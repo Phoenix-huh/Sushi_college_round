@@ -222,7 +222,8 @@ export async function patchRoutes(app: FastifyInstance) {
     }
 
     // Always rebase to current live version so CAS check passes at deploy time
-    if (patch.base_version !== liveVersionNumber) {
+    const wasRebased = patch.base_version !== liveVersionNumber;
+    if (wasRebased) {
       await store.updatePatch(id, { base_version: liveVersionNumber });
       await store.addAudit({
         actor_id: actor,
@@ -232,15 +233,15 @@ export async function patchRoutes(app: FastifyInstance) {
       });
     }
 
-    // Auto-approve: no conflicts found, patch is safe to deploy
-    await store.updatePatch(id, { status: "approved" });
+    // Move to in_review: a reviewer (≠ author) must approve before deploy
+    await store.updatePatch(id, { status: "in_review" });
     await store.addAudit({
       actor_id: actor,
       event_type: "patch_submitted",
       entity_id: patch.id,
-      details: { base_version: liveVersionNumber, auto_approved: true },
+      details: { base_version: liveVersionNumber, rebased: wasRebased },
     });
-    return reply.send({ status: "approved", rebased: patch.base_version !== liveVersionNumber, auto_approved: true });
+    return reply.send({ status: "in_review", rebased: wasRebased });
   });
 
   // GET /patches/:id/conflicts
@@ -317,6 +318,38 @@ export async function patchRoutes(app: FastifyInstance) {
     const result = await undeployPatch(id, actor);
     if (!result) return reply.code(409).send({ error: "Patch is not live" });
     return reply.send({ success: true, ...result });
+  });
+
+  // POST /patches/:id/healed — content script reports a successful self-heal
+  app.post("/patches/:id/healed", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const { score, breakdown } = (request.body ?? {}) as {
+      score?: number;
+      breakdown?: Record<string, number>;
+    };
+
+    const patch = await store.getPatch(id);
+    if (!patch) return reply.code(404).send({ error: "Patch not found" });
+
+    const actor = await resolveActor(request.headers.authorization, request.headers["x-actor-id"] as string);
+
+    // Mark as healed (only update status if it isn't already healed)
+    if (patch.status !== "healed") {
+      await store.updatePatch(id, { status: "healed" });
+    }
+
+    await store.addAudit({
+      actor_id: actor,
+      event_type: "patch_healed",
+      entity_id: id,
+      details: {
+        score,
+        breakdown,
+        previous_status: patch.status,
+      },
+    });
+
+    return reply.send({ ok: true, patchId: id, score });
   });
 
   // ---------- conflicts ----------

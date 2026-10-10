@@ -31,6 +31,18 @@ export interface LivePatch {
   change: PatchChange;
 }
 
+/** A lightweight view of a patch returned by the server for listing in the side panel. */
+export interface DraftPatch {
+  id: string;
+  title?: string;
+  status: string;
+  target_url: string;
+  anchors: PatchAnchor;
+  change: PatchChange;
+  author_id: string;
+  created_at: string;
+}
+
 /** What GET /deployments/live says is live right now. `signature` changes whenever the live set changes. */
 export interface LiveState {
   signature: string;
@@ -77,6 +89,20 @@ export interface MessageMap {
     };
     response: { id: string; status: string; title?: string };
   };
+  /** Lists all patches (draft + live) for a given site origin from the server. */
+  GET_SITE_PATCHES: {
+    request: { origin: string };
+    response: { patches: DraftPatch[] };
+  };
+  /** Content script reports that a patch was self-healed via the matcher. */
+  PATCH_HEALED: {
+    request: {
+      patchId: string;
+      score: number;
+      breakdown: Record<string, number>;
+    };
+    response: Record<never, never>;
+  };
 }
 
 export type MessageType = keyof MessageMap;
@@ -111,6 +137,11 @@ const validators: { [K in MessageType]: (m: Record<string, unknown>) => boolean 
     typeof (m.change as { type?: unknown }).type === 'string' &&
     typeof (m.change as { value?: unknown }).value === 'string' &&
     (m.title === undefined || typeof m.title === 'string'),
+  GET_SITE_PATCHES: (m) => typeof m.origin === 'string',
+  PATCH_HEALED: (m) =>
+    typeof m.patchId === 'string' &&
+    typeof m.score === 'number' &&
+    isRecord(m.breakdown),
 };
 
 /** Returns the message if it is a well-formed, known message; otherwise null. */

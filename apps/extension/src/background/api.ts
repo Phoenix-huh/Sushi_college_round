@@ -6,7 +6,7 @@
  * - Every request carries `x-actor-id` (the server uses it to know who acts).
  * - Failures become ApiError with a message a person can act on.
  */
-import { normalizeAnchor, type LivePatch, type LiveState, type Settings } from '../messages';
+import { normalizeAnchor, type DraftPatch, type LivePatch, type LiveState, type Settings } from '../messages';
 
 export class ApiError extends Error {
   /** HTTP status, or null when the server could not be reached at all. */
@@ -146,6 +146,26 @@ export function createApi(deps: ApiDeps) {
         throw new ApiError('Server response missing patch id', null);
       }
       return res;
+    },
+
+    /** GET /patches — returns all patches, optionally filtered by target origin. */
+    async getSitePatches(origin: string): Promise<DraftPatch[]> {
+      const all = await request<unknown>('GET', '/patches');
+      if (!Array.isArray(all)) return [];
+      // Filter to patches whose target_url matches the requested origin
+      return all.filter((p) => {
+        if (!isRecord(p) || typeof p.target_url !== 'string') return false;
+        try {
+          return new URL(p.target_url).origin === origin;
+        } catch {
+          return false;
+        }
+      }) as unknown as DraftPatch[];
+    },
+
+    /** POST /patches/:id/healed — report a successful self-heal to the server. */
+    async reportHealed(patchId: string, score: number, breakdown: Record<string, number>): Promise<void> {
+      await request<unknown>('POST', `/patches/${patchId}/healed`, { score, breakdown });
     },
 
     /** GET /health. Rejects unless the answer looks like a Patchwork server. */

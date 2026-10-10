@@ -165,6 +165,9 @@ export async function getProfile(id: string) {
   return (await listProfiles()).find((p) => p.id === id) ?? null;
 }
 
+// Status overlay for statuses ('in_review', 'conflicted', 'stale', 'rejected') that may not be in the DB constraint
+const patchStatusOverlay = new Map<string, Patch["status"]>();
+
 // ---------- patches ----------
 export async function listPatches(siteId?: string): Promise<Patch[]> {
   let patches: Patch[];
@@ -177,11 +180,30 @@ export async function listPatches(siteId?: string): Promise<Patch[]> {
     patches.sort(byNewest("created_at"));
   }
 
-  // Populate ops from patch_ops if available
+  // Populate ops from patch_ops if available and apply status overlay
   const allOps = await listPatchOps();
   return patches.map((p) => {
+    let status = p.status;
+    if (patchStatusOverlay.has(p.id)) {
+      status = patchStatusOverlay.get(p.id)!;
+    } else if ((p.anchors as any)?._status) {
+      status = (p.anchors as any)._status as Patch["status"];
+      patchStatusOverlay.set(p.id, status);
+    }
+    // Clean virtual _status from anchors so consumers get clean DOM anchors
+    let anchors = p.anchors;
+    if (anchors && (anchors as any)._status) {
+      const clean = { ...anchors };
+      delete (clean as any)._status;
+      anchors = clean;
+    }
     const matchingOps = allOps.filter((o) => o.patch_id === p.id);
-    return matchingOps.length > 0 ? { ...p, ops: matchingOps } : p;
+    return {
+      ...p,
+      status,
+      anchors,
+      ...(matchingOps.length > 0 ? { ops: matchingOps } : {}),
+    };
   });
 }
 
@@ -195,17 +217,46 @@ export async function getPatch(id: string): Promise<Patch | null> {
     patch = mem.patches.find((p) => p.id === id) ?? null;
   }
   if (!patch) return null;
+  if (patchStatusOverlay.has(patch.id)) {
+    patch.status = patchStatusOverlay.get(patch.id)!;
+  } else if ((patch.anchors as any)?._status) {
+    patch.status = (patch.anchors as any)._status as Patch["status"];
+    patchStatusOverlay.set(patch.id, patch.status);
+  }
+  if (patch.anchors && (patch.anchors as any)._status) {
+    const clean = { ...patch.anchors };
+    delete (clean as any)._status;
+    patch.anchors = clean;
+  }
   const ops = await listPatchOps(patch.id);
   return ops.length > 0 ? { ...patch, ops } : patch;
 }
 
 export async function getPatchesByIds(ids: string[]): Promise<Patch[]> {
   if (ids.length === 0) return [];
+  let patches: Patch[];
   if (storeMode === "supabase") {
     const rows = check(await getSupabaseAdmin().from("patches").select("*").in("id", ids)) as Patch[];
-    return ids.map((id) => rows.find((r) => r.id === id)).filter((p): p is Patch => !!p);
+    patches = ids.map((id) => rows.find((r) => r.id === id)).filter((p): p is Patch => !!p);
+  } else {
+    patches = ids.map((id) => mem.patches.find((p) => p.id === id)).filter((p): p is Patch => !!p);
   }
-  return ids.map((id) => mem.patches.find((p) => p.id === id)).filter((p): p is Patch => !!p);
+  return patches.map((p) => {
+    let status = p.status;
+    if (patchStatusOverlay.has(p.id)) {
+      status = patchStatusOverlay.get(p.id)!;
+    } else if ((p.anchors as any)?._status) {
+      status = (p.anchors as any)._status as Patch["status"];
+      patchStatusOverlay.set(p.id, status);
+    }
+    let anchors = p.anchors;
+    if (anchors && (anchors as any)._status) {
+      const clean = { ...anchors };
+      delete (clean as any)._status;
+      anchors = clean;
+    }
+    return { ...p, status, anchors };
+  });
 }
 
 export async function insertPatch(p: Patch): Promise<Patch> {
@@ -242,6 +293,10 @@ export async function updatePatch(id: string, updates: Partial<Patch>): Promise<
   const toSave = { ...withTs };
   delete toSave.ops;
 
+  if (updates.status) {
+    patchStatusOverlay.set(id, updates.status);
+  }
+
   let updated: Patch | null = null;
   if (storeMode === "supabase") {
     let res = await getSupabaseAdmin().from("patches").update(toSave).eq("id", id).select().maybeSingle();
@@ -254,6 +309,10 @@ export async function updatePatch(id: string, updates: Partial<Patch>): Promise<
       const fallback = { ...toSave };
       if (fallback.status === "conflicted" || fallback.status === "stale" || fallback.status === "in_review" || fallback.status === "rejected") {
         fallback.status = "draft";
+      }
+      // Never overwrite anchors when updating status
+      if (updates.anchors === undefined) {
+        delete fallback.anchors;
       }
       res = await getSupabaseAdmin().from("patches").update(fallback).eq("id", id).select().maybeSingle();
     }
@@ -281,6 +340,7 @@ export async function updatePatch(id: string, updates: Partial<Patch>): Promise<
 }
 
 export async function deletePatch(id: string): Promise<boolean> {
+  patchStatusOverlay.delete(id);
   await deletePatchOpsForPatch(id);
   if (storeMode === "supabase") {
     const { error } = await getSupabaseAdmin().from("patches").delete().eq("id", id);

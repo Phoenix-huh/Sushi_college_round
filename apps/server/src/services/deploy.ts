@@ -97,7 +97,8 @@ export async function mergePatch(patchId: string, actor: string) {
   if (!patch) throw new Error("Patch not found");
 
   const sites = await store.listSites();
-  const site = (patch.site_id ? sites.find((s) => s.id === patch.site_id) : null) ?? sites[0];
+  const patchSiteId = patch.site_id;
+  const site = (patchSiteId ? sites.find((s) => s.id === patchSiteId) : null) ?? sites[0];
 
   const live = await getLiveState();
   const liveVersionNumber = live.version?.number ?? 0;

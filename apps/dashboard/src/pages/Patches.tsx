@@ -1,4 +1,5 @@
 import { Fragment, useState, useRef, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import { Pencil, Trash2, Globe, ExternalLink, GitCommit, Check, X, Send } from 'lucide-react';
 import type { Patch, AuditEvent, Site } from '@patchwork/shared';
 import { api, usePolling, DEMO_URL, useActingUser, getUserName } from '../lib/api';
@@ -23,6 +24,8 @@ const TEXT_SEARCH_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, span, a, button, label,
 
 export function Patches() {
   const { user: actingUser } = useActingUser();
+  const outlet = useOutletContext<{ role: 'developer' | 'reviewer' } | null>();
+  const role = outlet?.role ?? 'developer';
   const patchesQ = usePolling(() => api<Patch[]>('/patches'), 3000);
   const liveQ = usePolling(() => api<LiveState>('/deployments/live'), 3000);
   const auditQ = usePolling(() => api<AuditEvent[]>('/audit'), 5000);
@@ -96,8 +99,8 @@ export function Patches() {
   };
 
   const submitPatch = (p: Patch) =>
-    run(p.id, '✅ No conflicts found! Patch approved — click Deploy to make it live.', async () => {
-      const res = await api<{ status: string; rebased?: boolean; auto_approved?: boolean; conflicts?: any[] }>(`/patches/${p.id}/submit`, {
+    run(p.id, '📋 Patch submitted for review. A reviewer must approve it before it can be deployed.', async () => {
+      const res = await api<{ status: string; rebased?: boolean; conflicts?: any[] }>(`/patches/${p.id}/submit`, {
         method: 'POST',
       });
       if (res.status === 'conflicted') {
@@ -105,8 +108,7 @@ export function Patches() {
       } else if (res.status === 'stale') {
         throw new Error('⚠️ Could not find the target element on the page. Check the selector.');
       } else if (res.rebased) {
-        // Will show the okMessage but also note the rebase
-        show('Auto-rebased to latest live version. Patch approved — click Deploy to make it live.');
+        show('Auto-rebased to latest live version. Patch is now in review — a reviewer must approve it.');
       }
     });
 
@@ -385,29 +387,36 @@ export function Patches() {
                           <>
                             {isAuthor ? (
                               <span
-                                className="text-xs text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded font-medium"
+                                className="text-xs text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded font-mono font-medium"
                                 title="An author cannot approve their own patch"
                               >
                                 Awaiting review
                               </span>
+                            ) : role !== 'reviewer' ? (
+                              <span
+                                className="text-xs text-on-surface-variant bg-surface-container border border-outline-variant/40 px-2 py-0.5 rounded font-mono"
+                                title="Switch your role to Reviewer (bottom-left) to approve or reject this patch"
+                              >
+                                In review (Reviewer only)
+                              </span>
                             ) : (
-                              <div className="inline-flex gap-1">
+                              <div className="inline-flex gap-1.5 items-center">
                                 <button
                                   disabled={busy}
                                   onClick={() => reviewPatch(patch, 'approved')}
-                                  className="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 px-2 py-1 rounded text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-0.5"
+                                  className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/60 px-2.5 py-1 rounded text-xs font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm transition-all"
                                   title="Approve this patch"
                                 >
-                                  <Check className="w-3 h-3" />
+                                  <Check className="w-3.5 h-3.5" />
                                   Approve
                                 </button>
                                 <button
                                   disabled={busy}
                                   onClick={() => reviewPatch(patch, 'rejected')}
-                                  className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2 py-1 rounded text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-0.5"
+                                  className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/60 px-2.5 py-1 rounded text-xs font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm transition-all"
                                   title="Reject this patch"
                                 >
-                                  <X className="w-3 h-3" />
+                                  <X className="w-3.5 h-3.5" />
                                   Reject
                                 </button>
                               </div>
@@ -419,7 +428,7 @@ export function Patches() {
                           <button
                             disabled={busy}
                             onClick={() => deploy(patch)}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded text-xs font-semibold disabled:opacity-50 shadow-sm"
+                            className="bg-primary-container hover:bg-[#ff1e70] text-white px-3 py-1 rounded text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 shadow-sm transition-all"
                             title="Deploy and merge into live version"
                           >
                             {busy ? 'Deploying...' : 'Deploy'}
@@ -430,7 +439,7 @@ export function Patches() {
                           <button
                             disabled={busy}
                             onClick={() => rollback(patch)}
-                            className="bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded text-xs font-semibold disabled:opacity-50"
+                            className="bg-amber-950/60 hover:bg-amber-900 text-amber-300 border border-amber-500/50 px-2.5 py-1 rounded text-xs font-mono font-semibold disabled:opacity-50 transition-all"
                             title="Roll back this patch from the live site"
                           >
                             Roll back
@@ -647,9 +656,10 @@ function StatusPill({ status }: { status: string }) {
     healed: 'bg-sky-950/60 text-sky-300 border border-sky-500/50',
   };
   const style = badgeClasses[status] || 'bg-surface-container text-on-surface-variant border border-outline-variant/40';
+  const label = status === 'healed' ? '⟡ auto-healed' : status.replace(/_/g, ' ');
   return (
     <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${style}`}>
-      {status.replace(/_/g, ' ')}
+      {label}
     </span>
   );
 }
@@ -718,8 +728,8 @@ function NLPromptBox({
     if (!pendingPatch) return;
     setDeploying(true);
     try {
-      // Step 1: Submit (validates + auto-approves if no conflicts)
-      const submitRes = await api<{ status: string; auto_approved?: boolean }>(`/patches/${pendingPatch.id}/submit`, {
+      // Submit (conflict check + rebase) — now moves to in_review, not auto-approve
+      const submitRes = await api<{ status: string }>(`/patches/${pendingPatch.id}/submit`, {
         method: 'POST',
       });
       if (submitRes.status === 'conflicted') {
@@ -732,11 +742,10 @@ function NLPromptBox({
         setPendingPatch(null);
         return;
       }
-      // Step 2: Deploy
-      await api(`/patches/${pendingPatch.id}/deploy`, { method: 'POST' });
+      // Patch is now in_review — inform the user
       setPendingPatch(null);
       setContext('');
-      await onCreated('🚀 Patch is now live! Reload the demo site to see your change.');
+      await onCreated('📋 AI patch submitted for review. Switch users and approve it, then click Deploy.');
     } catch (e: any) {
       onError(e.message);
     } finally {
@@ -794,12 +803,12 @@ function NLPromptBox({
             <button
               onClick={submitAndDeploy}
               disabled={deploying}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 shadow-sm transition-all"
+              className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 shadow-sm transition-all"
             >
               {deploying ? (
-                <span>Deploying...</span>
+                <span>Submitting...</span>
               ) : (
-                <><span>🚀</span><span>Submit & Deploy</span></>
+                <><span>📋</span><span>Submit for Review</span></>
               )}
             </button>
           </div>

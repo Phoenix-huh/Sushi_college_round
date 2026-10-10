@@ -7,12 +7,20 @@
     font-size: 16px;
     scrollbar-gutter: stable;
     overflow-y: scroll;
+    background-color: #0e0e12;
+    color: #e4e1e7;
   }
   body {
     font-size: 1rem;
     line-height: 1.6;
+    background-color: #0e0e12;
+    color: #e4e1e7;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+  #root {
+    min-height: 100vh;
+    background-color: #0e0e12;
   }
   p {
     font-size: 1.05rem;

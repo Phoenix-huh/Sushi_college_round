@@ -19,7 +19,7 @@ export async function aiRoutes(app: FastifyInstance) {
     const parsed = AIPatchRequestSchema.safeParse(request.body);
     if (!parsed.success) return reply.code(400).send({ error: parsed.error });
 
-    const actorId = await resolveActor(request.headers.authorization);
+    const actorId = await resolveActor(request.headers.authorization, request.headers["x-actor-id"] as string);
     const { instruction, element_context, target_url } = parsed.data;
 
     let generated;

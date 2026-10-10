@@ -6,5 +6,6 @@ export default defineConfig({
       "packages/*/src/**/*.test.ts",
       "apps/*/src/**/*.test.ts",
     ],
+    setupFiles: ["./test-setup.ts"],
   },
 });

@@ -84,6 +84,18 @@ export function createHandler(deps: HandlerDeps) {
       });
       return { id: res.id, status: res.status, title: res.title };
     },
+    GET_SITE_PATCHES: async (m) => {
+      const patches = await api.getSitePatches(m.origin);
+      return { patches };
+    },
+    PATCH_HEALED: async (m) => {
+      try {
+        await api.reportHealed(m.patchId, m.score, m.breakdown);
+      } catch {
+        // best-effort: if the server is not reachable, we still return ok
+      }
+      return {};
+    },
   };
 
   /** Handles one validated message. Rejects with an Error whose message is safe to show to the user. */

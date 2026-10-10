@@ -5,50 +5,346 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Patchwork</title>
   <style>
-    :root { color-scheme: light; }
-    body { margin: 0; min-width: 320px; padding: 16px; font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #1e293b; background: #fff; }
-    h1 { margin: 0 0 12px; font-size: 18px; color: #4f46e5; }
-    h2 { margin: 20px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
-    .conn { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
-    .dot { flex: none; width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; background: #94a3b8; }
-    .dot[data-state="connected"] { background: #16a34a; }
-    .dot[data-state="offline"] { background: #dc2626; }
-    #conn-text { flex: 1; word-break: break-word; }
-    .hint { margin: 4px 0 0; font-size: 12px; color: #64748b; }
-    label { display: block; margin-top: 10px; font-size: 12px; font-weight: 600; color: #475569; }
-    input { box-sizing: border-box; width: 100%; margin-top: 4px; padding: 7px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit; }
-    input:focus { outline: 2px solid #818cf8; outline-offset: 1px; }
-    button { padding: 7px 12px; border: 0; border-radius: 6px; background: #4f46e5; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
-    button.secondary { background: #e2e8f0; color: #334155; }
-    button:disabled { opacity: .6; cursor: default; }
-    .row { display: flex; gap: 8px; margin-top: 12px; }
-    .pick { margin-top: 10px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 12px; }
-    .pick dt { margin-top: 6px; font-weight: 600; color: #475569; }
-    .pick dt:first-child { margin-top: 0; }
-    .pick dd { margin: 2px 0 0; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; }
-    #pick-msg { min-height: 1.4em; margin: 8px 0 0; font-size: 12px; color: #64748b; }
-    #pick-msg[data-kind="error"] { color: #b91c1c; }
-    #settings-msg { min-height: 1.4em; margin: 8px 0 0; font-size: 12px; }
-    #settings-msg[data-kind="ok"] { color: #15803d; }
-    #settings-msg[data-kind="error"] { color: #b91c1c; }
+    :root {
+      --bg: #0d0f14;
+      --bg2: #13161e;
+      --surface: #1a1e2a;
+      --surface2: #21263a;
+      --border: rgba(255,255,255,0.08);
+      --primary: #ff3b81;
+      --primary-dim: rgba(255,59,129,0.18);
+      --text: #e8eaf0;
+      --text-dim: #6b7280;
+      --text-muted: #4b5263;
+      --green: #10b981;
+      --amber: #f59e0b;
+      --blue: #3b82f6;
+      --purple: #8b5cf6;
+      --rose: #f43f5e;
+      --sky: #38bdf8;
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      font: 12px/1.5 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    /* ─── header ─── */
+    .hd {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 14px 10px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .hd-logo {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ff3b81, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hd-version {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1px 4px;
+    }
+    .hd-spacer { flex: 1; }
+
+    /* ─── connection pill ─── */
+    .conn-pill {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-size: 10px;
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .conn-pill:hover { border-color: var(--primary); }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      flex: none;
+    }
+    .dot[data-state="connected"] { background: var(--green); box-shadow: 0 0 5px var(--green); }
+    .dot[data-state="offline"]   { background: var(--rose); }
+    .dot[data-state="checking"]  { background: var(--amber); animation: pulse 1s infinite; }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    /* ─── section labels ─── */
+    .section-label {
+      padding: 10px 14px 4px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+    }
+
+    /* ─── tabs ─── */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+    }
+    .tab {
+      padding: 8px 10px 7px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--text-muted);
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .tab[data-active="true"] { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab:hover:not([data-active="true"]) { color: var(--text); }
+
+    /* ─── pane ─── */
+    .pane { display: none; flex-direction: column; gap: 0; overflow-y: auto; }
+    .pane[data-active="true"] { display: flex; }
+
+    /* ─── action bar (inside panes) ─── */
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ─── patch list ─── */
+    .patch-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    .patch-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 9px 14px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.1s;
+      cursor: default;
+    }
+    .patch-item:hover { background: var(--surface); }
+    .patch-item:last-child { border-bottom: none; }
+
+    .patch-title {
+      font-weight: 600;
+      font-size: 11px;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .patch-selector {
+      font-family: 'Consolas', 'Menlo', monospace;
+      font-size: 10px;
+      color: var(--primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .patch-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-dim);
+    }
+    .patch-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 2px;
+    }
+
+    /* ─── status pill ─── */
+    .pill {
+      padding: 1px 7px;
+      border-radius: 99px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border: 1px solid transparent;
+    }
+    .pill-live    { background: rgba(16,185,129,0.12); color: #10b981; border-color: rgba(16,185,129,0.3); }
+    .pill-draft   { background: rgba(107,114,128,0.12); color: #6b7280; border-color: rgba(107,114,128,0.3); }
+    .pill-in-rev  { background: rgba(245,158,11,0.12); color: #f59e0b; border-color: rgba(245,158,11,0.3); }
+    .pill-appr    { background: rgba(139,92,246,0.12); color: #8b5cf6; border-color: rgba(139,92,246,0.3); }
+    .pill-conf    { background: rgba(244,63,94,0.12); color: #f43f5e; border-color: rgba(244,63,94,0.3); }
+    .pill-reject  { background: rgba(239,68,68,0.12); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+    .pill-healed  { background: rgba(56,189,248,0.12); color: #38bdf8; border-color: rgba(56,189,248,0.3); }
+    .pill-stale   { background: rgba(249,115,22,0.12); color: #f97316; border-color: rgba(249,115,22,0.3); }
+    .pill-broken  { background: rgba(239,68,68,0.12); color: #ef4444; border-color: rgba(239,68,68,0.3); }
+
+    /* ─── buttons ─── */
+    button {
+      border: none;
+      border-radius: 5px;
+      font: inherit;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    button:disabled { opacity: 0.45; cursor: default; }
+
+    .btn { padding: 5px 10px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: #ff1e70; }
+    .btn-ghost { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-ghost:hover:not(:disabled) { background: var(--surface2); }
+    .btn-icon { padding: 4px 8px; font-size: 10px; font-weight: 600; }
+    .btn-preview { background: var(--surface2); color: var(--sky); border: 1px solid rgba(56,189,248,0.2); padding: 3px 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.04em; }
+    .btn-preview:hover { background: rgba(56,189,248,0.1); }
+
+    /* ─── pick section ─── */
+    .pick-card {
+      margin: 10px 14px;
+      padding: 10px 12px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .pick-card dl { margin: 0; }
+    .pick-card dt { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-top: 6px; }
+    .pick-card dt:first-child { margin-top: 0; }
+    .pick-card dd { margin: 2px 0 0; font-family: 'Consolas', 'Menlo', monospace; font-size: 10px; word-break: break-all; color: var(--text-dim); }
+
+    /* ─── settings form ─── */
+    .settings-form { padding: 10px 14px; display: flex; flex-direction: column; gap: 10px; }
+    .field-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-dim); margin-bottom: 4px; }
+    input[type=text] {
+      width: 100%;
+      padding: 6px 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      font: 11px/1.4 'Consolas', 'Menlo', monospace;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type=text]:focus { border-color: var(--primary); }
+
+    /* ─── status message ─── */
+    .msg { padding: 6px 14px; font-size: 10px; min-height: 20px; }
+    .msg[data-kind="ok"]    { color: var(--green); }
+    .msg[data-kind="error"] { color: var(--rose); }
+
+    /* ─── empty state ─── */
+    .empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 28px 20px;
+      color: var(--text-muted);
+      font-size: 11px;
+      text-align: center;
+    }
+    .empty-icon { font-size: 24px; opacity: 0.5; }
+
+    /* ─── notice bar ─── */
+    .notice {
+      padding: 6px 14px;
+      font-size: 10px;
+      background: var(--primary-dim);
+      border-bottom: 1px solid rgba(255,59,129,0.2);
+      color: var(--primary);
+      display: none;
+    }
+    .notice[data-vis="true"] { display: block; }
+
+    /* ─── scroll container ─── */
+    html, body { height: 100%; }
+    body { display: flex; flex-direction: column; }
+    .main { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+
+    /* ─── loading spinner ─── */
+    .spin {
+      display: inline-block;
+      width: 10px; height: 10px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
-  <h1>Patchwork</h1>
 
-  <div class="conn" role="status" aria-live="polite">
-    <span id="conn-dot" class="dot" data-state="checking" aria-hidden="true"></span>
-    <div>
-      <div id="conn-text">Checking connection...</div>
-      <p id="conn-hint" class="hint"></p>
-    </div>
+<!-- ── Header ── -->
+<div class="hd">
+  <span class="hd-logo">⬡ PATCHWORK</span>
+  <span class="hd-version">v2</span>
+  <div class="hd-spacer"></div>
+  <button class="conn-pill" id="conn-pill" type="button" title="Click to re-check connection">
+    <span id="conn-dot" class="dot" data-state="checking"></span>
+    <span id="conn-text">Checking…</span>
+  </button>
+</div>
+
+<!-- ── Notice bar ── -->
+<div class="notice" id="notice-bar" role="status" aria-live="polite"></div>
+
+<!-- ── Tabs ── -->
+<div class="tabs" role="tablist">
+  <button class="tab" id="tab-patches" data-active="true" role="tab" type="button">Patches</button>
+  <button class="tab" id="tab-pick" data-active="false" role="tab" type="button">Picker</button>
+  <button class="tab" id="tab-settings" data-active="false" role="tab" type="button">Settings</button>
+</div>
+
+<!-- ── PATCHES PANE ── -->
+<div class="pane" id="pane-patches" data-active="true" role="tabpanel">
+  <div class="action-bar">
+    <button class="btn btn-ghost btn-icon" id="patches-refresh" type="button" title="Refresh patches">↻ Refresh</button>
+    <span style="flex:1"></span>
+    <span id="patches-count" style="font-size:10px;color:var(--text-muted)"></span>
   </div>
-  <div class="row"><button id="conn-recheck" type="button" class="secondary">Check again</button></div>
+  <div class="patch-list" id="patch-list">
+    <div class="empty"><span class="spin"></span><span>Loading patches…</span></div>
+  </div>
+</div>
 
-  <h2>Pick an element</h2>
-  <div class="row" style="margin-top:0"><button id="pick-start" type="button">Pick element</button></div>
-  <p id="pick-msg" role="status" aria-live="polite">Click the button, then click an element on the page. Esc cancels.</p>
-  <div id="pick-card" class="pick" hidden>
+<!-- ── PICKER PANE ── -->
+<div class="pane" id="pane-pick" data-active="false" role="tabpanel">
+  <div class="action-bar">
+    <button class="btn btn-primary btn-icon" id="pick-start" type="button">Pick element</button>
+    <p id="pick-msg" style="margin:0;flex:1;font-size:10px;color:var(--text-dim)" role="status" aria-live="polite">
+      Click "Pick element", then click any element on the page.
+    </p>
+  </div>
+  <div id="pick-card" class="pick-card" hidden>
     <dl>
       <dt>Selector</dt><dd id="pick-selector"></dd>
       <dt>Text</dt><dd id="pick-text"></dd>
@@ -57,17 +353,29 @@
       <dt>Page</dt><dd id="pick-page"></dd>
     </dl>
   </div>
+</div>
 
-  <h2>Settings</h2>
-  <form id="settings-form" novalidate>
-    <label for="serverUrl">Server URL</label>
-    <input id="serverUrl" name="serverUrl" type="text" autocomplete="off" spellcheck="false">
-    <label for="authorId">Author id</label>
-    <input id="authorId" name="authorId" type="text" autocomplete="off" spellcheck="false">
-    <div class="row"><button id="settings-save" type="submit">Save</button></div>
-    <p id="settings-msg" role="status" aria-live="polite"></p>
+<!-- ── SETTINGS PANE ── -->
+<div class="pane" id="pane-settings" data-active="false" role="tabpanel">
+  <form class="settings-form" id="settings-form" novalidate>
+    <div>
+      <div class="field-label">Server URL</div>
+      <input id="serverUrl" name="serverUrl" type="text" autocomplete="off" spellcheck="false" placeholder="http://localhost:4000">
+    </div>
+    <div>
+      <div class="field-label">Author ID (UUID)</div>
+      <input id="authorId" name="authorId" type="text" autocomplete="off" spellcheck="false" placeholder="xxxxxxxx-…">
+    </div>
+    <div>
+      <button class="btn btn-primary" id="settings-save" type="submit">Save settings</button>
+    </div>
+    <p id="settings-msg" class="msg" data-kind="" role="status" aria-live="polite"></p>
   </form>
+  <p style="padding:0 14px 10px;font-size:10px;color:var(--text-muted)">
+    Connection status: <span id="conn-hint"></span>
+  </p>
+</div>
 
-  <script src="sidepanel.js"></script>
+<script src="sidepanel.js"></script>
 </body>
 </html>

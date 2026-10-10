@@ -32,6 +32,8 @@ export function Audit() {
         return { color: 'bg-rose-500', icon: AlertTriangle, badge: 'bg-rose-100 text-rose-800' };
       case 'conflict_resolved':
         return { color: 'bg-amber-500', icon: Sparkles, badge: 'bg-amber-100 text-amber-800' };
+      case 'patch_healed':
+        return { color: 'bg-sky-500', icon: Sparkles, badge: 'bg-sky-100 text-sky-800' };
       case 'deployment_rolled_back':
         return { color: 'bg-amber-500', icon: RotateCcw, badge: 'bg-amber-100 text-amber-800' };
       case 'site_created':

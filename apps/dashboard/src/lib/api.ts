@@ -13,6 +13,7 @@ export interface UserProfile {
 }
 
 export const USERS: UserProfile[] = [
+  { id: '00000000-0000-0000-0000-000000000001', name: 'Demo Dev', email: 'dev@patchwork.io', role: 'developer' },
   { id: '00000000-0000-0000-0000-000000000003', name: 'Alice', email: 'alice@patchwork.io', role: 'developer' },
   { id: '00000000-0000-0000-0000-000000000004', name: 'Bob', email: 'bob@patchwork.io', role: 'developer' },
   { id: '00000000-0000-0000-0000-000000000005', name: 'Carol', email: 'carol@patchwork.io', role: 'developer' },

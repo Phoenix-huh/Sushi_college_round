@@ -66,15 +66,34 @@ export function SidebarLayout() {
 
           {/* Right: Overview & Extension capsule + Launch App button (Public Landing / Extension state) */}
           {!isAppTab && (
-            <div className="flex items-center gap-3 shrink-0">
-              <nav className="flex items-center gap-1 bg-surface-container/90 p-1 rounded-full border border-outline-variant/40 text-[13px] font-mono shadow-inner">
+            <div className="flex items-center gap-4 shrink-0">
+              <nav className="flex items-center gap-1.5 bg-[#17141f]/90 p-1 rounded-full border border-[#3b3248]/50 text-xs font-mono shadow-inner">
                 <TopNavItem to="/">Overview</TopNavItem>
-                <TopNavItem to="/extension">Extension</TopNavItem>
+                <NavLink
+                  to="/patches"
+                  className="px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-[#c5b8c8] hover:text-white transition-colors"
+                >
+                  Architecture
+                </NavLink>
+                <NavLink
+                  to="/verification"
+                  className="px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-[#c5b8c8] hover:text-white transition-colors"
+                >
+                  Playwright Diff
+                </NavLink>
+                <a
+                  href={DEMO_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-[#c5b8c8] hover:text-white transition-colors"
+                >
+                  Live Demo
+                </a>
               </nav>
 
               <Link
                 to="/patches"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary-container hover:bg-[#ff1e70] text-white font-headline font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md cyber-glow-primary hover:scale-[1.02] active:scale-[0.98] shrink-0 whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#ff2a6d] hover:bg-[#ff165d] text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-[0_0_20px_rgba(255,42,109,0.55)] hover:scale-[1.02] active:scale-[0.98] shrink-0 whitespace-nowrap"
               >
                 <span>Launch App</span>
                 <ArrowRight className="w-4 h-4" />
@@ -98,7 +117,7 @@ export function SidebarLayout() {
             <span>Acting as</span>
             <span className="size-2 rounded-full bg-primary-container/80" />
           </div>
-          <div className="grid grid-cols-3 gap-1.5 bg-surface-container-lowest/90 p-1 rounded-lg border border-outline-variant/30">
+          <div className="grid grid-cols-2 gap-1.5 bg-surface-container-lowest/90 p-1 rounded-lg border border-outline-variant/30">
             {users.map((u) => (
               <button
                 key={u.id}
@@ -115,6 +134,39 @@ export function SidebarLayout() {
               </button>
             ))}
           </div>
+
+          {/* Role Toggle: Developer vs Reviewer (UI toggle for Phase 5) */}
+          <div className="mt-2.5 pt-2 border-t border-outline-variant/30">
+            <div className="text-[10px] font-mono font-semibold text-outline uppercase tracking-wider mb-1.5 flex items-center justify-between">
+              <span>Role</span>
+              <span className="text-[10px] font-mono text-primary font-bold uppercase">{role}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5 bg-surface-container-lowest/90 p-1 rounded-lg border border-outline-variant/30">
+              <button
+                onClick={() => setRole('developer')}
+                className={cn(
+                  "py-1 px-2 rounded-md text-[11px] font-mono font-semibold text-center transition-all",
+                  role === 'developer'
+                    ? "bg-secondary-container text-white shadow-sm"
+                    : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
+                )}
+              >
+                Developer
+              </button>
+              <button
+                onClick={() => setRole('reviewer')}
+                className={cn(
+                  "py-1 px-2 rounded-md text-[11px] font-mono font-semibold text-center transition-all",
+                  role === 'reviewer'
+                    ? "bg-primary-container text-white shadow-sm"
+                    : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
+                )}
+              >
+                Reviewer
+              </button>
+            </div>
+          </div>
+
           <div className="mt-2 text-xs font-mono text-outline truncate flex items-center justify-between">
             <span className="truncate text-on-surface-variant text-[11px]">{user.email}</span>
             <span className="font-bold text-primary uppercase text-[10px] ml-2 shrink-0">{user.name}</span>
