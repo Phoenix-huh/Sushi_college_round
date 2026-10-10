@@ -60,4 +60,22 @@ describe('detectConflicts', () => {
     const res = detectConflicts([basePatch, p2]);
     expect(res.hasConflict).toBe(false);
   });
+
+  it('different elements that share a selector (told apart by their text) do not conflict', () => {
+    const a = { ...basePatch, id: 'a', anchors: { ...basePatch.anchors, cssSelector: '.product-title', xpath: '', textContent: 'Wireless Headphones' } } as Patch;
+    const b = { ...basePatch, id: 'b', anchors: { ...basePatch.anchors, cssSelector: '.product-title', xpath: '', textContent: 'Smart Watch' } } as Patch;
+    expect(detectConflicts([a, b]).hasConflict).toBe(false);
+  });
+
+  it('same selector and same element text still conflicts', () => {
+    const a = { ...basePatch, id: 'a', anchors: { ...basePatch.anchors, cssSelector: '.product-title', xpath: '', textContent: 'Smart Watch' } } as Patch;
+    const b = { ...basePatch, id: 'b', anchors: { ...basePatch.anchors, cssSelector: '.product-title', xpath: '', textContent: ' smart  watch ' } } as Patch;
+    expect(detectConflicts([a, b]).hasConflict).toBe(true);
+  });
+
+  it('two empty xpaths do not make different selectors "the same element"', () => {
+    const a = { ...basePatch, id: 'a', anchors: { ...basePatch.anchors, cssSelector: '.logo', xpath: '' } } as Patch;
+    const b = { ...basePatch, id: 'b', anchors: { ...basePatch.anchors, cssSelector: '.footer', xpath: '' } } as Patch;
+    expect(detectConflicts([a, b]).hasConflict).toBe(false);
+  });
 });

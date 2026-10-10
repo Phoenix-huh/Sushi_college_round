@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { beforeEach, describe, expect, test, vi } from 'vitest';
+import { beforeEach, describe, expect, it, test, vi } from 'vitest';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -92,5 +92,60 @@ describe('patchwork runtime', () => {
     const pw = load('v1', live);
     await pw.pollLive();
     expect($('.logo').textContent).toBe('SuperStore');
+  });
+
+  describe('several elements share one selector (three .product-title headings)', () => {
+    const titleOf = () => Array.from(document.querySelectorAll('.product-title')).map((e) => e.textContent);
+    const titlePatch = (anchorText: string, selector: string, value: string, attrs: Record<string, string> = {}) =>
+      mkPatch(selector, 'text', value, { textContent: anchorText, attributes: attrs });
+
+    it('patches the title whose text matches, not the first one', () => {
+      const pw = load('v1', { patches: [], signature: 's' });
+      pw.applyPatches([titlePatch('Smart Watch', 'h3.product-title', 'Analog Watch')]);
+      expect(titleOf()).toEqual(['Wireless Headphones', 'Analog Watch', 'USB-C Hub']);
+    });
+
+    it('two patches on the same selector each hit their own element, in any order', () => {
+      const a = titlePatch('Wireless Headphones', '.product-title', 'Wired Earphones');
+      const b = titlePatch('Smart Watch', 'h3.product-title', 'Analog Watch');
+      let pw = load('v1', { patches: [], signature: 's' });
+      pw.applyPatches([a, b]);
+      expect(titleOf()).toEqual(['Wired Earphones', 'Analog Watch', 'USB-C Hub']);
+      pw = load('v1', { patches: [], signature: 's' });
+      pw.applyPatches([b, a]);
+      expect(titleOf()).toEqual(['Wired Earphones', 'Analog Watch', 'USB-C Hub']);
+    });
+
+    it('a later patch can still find an element that an earlier patch renamed', () => {
+      const rename = titlePatch('Smart Watch', 'h3.product-title', 'Analog Watch');
+      const style = { ...mkPatch('h3.product-title', 'style', 'color: red;', { textContent: 'Smart Watch' }) };
+      const pw = load('v1', { patches: [], signature: 's' });
+      pw.applyPatches([rename, style]);
+      const el = document.querySelectorAll('.product-title')[1] as HTMLElement;
+      expect(el.textContent).toBe('Analog Watch');
+      expect(el.style.color).toBe('red');
+    });
+
+    it('find-by-text patches (no real selector) hit only the matching element', () => {
+      const generic = 'h1, h2, h3, h4, h5, h6, p, span, a, button, label, li, td, th, strong, em, b, small, div';
+      const pw = load('v1', { patches: [], signature: 's' });
+      pw.applyPatches([titlePatch('USB-C Hub', generic, 'Charging Hub', { 'pw-find': 'text' })]);
+      expect(titleOf()).toEqual(['Wireless Headphones', 'Smart Watch', 'Charging Hub']);
+    });
+
+    it('find-by-text patches never fall back to "the first element" when the text is not on the page', () => {
+      const generic = 'h1, h2, h3, h4, h5, h6, p, span, a, button, label, li, td, th, strong, em, b, small, div';
+      const pw = load('v1', { patches: [], signature: 's' });
+      const before = document.body.innerHTML;
+      pw.applyPatches([titlePatch('Quantum Toaster', generic, 'x', { 'pw-find': 'text' })]);
+      expect(document.body.innerHTML).toBe(before);
+    });
+
+    it('older patches without a text hint keep the old behaviour (first match)', () => {
+      const legacy = titlePatch('Checkout', '.product-title', 'Wired Earphones');
+      const pw = load('v1', { patches: [], signature: 's' });
+      pw.applyPatches([legacy]);
+      expect(titleOf()).toEqual(['Wired Earphones', 'Smart Watch', 'USB-C Hub']);
+    });
   });
 });

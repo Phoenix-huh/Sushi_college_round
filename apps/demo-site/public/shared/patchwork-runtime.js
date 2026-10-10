@@ -93,12 +93,31 @@
     } catch (e) { return null; }
   }
 
+  function norm(str) { return String(str || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+
+  // A selector like ".product-title" matches several elements. The patch remembers the
+  // element's text, so choose the match whose text is exactly that (innermost one first).
+  function pickByText(matches, text, strict) {
+    var want = norm(text);
+    if (!want) return strict ? null : matches[0] || null;
+    var exact = matches.filter(function (m) { return norm(m.textContent) === want; });
+    if (exact.length) {
+      exact.sort(function (a, b) { return a.querySelectorAll('*').length - b.querySelectorAll('*').length; });
+      return exact[0];
+    }
+    return strict ? null : matches[0] || null; // older patches without a usable text hint
+  }
+
   function findTarget(patch) {
     var a = patch.anchors || {};
-    var el = null;
-    try { el = a.cssSelector ? document.querySelector(a.cssSelector) : null; } catch (e) { /* bad selector */ }
-    if (el) return { el: el, how: 'selector' };
-    if (a.xpath && (el = byXPath(a.xpath))) return { el: el, how: 'xpath' };
+    // pw-find=text means "find the element by its text only" (selector is just a list of tags)
+    var strict = !!(a.attributes && a.attributes['pw-find'] === 'text');
+    var matches = [];
+    try { if (a.cssSelector) matches = [].slice.call(document.querySelectorAll(a.cssSelector)); } catch (e) { /* bad selector */ }
+    matches = matches.filter(function (m) { return !m.closest('#patchwork-preview-banner'); });
+    var el = matches.length ? pickByText(matches, a.textContent, strict) : null;
+    if (el) return { el: el, how: matches.length > 1 && a.textContent ? 'selector+text' : 'selector' };
+    if (!strict && a.xpath && (el = byXPath(a.xpath))) return { el: el, how: 'xpath' };
 
     // Healing: the selector no longer matches (site was updated), so look for the
     // element that is most similar in id / class / text, with a small synonym table.
@@ -113,14 +132,17 @@
   }
 
   function applyPatches(patches) {
-    patches.forEach(function (patch) {
-      var found = findTarget(patch);
-      if (!found) {
-        console.warn('[Patchwork] could not find target for patch', patch.id, patch.anchors && patch.anchors.cssSelector);
+    // Phase 1: find every target BEFORE changing anything, so an earlier patch that
+    // renames an element cannot stop a later patch from finding it by its old text.
+    var found = patches.map(function (patch) { return { patch: patch, hit: findTarget(patch) }; });
+    // Phase 2: apply.
+    found.forEach(function (x) {
+      if (!x.hit) {
+        console.warn('[Patchwork] could not find target for patch', x.patch.id, x.patch.anchors && x.patch.anchors.cssSelector);
         return;
       }
-      applyChange(found.el, patch.change);
-      console.log('[Patchwork] applied', patch.id.slice(0, 8), 'via', found.how, found.score ? '(' + found.score.toFixed(2) + ')' : '');
+      applyChange(x.hit.el, x.patch.change);
+      console.log('[Patchwork] applied', x.patch.id.slice(0, 8), 'via', x.hit.how, x.hit.score ? '(' + x.hit.score.toFixed(2) + ')' : '');
     });
   }
 
@@ -169,8 +191,7 @@
     if (previewId) {
       Promise.all([getJson('/deployments/live'), getJson('/patches/' + encodeURIComponent(previewId))])
         .then(function (r) {
-          applyPatches((r[0].patches || []).filter(function (p) { return p.id !== r[1].id; }));
-          applyPatches([r[1]]);
+          applyPatches((r[0].patches || []).filter(function (p) { return p.id !== r[1].id; }).concat([r[1]]));
           showBanner(r[1]);
         })
         .catch(function (e) { console.warn('[Patchwork] preview failed:', e); });

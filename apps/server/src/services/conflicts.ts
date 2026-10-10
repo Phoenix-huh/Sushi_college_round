@@ -5,6 +5,25 @@ export interface ConflictResult {
   conflictingPatches: [Patch, Patch][];
 }
 
+const norm = (s?: string) => (s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+/**
+ * Do two patches target the same element?
+ * A selector such as ".product-title" can match several elements, so when BOTH patches
+ * remember the element's text and the texts differ, they are different elements.
+ * (An empty xpath never counts as a match.)
+ */
+export function targetsSameElement(a: Patch, b: Patch): boolean {
+  const sameSelector =
+    a.anchors.cssSelector === b.anchors.cssSelector ||
+    (!!a.anchors.xpath && a.anchors.xpath === b.anchors.xpath);
+  if (!sameSelector) return false;
+  const ta = norm(a.anchors.textContent);
+  const tb = norm(b.anchors.textContent);
+  if (ta && tb && ta !== tb) return false;
+  return true;
+}
+
 /**
  * Basic conflict detection.
  * Flags patches as conflicting if they target the same element (based on cssSelector) 
@@ -18,8 +37,7 @@ export function detectConflicts(patches: Patch[]): ConflictResult {
       const p1 = patches[i];
       const p2 = patches[j];
       
-      const sameElement = p1.anchors.cssSelector === p2.anchors.cssSelector || 
-                          p1.anchors.xpath === p2.anchors.xpath;
+      const sameElement = targetsSameElement(p1, p2);
       const sameProperty = p1.change.type === p2.change.type;
       
       if (sameElement && sameProperty) {

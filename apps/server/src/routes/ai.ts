@@ -8,7 +8,7 @@ import { resolveActor } from "../auth.js";
 
 const AIPatchRequestSchema = z.object({
   instruction: z.string().min(2).max(500),
-  element_context: z.string().optional().default('<button id="checkout-btn">Checkout</button>'),
+  element_context: z.string().optional().default(""),
   target_url: z.string().optional().default("http://localhost:4100/"),
   author_id: z.string().uuid().optional(),
 });

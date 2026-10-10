@@ -53,7 +53,7 @@ export async function generatePatchFromInstruction(
         "anchors": {
           "cssSelector": "A precise CSS selector identifying the element (e.g. '.product-title', '#checkout-btn', '.logo', 'header', '.product-card:first-child .product-price')",
           "xpath": "XPath to the element",
-          "textContent": "Current or expected text content",
+          "textContent": "The EXACT current visible text of the target element (needed to tell apart elements that share a selector, e.g. three .product-title headings)",
           "attributes": { "id": "...", "class": "..." },
           "parentContext": "parent tag or class name",
           "siblingContext": ["sibling classes or tags"]
@@ -79,6 +79,8 @@ export async function generatePatchFromInstruction(
 
       const parsed = JSON.parse(text.trim());
       parsed.target_url = targetUrl;
+      const ctx = context.trim() ? parseElementContext(context) : null;
+      if (parsed.anchors && !parsed.anchors.textContent && ctx?.text) parsed.anchors.textContent = ctx.text;
       if (!parsed.author_id) parsed.author_id = DEV_ID;
       if (parsed.base_version === undefined) parsed.base_version = 0;
       return CreatePatchSchema.parse(parsed);
@@ -92,76 +94,96 @@ export async function generatePatchFromInstruction(
   return generateHeuristicPatch(instruction, context, targetUrl);
 }
 
-function generateHeuristicPatch(instruction: string, context: string, targetUrl: string): CreatePatch {
+/** Selector list used when we only know the element's TEXT (matched by text in the page runtime). */
+export const TEXT_SEARCH_SELECTOR = "h1, h2, h3, h4, h5, h6, p, span, a, button, label, li, td, th, strong, em, b, small, div";
+
+const DESCRIPTOR_WORDS = /\b(logo|brand|header|footer|price|total|button|btn|text|title|heading|label|cart|color|colour|background|font|border|style)\b/i;
+const COLORS: Record<string, string> = {
+  red: "background-color: #ef4444; color: white;",
+  green: "background-color: #10b981; color: white;",
+  blue: "background-color: #3b82f6; color: white;",
+  yellow: "background-color: #f59e0b; color: black;",
+  purple: "background-color: #8b5cf6; color: white;",
+};
+
+/** Pull tag / id / classes / visible text out of a pasted snippet like <h3 class="x">Hello</h3>. */
+export function parseElementContext(context: string) {
+  const full = context.match(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>([\s\S]*?)<\/\1\s*>/);
+  const open = full ?? context.match(/<([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/);
+  if (!open) return null;
+  const attrs = open[2] ?? "";
+  const id = attrs.match(/\bid=["']([^"']+)["']/i)?.[1];
+  const classes = (attrs.match(/\bclass=["']([^"']+)["']/i)?.[1] ?? "").split(/\s+/).filter(Boolean);
+  const text = (full?.[3] ?? "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return { tag: open[1].toLowerCase(), id, classes, text };
+}
+
+export function generateHeuristicPatch(instruction: string, context: string, targetUrl: string): CreatePatch {
   const lower = instruction.toLowerCase();
+  const el = context.trim() ? parseElementContext(context) : null;
 
-  // Extract selector from context or instruction
-  let selector = "#checkout-btn";
-  const idMatch = context.match(/id=["']([^"']+)["']/i);
-  const classMatch = context.match(/class=["']([^"']+)["']/i);
+  // "Change <X> to <Y>": Y is the new value, X is either a descriptor ("the logo text")
+  // or the literal text of the element ("Smart Watch").
+  const swap = instruction.match(/^\s*(?:please\s+)?(?:change|replace|rename|update|set|switch)\s+(?:the\s+)?(.+?)\s+(?:to|with|into)\s+(.+?)\s*$/i);
+  const wantsHide = /\b(hide|invisible|remove)\b/.test(lower);
+  const colorWord = Object.keys(COLORS).find((c) => new RegExp(`\\b${c}\\b`).test(lower));
+  const wantsStyle = !wantsHide && (!!colorWord || /\b(colou?r|background|font|border|style|bold|shadow)\b/.test(lower));
+  // "Change Wireless Earphones to Wired Earphones" is a text change even though it contains "red"
+  const isTextSwap = !!swap && !wantsHide && !(wantsStyle && DESCRIPTOR_WORDS.test(swap[1]));
 
-  if (idMatch) {
-    selector = `#${idMatch[1]}`;
-  } else if (classMatch) {
-    selector = `.${classMatch[1].split(" ")[0]}`;
-  } else if (lower.includes("logo") || lower.includes("brand")) {
-    selector = ".logo";
-  } else if (lower.includes("headphone") || (lower.includes("title") && lower.includes("first"))) {
-    selector = ".product-card:nth-child(1) .product-title";
-  } else if (lower.includes("price")) {
-    selector = ".product-card:nth-child(1) .product-price";
-  } else if (lower.includes("cart") && lower.includes("total")) {
-    selector = ".cart-total span:last-child";
-  } else if (lower.includes("header")) {
-    selector = ".header";
-  } else if (lower.includes("footer")) {
-    selector = ".footer";
-  } else if (lower.includes("order")) {
-    selector = "#place-order-btn";
-  }
-
-  // Determine change type and value
+  // ---- what to change ----
   let type: "text" | "style" | "visibility" | "script" = "text";
   let value = instruction;
-
-  if (lower.includes("hide") || lower.includes("invisible") || lower.includes("remove")) {
+  if (wantsHide) {
     type = "visibility";
     value = "hidden";
-  } else if (
-    lower.includes("color") ||
-    lower.includes("red") ||
-    lower.includes("blue") ||
-    lower.includes("green") ||
-    lower.includes("yellow") ||
-    lower.includes("purple") ||
-    lower.includes("background") ||
-    lower.includes("font") ||
-    lower.includes("border") ||
-    lower.includes("style")
-  ) {
-    type = "style";
-    if (lower.includes("red")) {
-      value = "background-color: #ef4444; color: white;";
-    } else if (lower.includes("green")) {
-      value = "background-color: #10b981; color: white;";
-    } else if (lower.includes("blue")) {
-      value = "background-color: #3b82f6; color: white;";
-    } else if (lower.includes("yellow")) {
-      value = "background-color: #f59e0b; color: black;";
-    } else if (lower.includes("purple")) {
-      value = "background-color: #8b5cf6; color: white;";
-    } else {
-      value = "box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); font-weight: 600;";
-    }
-  } else {
+  } else if (isTextSwap) {
     type = "text";
-    // Clean up text
-    const clean = instruction
-      .replace(/^(change|make|set|replace|update)\s+(the\s+)?([a-z0-9_-]+\s+)?(text\s+)?(to\s+)?/i, "")
-      .replace(/['"]/g, "")
-      .trim();
-    value = clean || instruction;
+    value = swap![2].replace(/^["'\u201c\u2018]+|["'\u201d\u2019]+$/g, "").trim();
+  } else if (wantsStyle) {
+    type = "style";
+    value = colorWord ? COLORS[colorWord] : "box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); font-weight: 600;";
+  } else {
+    value = instruction
+      .replace(/^\s*(?:please\s+)?(?:change|make|set|replace|update)\s+(?:the\s+)?(?:[a-z0-9_-]+\s+)?(?:text\s+)?(?:to\s+)?/i, "")
+      .replace(/["']/g, "")
+      .trim() || instruction;
   }
+
+  // ---- which element ----
+  const literalText = isTextSwap && !DESCRIPTOR_WORDS.test(swap![1]) ? swap![1].replace(/^["'\u201c]+|["'\u201d]+$/g, "").trim() : "";
+  let selector: string;
+  let textHint = "";
+  let findByText = false;
+  const attributes: Record<string, string> = {};
+
+  if (el && (el.id || el.classes.length)) {
+    selector = el.id ? `#${el.id}` : `${el.tag}.${el.classes.join(".")}`;
+    textHint = el.text; // lets the page pick the right one when the selector matches several elements
+    if (el.id) attributes.id = el.id;
+    if (el.classes.length) attributes.class = el.classes.join(" ");
+  } else if (literalText) {
+    selector = TEXT_SEARCH_SELECTOR;
+    textHint = literalText;
+    findByText = true;
+  } else if (/\b(logo|brand)\b/.test(lower)) {
+    selector = ".logo";
+  } else if (/\bheadphones?\b/.test(lower) || (/\btitle\b/.test(lower) && /\bfirst\b/.test(lower))) {
+    selector = ".product-card:nth-child(1) .product-title";
+  } else if (/\bprice\b/.test(lower)) {
+    selector = ".product-card:nth-child(1) .product-price";
+  } else if (/\bcart\b/.test(lower) && /\btotal\b/.test(lower)) {
+    selector = ".cart-total span:last-child";
+  } else if (/\bheader\b/.test(lower)) {
+    selector = ".header";
+  } else if (/\bfooter\b/.test(lower)) {
+    selector = ".footer";
+  } else if (/\b(order|place order)\b/.test(lower)) {
+    selector = "#place-order-btn";
+  } else {
+    selector = "#checkout-btn";
+  }
+  if (findByText) attributes["pw-find"] = "text";
 
   return {
     target_url: targetUrl,
@@ -169,15 +191,12 @@ function generateHeuristicPatch(instruction: string, context: string, targetUrl:
     author_id: DEV_ID,
     anchors: {
       cssSelector: selector,
-      xpath: `//*[@id="${selector.replace("#", "")}"]`,
-      textContent: "Checkout",
-      attributes: { id: selector.replace("#", "") },
-      parentContext: "div.cart-actions",
-      siblingContext: ["div.cart-summary"],
+      xpath: selector.startsWith("#") ? `//*[@id="${selector.slice(1)}"]` : "",
+      textContent: textHint,
+      attributes,
+      parentContext: "",
+      siblingContext: [],
     },
-    change: {
-      type,
-      value,
-    },
+    change: { type, value },
   };
 }

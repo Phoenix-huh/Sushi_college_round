@@ -10,8 +10,10 @@ interface LiveState {
   signature: string;
 }
 
-type FormState = { type: string; value: string; selector: string };
-const EMPTY_FORM: FormState = { type: 'text', value: '', selector: '' };
+type FormState = { type: string; value: string; selector: string; text: string };
+const EMPTY_FORM: FormState = { type: 'text', value: '', selector: '', text: '' };
+// Same list the server uses when an element is identified by its text only.
+const TEXT_SEARCH_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, span, a, button, label, li, td, th, strong, em, b, small, div';
 
 export function Patches() {
   const patchesQ = usePolling(() => api<Patch[]>('/patches'));
@@ -60,20 +62,23 @@ export function Patches() {
 
   const openCreate = () => { setForm(EMPTY_FORM); setModal({ mode: 'create' }); };
   const openEdit = (patch: Patch) => {
-    setForm({ type: patch.change.type, value: patch.change.value, selector: patch.anchors.cssSelector });
+    setForm({ type: patch.change.type, value: patch.change.value, selector: patch.anchors.cssSelector, text: patch.anchors.textContent ?? '' });
     setModal({ mode: 'edit', patch });
   };
 
   const save = async () => {
     if (!modal) return;
-    if (!form.selector.trim()) { show('Enter a CSS selector for the element to change.', 'error'); return; }
+    const selector = form.selector.trim();
+    const text = form.text.trim();
+    if (!selector && !text) { show('Enter a CSS selector, or the exact text of the element to change.', 'error'); return; }
+    const byTextOnly = !selector; // no selector: find the element by its text
     try {
       if (modal.mode === 'edit') {
         await api(`/patches/${modal.patch.id}`, {
           method: 'PUT',
           body: JSON.stringify({
             change: { type: form.type, value: form.value },
-            anchors: { cssSelector: form.selector.trim() },
+            anchors: { cssSelector: selector || TEXT_SEARCH_SELECTOR, textContent: text },
           }),
         });
         show(liveIds.has(modal.patch.id)
@@ -86,10 +91,10 @@ export function Patches() {
             target_url: `${DEMO_URL}/`,
             base_version: live?.version?.number ?? 0,
             anchors: {
-              cssSelector: form.selector.trim(),
+              cssSelector: selector || TEXT_SEARCH_SELECTOR,
               xpath: '',
-              textContent: '',
-              attributes: {},
+              textContent: text,
+              attributes: byTextOnly ? { 'pw-find': 'text' } : {},
               parentContext: '',
               siblingContext: [],
             },
@@ -237,9 +242,21 @@ export function Patches() {
                 <input
                   value={form.selector}
                   onChange={(e) => setForm({ ...form, selector: e.target.value })}
-                  placeholder="e.g. #checkout-btn, .logo, .product-title"
+                  placeholder="e.g. #checkout-btn, .logo, .product-title (or leave empty)"
                   className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 ring-indigo-300 outline-none"
                 />
+              </label>
+              <label className="block">
+                <span className="block text-xs font-semibold text-slate-600 mb-1">Element's current text (optional)</span>
+                <input
+                  value={form.text}
+                  onChange={(e) => setForm({ ...form, text: e.target.value })}
+                  placeholder="e.g. Smart Watch"
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
+                />
+                <span className="block text-[11px] text-slate-500 mt-1">
+                  Use this when the selector matches several elements (like three .product-title). Leave the selector empty to find the element by its text alone.
+                </span>
               </label>
               <label className="block">
                 <span className="block text-xs font-semibold text-slate-600 mb-1">Change type</span>
@@ -317,7 +334,7 @@ function ScoreBreakdown({ details }: { details: Record<string, unknown> }) {
 
 function NLPromptBox({ onCreated, onError }: { onCreated: (msg: string) => Promise<void>; onError: (m: string) => void }) {
   const [instruction, setInstruction] = useState('');
-  const [context, setContext] = useState('<button id="checkout-btn" class="btn-checkout">Checkout</button>');
+  const [context, setContext] = useState('');
   const [loading, setLoading] = useState(false);
 
   const submit = async () => {
@@ -343,7 +360,7 @@ function NLPromptBox({ onCreated, onError }: { onCreated: (msg: string) => Promi
       <textarea
         value={context}
         onChange={(e) => setContext(e.target.value)}
-        placeholder="Paste the element's HTML (optional)"
+        placeholder={'Paste the element\'s HTML (optional), e.g. <h3 class="product-title">Smart Watch</h3>'}
         rows={2}
         className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 ring-indigo-300 outline-none"
       />

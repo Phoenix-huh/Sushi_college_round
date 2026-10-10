@@ -4,6 +4,7 @@
  */
 import type { Patch, Version, Deployment } from "@patchwork/shared";
 import * as store from "../store.js";
+import { targetsSameElement } from "./conflicts.js";
 
 export const SYSTEM_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -70,8 +71,7 @@ export async function deployPatchSet(
   return { version, deployment: { ...deployment, is_live: true } };
 }
 
-const sameTarget = (a: Patch, b: Patch) =>
-  a.anchors.cssSelector === b.anchors.cssSelector && a.change.type === b.change.type;
+const sameTarget = (a: Patch, b: Patch) => targetsSameElement(a, b) && a.change.type === b.change.type;
 
 /**
  * Deploy ONE patch on top of whatever is already live.

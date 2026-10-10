@@ -131,6 +131,31 @@ async function main() {
   check('site v2: other buttons untouched', v.win.document.querySelector('.btn-add')?.textContent, 'Add to Cart');
   await fetch(`${SITE}/deploy/v1`, { method: 'POST' });
 
+  // --- the "Smart Watch" scenario: three titles share the .product-title selector ---
+  const titles = (vv: Awaited<ReturnType<typeof visit>>) =>
+    Array.from(vv.win.document.querySelectorAll('.product-title')).map((e: any) => e.textContent.trim());
+  await fetch(`${SITE}/deploy/v1`, { method: 'POST' });
+  const ai1 = await post('/ai/patch', {
+    instruction: 'Change Wireless Headphones to Wired Earphones',
+    element_context: '<h3 class="product-title">Wireless Headphones</h3>', target_url: `${SITE}/`,
+  });
+  await post(`/patches/${ai1.draft.id}/deploy`);
+  const ai2 = await post('/ai/patch', {
+    instruction: 'Change Smart Watch to Analog Watch',
+    element_context: '<h3 class="product-title">Smart Watch</h3>', target_url: `${SITE}/`,
+  });
+  check('AI patch for Smart Watch: right text and a text hint',
+    [ai2.draft.change.value, ai2.draft.anchors.textContent], ['Analog Watch', 'Smart Watch']);
+  v = await visit(`?preview_patch=${ai2.draft.id}`);
+  check('preview changes ONLY the Smart Watch title', titles(v), ['Wired Earphones', 'Analog Watch', 'USB-C Hub']);
+  await post(`/patches/${ai2.draft.id}/deploy`);
+  v = await visit();
+  check('after Deploy: both titles patched, each on its own element', titles(v), ['Wired Earphones', 'Analog Watch', 'USB-C Hub']);
+  const ai3 = await post('/ai/patch', { instruction: 'Change USB-C Hub to Charging Hub', target_url: `${SITE}/` });
+  await post(`/patches/${ai3.draft.id}/deploy`);
+  v = await visit();
+  check('no pasted HTML: found by its text alone', titles(v), ['Wired Earphones', 'Analog Watch', 'Charging Hub']);
+
   console.log(failures === 0 ? '\nALL CHECKS PASSED' : `\n${failures} CHECK(S) FAILED`);
 }
 

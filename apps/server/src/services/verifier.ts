@@ -30,7 +30,14 @@ export async function verifyPatches(targetUrl: string, patches: Patch[]): Promis
         for (const p of patchList) {
           // Extremely simplified applier for verification:
           // Try cssSelector, if found, apply change.
-          let el = document.querySelector(p.anchors.cssSelector);
+          // same rule as the page runtime: when a selector matches several elements, use the one with the remembered text
+          const textOnly = p.anchors.attributes && p.anchors.attributes['pw-find'] === 'text';
+          const norm = (t: string) => (t || '').replace(/\s+/g, ' ').trim().toLowerCase();
+          let all: Element[] = [];
+          try { all = Array.from(document.querySelectorAll(p.anchors.cssSelector)); } catch { /* bad selector */ }
+          const want = norm(p.anchors.textContent);
+          const exact = want ? all.filter((e) => norm(e.textContent || '') === want) : [];
+          let el: Element | null = exact[0] || (textOnly ? null : all[0]) || null;
           if (!el && (p.anchors.cssSelector === '#checkout-btn' || p.anchors.cssSelector.includes('checkout'))) {
             el = document.querySelector('#place-order-btn, .btn-order');
           }
