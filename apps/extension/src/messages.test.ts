@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isConnectionStatus, parseMessage, send } from './messages';
+import { isConnectionStatus, normalizeAnchor, normalizePick, parseContentMessage, parseMessage, send } from './messages';
 
 describe('parseMessage', () => {
   it('accepts every known message when well formed', () => {
@@ -27,6 +27,49 @@ describe('parseMessage', () => {
     expect(parseMessage({ type: 'SET_SETTINGS', settings: 'http://x.test' })).toBeNull();
     expect(parseMessage({ type: 'SET_SETTINGS', settings: null })).toBeNull();
     expect(parseMessage({ type: 'SET_SETTINGS', settings: [] })).toBeNull();
+  });
+});
+
+const anchor = { cssSelector: '#a', xpath: '', textContent: 't', attributes: { id: 'a' }, parentContext: 'div', siblingContext: ['p'] };
+const pick = { anchor, tag: 'p', pageUrl: 'http://x.test/', pickedAt: 5 };
+
+describe('picker messages', () => {
+  it('accepts PICK_RESULT with a pick object and GET_LAST_PICK', () => {
+    expect(parseMessage({ type: 'PICK_RESULT', pick })).toEqual({ type: 'PICK_RESULT', pick });
+    expect(parseMessage({ type: 'GET_LAST_PICK' })).toEqual({ type: 'GET_LAST_PICK' });
+    expect(parseMessage({ type: 'GET_LIVE_PATCHES' })).toEqual({ type: 'GET_LIVE_PATCHES' });
+  });
+  it('rejects PICK_RESULT without a pick object', () => {
+    for (const bad of [{ type: 'PICK_RESULT' }, { type: 'PICK_RESULT', pick: 'x' }, { type: 'PICK_RESULT', pick: null }, { type: 'PICK_RESULT', pick: [] }]) {
+      expect(parseMessage(bad)).toBeNull();
+    }
+  });
+  it('parseContentMessage only knows the two picker commands', () => {
+    expect(parseContentMessage({ type: 'START_PICKER' })).toEqual({ type: 'START_PICKER' });
+    expect(parseContentMessage({ type: 'STOP_PICKER' })).toEqual({ type: 'STOP_PICKER' });
+    for (const bad of [null, 'START_PICKER', {}, { type: 'GET_SETTINGS' }, { type: 'constructor' }]) expect(parseContentMessage(bad)).toBeNull();
+  });
+});
+
+describe('normalizeAnchor / normalizePick', () => {
+  it('keeps a good anchor and drops extra fields', () => {
+    expect(normalizeAnchor({ ...anchor, evil: 1 })).toEqual(anchor);
+  });
+  it('fills defaults, filters non-string values, and needs a selector or an xpath', () => {
+    expect(normalizeAnchor({ cssSelector: 'p', attributes: { a: 'b', c: 3 }, siblingContext: ['x', 4] })).toEqual({
+      cssSelector: 'p', xpath: '', textContent: '', attributes: { a: 'b' }, parentContext: '', siblingContext: ['x'],
+    });
+    expect(normalizeAnchor({ cssSelector: '', xpath: '//p' })).not.toBeNull();
+    expect(normalizeAnchor({ cssSelector: '', xpath: '' })).toBeNull();
+    expect(normalizeAnchor({ xpath: '//p' })).toBeNull();
+    expect(normalizeAnchor(null)).toBeNull();
+  });
+  it('normalizePick needs every field', () => {
+    expect(normalizePick(pick)).toEqual(pick);
+    expect(normalizePick({ ...pick, tag: 5 })).toBeNull();
+    expect(normalizePick({ ...pick, pickedAt: 'now' })).toBeNull();
+    expect(normalizePick({ ...pick, anchor: {} })).toBeNull();
+    expect(normalizePick(undefined)).toBeNull();
   });
 });
 

@@ -6,7 +6,7 @@
  * - Every request carries `x-actor-id` (the server uses it to know who acts).
  * - Failures become ApiError with a message a person can act on.
  */
-import type { Settings } from '../messages';
+import { normalizeAnchor, type LivePatch, type LiveState, type Settings } from '../messages';
 
 export class ApiError extends Error {
   /** HTTP status, or null when the server could not be reached at all. */
@@ -35,6 +35,23 @@ function describeServerError(body: unknown): string {
     if (e !== undefined) return JSON.stringify(e).slice(0, 300);
   }
   return '';
+}
+
+const CHANGE_TYPES = ['text', 'style', 'visibility', 'script'];
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
+
+/** Keeps only what the applier needs, and checks the shape (the server is not trusted blindly). */
+function toLivePatch(raw: unknown): LivePatch | null {
+  if (!isRecord(raw) || typeof raw.id !== 'string' || !isRecord(raw.change)) return null;
+  const anchors = normalizeAnchor(raw.anchors);
+  const c = raw.change;
+  if (!anchors || typeof c.value !== 'string' || typeof c.type !== 'string' || !CHANGE_TYPES.includes(c.type)) return null;
+  return {
+    id: raw.id,
+    target_url: typeof raw.target_url === 'string' ? raw.target_url : '',
+    anchors,
+    change: { type: c.type as LivePatch['change']['type'], value: c.value },
+  };
 }
 
 export function createApi(deps: ApiDeps) {
@@ -86,6 +103,16 @@ export function createApi(deps: ApiDeps) {
 
   return {
     request,
+
+    /** GET /deployments/live. Patches with an unusable shape are dropped (and counted in `dropped`). */
+    async liveState(): Promise<LiveState & { dropped: number }> {
+      const body = await request<unknown>('GET', '/deployments/live');
+      if (!isRecord(body) || !Array.isArray(body.patches) || typeof body.signature !== 'string') {
+        throw new ApiError('That address answered, but not with a Patchwork live deployment.', null);
+      }
+      const patches = body.patches.map(toLivePatch).filter((p): p is LivePatch => p !== null);
+      return { signature: body.signature, patches, dropped: body.patches.length - patches.length };
+    },
 
     /** GET /health. Rejects unless the answer looks like a Patchwork server. */
     async health(): Promise<HealthResponse> {

@@ -6,7 +6,7 @@
  * module variables: settings come from chrome.storage.local, the last connection
  * result from chrome.storage.session.
  */
-import { isConnectionStatus, type ConnectionStatus, type Message, type ResponseOf, type MessageType } from '../messages';
+import { isConnectionStatus, normalizePick, type ConnectionStatus, type Message, type ResponseOf, type MessageType } from '../messages';
 import { loadSettings, saveSettings, type KeyValueStore } from '../settings';
 import { ApiError, createApi } from './api';
 
@@ -19,6 +19,7 @@ export interface HandlerDeps {
 }
 
 const STATUS_KEY = 'connectionStatus';
+const PICK_KEY = 'lastPick';
 
 export function createHandler(deps: HandlerDeps) {
   const now = deps.now ?? Date.now;
@@ -57,6 +58,18 @@ export function createHandler(deps: HandlerDeps) {
     },
     CHECK_CONNECTION: () => checkConnection(),
     GET_CONNECTION_STATUS: () => readCachedStatus(),
+    PICK_RESULT: async (m) => {
+      const pick = normalizePick(m.pick);
+      if (!pick) throw new Error('The picked element had no usable selector');
+      await deps.session.set({ [PICK_KEY]: pick });
+      return {};
+    },
+    GET_LAST_PICK: async () => normalizePick((await deps.session.get([PICK_KEY]))[PICK_KEY]),
+    GET_LIVE_PATCHES: async () => {
+      const { signature, patches, dropped } = await api.liveState();
+      if (dropped > 0) console.warn(`[Patchwork] ignored ${dropped} live patch(es) with an unusable shape`);
+      return { signature, patches };
+    },
   };
 
   /** Handles one validated message. Rejects with an Error whose message is safe to show to the user. */

@@ -1,8 +1,8 @@
 # Patchwork Chrome extension
 
-Status: **Phase 1** (settings, typed messages, connection status). The extension loads, opens a side panel
-that shows whether the Patchwork server is reachable, and lets you change the server URL and author id.
-Picker, editor, live-patch applier and healing arrive in later phases; this file grows with them.
+Status: **Phase 3** (element picker and anchor builder). The extension loads, opens a side panel
+that shows whether the Patchwork server is reachable, and applies the live patches to every page whose origin
+matches the patch's `target_url`, and lets you pick an element and see the anchor that finds it again. Editor and full healing arrive in later phases; this file grows with them.
 
 ## Build and load it (Chrome / Chromium 114 or newer)
 
@@ -30,6 +30,42 @@ then reload any page you are testing (content scripts are only injected when a p
 
 Always build before loading: `dist/` is generated and git-ignored. `npx tsc --build` writes to
 `apps/extension/.tsc-out`, never to `dist`, so the two do not interfere.
+
+## Live patches (Phase 2)
+
+The content script asks the background worker for `GET /deployments/live` (message `GET_LIVE_PATCHES`) every 3 s
+while the tab is visible, and only re-applies when the `signature` changes.
+
+- A patch applies to a page when its `target_url` has the same origin, and the same path unless the path is `/` (whole site).
+- Targets are all found first, then changes are applied. `pw-find=text` never falls back to the first match.
+- A patch that is rolled back or replaced is undone in place (original text, inline styles and display are restored). No reload.
+- If the page re-renders the element (single-page apps), a debounced `MutationObserver` applies the patch again.
+- `script` patches are not run by the extension (content scripts must not eval code); the console shows a warning.
+- The demo site also loads `patchwork-runtime.js`. With both active on the same page, each applies the same patches; the result is the same.
+
+Rules live in `packages/shared/src/targeting.ts`; the page-side loop is `apps/extension/src/content/applier.ts`.
+
+## Picking an element (Phase 3)
+
+Open the side panel, click **Pick element**, then click something on the page. Hover shows an outline and the
+tag.class of the element; the click is swallowed so links and buttons do not fire; **Esc** cancels. The result
+appears as a card in the side panel (selector, text, parent, siblings, page).
+
+Reload the page first if it was open before you installed or reloaded the extension: content scripts only load with a page.
+
+How the selector is chosen (`content/anchor.ts`). The first candidate that matches exactly one element, checked
+against the live page, wins:
+
+1. a stable `#id`
+2. a stable attribute: `data-testid`, `data-test`, `data-cy`, `data-qa`, `name`, `aria-label`, or a plain `href` on links
+3. `tag.class` steps (with `:nth-of-type` where siblings look alike), climbing parents until the path is unique and contains a class, attribute or id; it stops early at a stable ancestor `#id`
+
+"Stable" excludes generated names (`css-1a2b3c`, `sc-…`, React `:r1:`, hashes, long digit runs) and `pw-` markers.
+The anchor also stores the `textContent` hint (whitespace collapsed, cut at 200 characters), an xpath,
+useful attributes, `parentContext` (the parent's own `tag.class`, which the shared matcher tests with `matches()`)
+and `siblingContext` (tags of the previous and next sibling). Generated anchors never set `pw-find`.
+
+Not covered yet: elements inside iframes or shadow roots. Phase 4 turns a pick into an editable draft.
 
 ## Settings
 

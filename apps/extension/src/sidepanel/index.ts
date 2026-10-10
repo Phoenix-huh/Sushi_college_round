@@ -1,9 +1,9 @@
 /**
- * Side panel. Phase 1: connection status indicator + settings form.
+ * Side panel. Connection status indicator, element picker and settings form.
  * Talks to the background worker only through typed messages. All text is set
  * with textContent / .value; nothing from the server or the page is ever parsed as HTML.
  */
-import { send, type ConnectionStatus } from '../messages';
+import { normalizePick, send, type ConnectionStatus, type ContentMessage, type Pick } from '../messages';
 
 const CHECK_EVERY_MS = 5000;
 
@@ -91,12 +91,61 @@ form.addEventListener('submit', (event) => {
   })();
 });
 
+// ---------- element picker ----------
+
+const pickButton = el<HTMLButtonElement>('pick-start');
+const pickMsg = el('pick-msg');
+const pickCard = el('pick-card');
+
+function renderPick(pick: Pick | null): void {
+  pickCard.hidden = !pick;
+  if (!pick) return;
+  el('pick-selector').textContent = pick.anchor.cssSelector;
+  el('pick-text').textContent = pick.anchor.textContent || '(no text)';
+  el('pick-parent').textContent = pick.anchor.parentContext || '(none)';
+  el('pick-siblings').textContent = pick.anchor.siblingContext.join(', ') || '(none)';
+  el('pick-page').textContent = pick.pageUrl;
+  pickMsg.dataset.kind = '';
+  pickMsg.textContent = `Picked <${pick.tag}>.`;
+}
+
+/** Sends a message to the content script of the tab the user is looking at. */
+async function sendToActiveTab(message: ContentMessage): Promise<void> {
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  if (tab?.id === undefined) throw new Error('No active tab.');
+  try {
+    await chrome.tabs.sendMessage(tab.id, message);
+  } catch {
+    // Chrome gives "Receiving end does not exist" for pages without our content script.
+    throw new Error('Cannot pick on this page. Reload the page (content scripts load only when a page loads), and note that chrome:// pages and the Web Store are off limits.');
+  }
+}
+
+pickButton.addEventListener('click', () => {
+  void (async () => {
+    try {
+      await sendToActiveTab({ type: 'START_PICKER' });
+      pickMsg.dataset.kind = '';
+      pickMsg.textContent = 'Click an element on the page. Esc cancels.';
+    } catch (err) {
+      pickMsg.dataset.kind = 'error';
+      pickMsg.textContent = err instanceof Error ? err.message : String(err);
+    }
+  })();
+});
+
+// The worker stores each pick in session storage; show it as soon as it changes.
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'session' && changes.lastPick) renderPick(normalizePick(changes.lastPick.newValue));
+});
+
 async function init(): Promise<void> {
   try {
     const settings = await send({ type: 'GET_SETTINGS' });
     serverUrlInput.value = settings.serverUrl;
     authorIdInput.value = settings.authorId;
     renderStatus(await send({ type: 'GET_CONNECTION_STATUS' })); // instant: last known result
+    renderPick(await send({ type: 'GET_LAST_PICK' }));
   } catch (err) {
     renderBackgroundFailure(err);
     return;

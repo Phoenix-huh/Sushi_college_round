@@ -22,6 +22,12 @@
     button.secondary { background: #e2e8f0; color: #334155; }
     button:disabled { opacity: .6; cursor: default; }
     .row { display: flex; gap: 8px; margin-top: 12px; }
+    .pick { margin-top: 10px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 12px; }
+    .pick dt { margin-top: 6px; font-weight: 600; color: #475569; }
+    .pick dt:first-child { margin-top: 0; }
+    .pick dd { margin: 2px 0 0; word-break: break-all; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    #pick-msg { min-height: 1.4em; margin: 8px 0 0; font-size: 12px; color: #64748b; }
+    #pick-msg[data-kind="error"] { color: #b91c1c; }
     #settings-msg { min-height: 1.4em; margin: 8px 0 0; font-size: 12px; }
     #settings-msg[data-kind="ok"] { color: #15803d; }
     #settings-msg[data-kind="error"] { color: #b91c1c; }
@@ -38,6 +44,19 @@
     </div>
   </div>
   <div class="row"><button id="conn-recheck" type="button" class="secondary">Check again</button></div>
+
+  <h2>Pick an element</h2>
+  <div class="row" style="margin-top:0"><button id="pick-start" type="button">Pick element</button></div>
+  <p id="pick-msg" role="status" aria-live="polite">Click the button, then click an element on the page. Esc cancels.</p>
+  <div id="pick-card" class="pick" hidden>
+    <dl>
+      <dt>Selector</dt><dd id="pick-selector"></dd>
+      <dt>Text</dt><dd id="pick-text"></dd>
+      <dt>Parent</dt><dd id="pick-parent"></dd>
+      <dt>Siblings</dt><dd id="pick-siblings"></dd>
+      <dt>Page</dt><dd id="pick-page"></dd>
+    </dl>
+  </div>
 
   <h2>Settings</h2>
   <form id="settings-form" novalidate>

@@ -111,4 +111,78 @@ describe('background handler', () => {
     await handle({ type: 'CHECK_CONNECTION' });
     expect(urls).toEqual(['https://patchwork.example.com/health']);
   });
+  describe('GET_LIVE_PATCHES', () => {
+    const livePatch = {
+      id: 'p1',
+      target_url: 'http://localhost:4100/',
+      anchors: { cssSelector: 'h1', xpath: '', textContent: 'Hi', attributes: { 'pw-find': 'text' }, parentContext: '', siblingContext: [] },
+      change: { type: 'text', value: 'Hello' },
+      author_id: 'ignored',
+    };
+
+    it('returns the signature and the patches, with only the fields the page needs', async () => {
+      const { handle, urls } = setup(() => json({ deployment: {}, version: {}, signature: 'abc', patches: [livePatch] }));
+      const live = (await handle({ type: 'GET_LIVE_PATCHES' })) as { signature: string; patches: Record<string, unknown>[] };
+      expect(urls).toEqual(['http://localhost:4000/deployments/live']);
+      expect(live.signature).toBe('abc');
+      expect(live.patches).toHaveLength(1);
+      expect(live.patches[0]).not.toHaveProperty('author_id');
+      expect(live.patches[0]).toMatchObject({ id: 'p1', change: { type: 'text', value: 'Hello' } });
+    });
+
+    it('drops patches with an unusable shape instead of failing', async () => {
+      const bad = { id: 'p2', anchors: {}, change: { type: 'explode', value: 'x' } };
+      const { handle } = setup(() => json({ signature: 's', patches: [bad, livePatch, null] }));
+      const live = (await handle({ type: 'GET_LIVE_PATCHES' })) as { patches: { id: string }[] };
+      expect(live.patches.map((p) => p.id)).toEqual(['p1']);
+    });
+
+    it('rejects an answer that is not a live deployment', async () => {
+      const { handle } = setup(() => json({ hello: 'world' }));
+      await expect(handle({ type: 'GET_LIVE_PATCHES' })).rejects.toThrow('not with a Patchwork live deployment');
+    });
+
+    it('rejects with a readable message when the server is down', async () => {
+      const { handle } = setup(() => {
+        throw new TypeError('Failed to fetch');
+      });
+      await expect(handle({ type: 'GET_LIVE_PATCHES' })).rejects.toThrow('Cannot reach http://localhost:4000');
+    });
+  });
+  describe('picks', () => {
+    const anchor = { cssSelector: '#a', xpath: '', textContent: 't', attributes: {}, parentContext: 'div', siblingContext: [] };
+    const pick = { anchor, tag: 'p', pageUrl: 'http://x.test/', pickedAt: 5 };
+
+    it('GET_LAST_PICK is null before any pick', async () => {
+      const { handle } = setup(() => json({}));
+      expect(await handle({ type: 'GET_LAST_PICK' })).toBeNull();
+    });
+
+    it('PICK_RESULT stores the pick in session storage and GET_LAST_PICK returns it', async () => {
+      const { handle, session, local } = setup(() => json({}));
+      await handle({ type: 'PICK_RESULT', pick });
+      expect(session.data.lastPick).toEqual(pick);
+      expect(local.data).toEqual({});
+      expect(await handle({ type: 'GET_LAST_PICK' })).toEqual(pick);
+    });
+
+    it('PICK_RESULT rejects a pick without a usable selector and stores nothing', async () => {
+      const { handle, session } = setup(() => json({}));
+      await expect(handle({ type: 'PICK_RESULT', pick: { ...pick, anchor: {} } as never })).rejects.toThrow('usable selector');
+      expect(session.data).toEqual({});
+    });
+
+    it('a corrupt stored pick reads as null', async () => {
+      const { handle, session } = setup(() => json({}));
+      session.data.lastPick = { tag: 'p' };
+      expect(await handle({ type: 'GET_LAST_PICK' })).toBeNull();
+    });
+
+    it('a newer pick replaces the older one', async () => {
+      const { handle } = setup(() => json({}));
+      await handle({ type: 'PICK_RESULT', pick });
+      await handle({ type: 'PICK_RESULT', pick: { ...pick, tag: 'h1', pickedAt: 9 } });
+      expect(((await handle({ type: 'GET_LAST_PICK' })) as { tag: string }).tag).toBe('h1');
+    });
+  });
 });
