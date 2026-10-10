@@ -3,10 +3,15 @@ import dotenv from "dotenv";
 import crypto from "crypto";
 import type { Patch, Version, Deployment, AuditEvent } from "@patchwork/shared";
 
-dotenv.config({ path: "../../.env" });
+import path from "path";
+dotenv.config();
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+if (typeof import.meta.dirname !== "undefined") {
+  dotenv.config({ path: path.resolve(import.meta.dirname, "../../../.env") });
+}
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 export const DEV_ID = "00000000-0000-0000-0000-000000000001";
 export const REVIEWER_ID = "00000000-0000-0000-0000-000000000002";
