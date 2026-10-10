@@ -95,3 +95,17 @@ describe('api client', () => {
     expect(Date.now() - started < 2000).toBe(true);
   });
 });
+
+describe('live patches with the visual-patching change types', () => {
+  it('keeps attribute, remove, move and behavior patches (and still drops unknown types)', async () => {
+    const anchor = { cssSelector: '#a', xpath: '', textContent: 'A', attributes: {}, parentContext: '', siblingContext: [] };
+    const mk = (id: string, type: string, value: string) => ({ id, target_url: 'http://x.test/', anchors: anchor, change: { type, value }, updated_at: 't' });
+    const body = {
+      deployment: null, version: null, signature: 's',
+      patches: [mk('1', 'attribute', '{"name":"alt","value":"x"}'), mk('2', 'remove', 'remove'), mk('3', 'move', '{}'), mk('4', 'behavior', '{"action":"disable"}'), mk('5', 'teleport', 'x')],
+    };
+    const api = createApi({ getSettings: async () => settings, fetch: fakeFetch(() => json(body)).fn });
+    const live = await api.liveState();
+    expect(live.patches.map((p) => p.id)).toEqual(['1', '2', '3', '4']);
+  });
+});

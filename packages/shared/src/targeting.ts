@@ -14,7 +14,9 @@
  *  - Style takes CSS text or a JSON object. Visibility "hidden" sets display:none,
  *    any other value restores the element's own display.
  *  - Every apply returns an undo record that puts the original state back.
+ *  - attribute / remove / move / behavior (see changes.ts): structured JSON values, all undoable, none evaluated.
  */
+import { parseAttributeValue, parseBehaviorValue, parseMoveValue, type BehaviorValue } from "./changes.js";
 import type { PatchAnchor, PatchChange } from "./types.js";
 
 /** The part of a Patch this engine needs. */
@@ -180,6 +182,137 @@ function undoOf(revert: () => void): Undo {
   };
 }
 
+function applyAttribute(el: Element, raw: string): Undo | { skipped: string } {
+  const parsed = parseAttributeValue(raw);
+  if (!parsed.ok) return { skipped: parsed.error };
+  const { name, value, remove } = parsed.value;
+  const had = el.hasAttribute(name);
+  const old = el.getAttribute(name);
+  if (remove) el.removeAttribute(name);
+  else el.setAttribute(name, value ?? "");
+  return undoOf(() => {
+    if (had) el.setAttribute(name, old ?? "");
+    else el.removeAttribute(name);
+  });
+}
+
+/** Where an element was, so it can be put back exactly there. */
+function placeMarker(el: Element) {
+  const parent = el.parentNode;
+  const next = el.nextSibling;
+  return {
+    parent,
+    restore() {
+      if (!parent) return;
+      // If the old next sibling has moved elsewhere, append rather than lose the element.
+      parent.insertBefore(el, next && next.parentNode === parent ? next : null);
+    },
+  };
+}
+
+const NEVER_MOVE = /^(html|head|body)$/i;
+
+function applyRemove(el: Element): Undo | { skipped: string } {
+  if (NEVER_MOVE.test(el.tagName)) return { skipped: `the <${el.tagName.toLowerCase()}> element cannot be removed` };
+  if (!el.parentNode) return { skipped: "the element is already removed" };
+  const where = placeMarker(el);
+  el.remove();
+  return undoOf(() => where.restore());
+}
+
+function applyMove(el: Element, raw: string): Undo | { skipped: string } {
+  const parsed = parseMoveValue(raw);
+  if (!parsed.ok) return { skipped: parsed.error };
+  if (NEVER_MOVE.test(el.tagName)) return { skipped: `the <${el.tagName.toLowerCase()}> element cannot be moved` };
+  if (!el.parentNode) return { skipped: "the element is not on the page" };
+  const ref = findTarget({ id: "move-ref", anchors: parsed.value.ref, change: { type: "text", value: "" } }, el.ownerDocument, {})?.element;
+  if (!ref) return { skipped: "the element to move next to was not found" };
+  if (ref === el || el.contains(ref)) return { skipped: "an element cannot be moved into itself" };
+
+  const { to } = parsed.value;
+  if ((to === "before" || to === "after") && (!ref.parentNode || ref.parentNode === el.ownerDocument)) {
+    return { skipped: "cannot place an element next to the top-level element" };
+  }
+  const where = placeMarker(el);
+  if (to === "before") ref.parentNode!.insertBefore(el, ref);
+  else if (to === "after") ref.parentNode!.insertBefore(el, ref.nextSibling);
+  else if (to === "first") ref.insertBefore(el, ref.firstChild);
+  else ref.appendChild(el);
+  return undoOf(() => where.restore());
+}
+
+function applyBehavior(el: Element, raw: string): Undo | { skipped: string } {
+  const parsed = parseBehaviorValue(raw);
+  if (!parsed.ok) return { skipped: parsed.error };
+  const b: BehaviorValue = parsed.value;
+  const doc = el.ownerDocument;
+  const win = doc.defaultView;
+  const undos: Array<() => void> = [];
+
+  const onClick = (handler: (e: Event) => void) => {
+    el.addEventListener("click", handler, true); // capture: runs before the page's own click handlers
+    undos.push(() => el.removeEventListener("click", handler, true));
+  };
+  const setAttr = (name: string, value: string) => {
+    const had = el.hasAttribute(name);
+    const old = el.getAttribute(name);
+    el.setAttribute(name, value);
+    undos.push(() => (had ? el.setAttribute(name, old ?? "") : el.removeAttribute(name)));
+  };
+  const refElement = (a: PatchAnchor): Element | null =>
+    findTarget({ id: "behavior-ref", anchors: a, change: { type: "text", value: "" } }, doc, {})?.element ?? null;
+  const stop = (e: Event) => {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+
+  switch (b.action) {
+    case "navigate": {
+      if (!win) return { skipped: "no window to navigate" };
+      onClick((e) => {
+        stop(e);
+        if (b.newTab) win.open(b.url, "_blank", "noopener,noreferrer");
+        else win.location.assign(b.url);
+      });
+      break;
+    }
+    case "confirm": {
+      if (!win) return { skipped: "no window to ask in" };
+      onClick((e) => {
+        if (!win.confirm(b.message)) stop(e); // "Cancel" blocks the click; "OK" lets it through
+      });
+      break;
+    }
+    case "disable": {
+      setAttr("aria-disabled", "true");
+      if (/^(button|input|select|textarea)$/i.test(el.tagName)) setAttr("disabled", "");
+      onClick(stop);
+      break;
+    }
+    case "toggle": {
+      onClick(() => {
+        const target = refElement(b.ref) as HTMLElement | null;
+        if (!target) return;
+        if (target.style.display === "none") target.style.removeProperty("display");
+        else target.style.setProperty("display", "none");
+      });
+      break;
+    }
+    case "scroll_to": {
+      onClick((e) => {
+        const target = refElement(b.ref);
+        if (!target) return;
+        stop(e);
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+      break;
+    }
+  }
+  return undoOf(() => {
+    for (const u of undos.reverse()) u();
+  });
+}
+
 /** Applies one change to an element and returns how to undo it. */
 export function applyChange(el: Element, change: PatchChange, opts: ApplyOptions = {}): Undo | { skipped: string } {
   const style = (el as HTMLElement).style;
@@ -212,6 +345,11 @@ export function applyChange(el: Element, change: PatchChange, opts: ApplyOptions
       else style.removeProperty("display");
     });
   }
+
+  if (change.type === "attribute") return applyAttribute(el, change.value);
+  if (change.type === "remove") return applyRemove(el);
+  if (change.type === "move") return applyMove(el, change.value);
+  if (change.type === "behavior") return applyBehavior(el, change.value);
 
   // change.type === "script"
   if (!opts.allowScript) return { skipped: "script patches are not run here" };

@@ -12,7 +12,7 @@ export const PatchAnchorSchema = z.object({
 
 // Patch change — what to modify
 export const PatchChangeSchema = z.object({
-  type: z.enum(["text", "style", "visibility", "script"]),
+  type: z.enum(["text", "style", "visibility", "script", "attribute", "remove", "move", "behavior"]),
   value: z.string(),
 });
 

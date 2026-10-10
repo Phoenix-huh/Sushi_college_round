@@ -37,7 +37,8 @@ function describeServerError(body: unknown): string {
   return '';
 }
 
-const CHANGE_TYPES = ['text', 'style', 'visibility', 'script'];
+// Same list as the shared schema; a type missing here would be silently dropped from the live patches.
+const CHANGE_TYPES: readonly string[] = ['text', 'style', 'visibility', 'script', 'attribute', 'remove', 'move', 'behavior'];
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
 /** Keeps only what the applier needs, and checks the shape (the server is not trusted blindly). */

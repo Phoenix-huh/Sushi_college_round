@@ -1,5 +1,6 @@
 import type { Patch, PatchOp, PatchAnchor, Conflict } from "./types.js";
 import { targetsSameElement } from "./matcher.js";
+import { parseAttributeValue } from "./changes.js";
 
 export { targetsSameElement };
 
@@ -36,14 +37,25 @@ export function getPatchOps(patch: Patch): PatchOp[] {
     }
   }
 
+  // One property per attribute name, so changing href and alt on the same element does not conflict.
+  let property: string = change.type;
+  let newValue = change.value;
+  if (change.type === "attribute") {
+    const a = parseAttributeValue(change.value);
+    if (a.ok) {
+      property = `attr:${a.value.name}`;
+      newValue = a.value.remove ? "(removed)" : a.value.value ?? "";
+    }
+  }
+
   return [
     {
       id: `${patch.id}-op-0`,
       patch_id: patch.id,
       anchors: patch.anchors,
-      property: change.type,
+      property,
       old_value: null,
-      new_value: change.value,
+      new_value: newValue,
     },
   ];
 }
@@ -76,6 +88,15 @@ export function detectOpConflict(
 
   const propA = opA.property.toLowerCase().trim();
   const propB = opB.property.toLowerCase().trim();
+
+  // Semantic overlap: taking an element out of the page overlaps with any other change to it.
+  if ((propA === "remove") !== (propB === "remove")) {
+    return {
+      isConflict: true,
+      type: "semantic",
+      reason: "Semantic conflict: one patch removes this element while another changes it",
+    };
+  }
 
   // Same property on same element -> conflict between different patches
   if (propA === propB) {
