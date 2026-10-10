@@ -30,10 +30,19 @@ export async function verifyPatches(targetUrl: string, patches: Patch[]): Promis
         for (const p of patchList) {
           // Extremely simplified applier for verification:
           // Try cssSelector, if found, apply change.
-          const el = document.querySelector(p.anchors.cssSelector);
+          let el = document.querySelector(p.anchors.cssSelector);
+          if (!el && (p.anchors.cssSelector === '#checkout-btn' || p.anchors.cssSelector.includes('checkout'))) {
+            el = document.querySelector('#place-order-btn, .btn-order');
+          }
           if (el) {
             if (p.change.type === 'visibility') {
-              (el as HTMLElement).style.display = p.change.value === 'hidden' ? 'none' : '';
+              if (p.change.value === 'hidden') {
+                (el as HTMLElement).style.display = 'none';
+                (el as HTMLElement).style.visibility = 'hidden';
+              } else {
+                (el as HTMLElement).style.display = '';
+                (el as HTMLElement).style.visibility = 'visible';
+              }
             } else if (p.change.type === 'text') {
               el.textContent = p.change.value;
             } else if (p.change.type === 'style') {

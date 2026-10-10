@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { hasSupabase, supabase } from '../lib/supabase';
 import type { Patch, AuditEvent } from '@patchwork/shared';
 
 type PatchWithHealData = Patch & { healDetails?: Record<string, unknown> };
@@ -11,36 +11,71 @@ export function Patches() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: patchData } = await supabase
-        .from('patches')
-        .select('*')
-        .order('created_at', { ascending: false });
+      let loadedPatches: Patch[] = [];
 
-      if (patchData) setPatches(patchData as Patch[]);
+      if (hasSupabase && supabase) {
+        try {
+          const { data: patchData } = await supabase
+            .from('patches')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (patchData && patchData.length > 0) {
+            loadedPatches = patchData as Patch[];
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      if (loadedPatches.length === 0) {
+        try {
+          const res = await fetch('http://localhost:4000/patches');
+          if (res.ok) {
+            const data = await res.json();
+            loadedPatches = data as Patch[];
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      setPatches(loadedPatches);
 
       // Fetch heal events
-      const { data: evtData } = await supabase
-        .from('audit_events')
-        .select('*')
-        .eq('event_type', 'patch_healed');
-
-      if (evtData) {
-        const byEntity: Record<string, AuditEvent> = {};
-        for (const e of evtData as AuditEvent[]) {
-          byEntity[e.entity_id] = e;
+      try {
+        const res = await fetch('http://localhost:4000/audit');
+        if (res.ok) {
+          const evts = await res.json();
+          const byEntity: Record<string, AuditEvent> = {};
+          for (const e of evts as AuditEvent[]) {
+            if (e.event_type === 'patch_healed') {
+              byEntity[e.entity_id] = e;
+            }
+          }
+          setHealEvents(byEntity);
         }
-        setHealEvents(byEntity);
+      } catch {
+        // ignore
       }
     };
 
     fetchData();
 
-    const channel = supabase
-      .channel('patches_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'patches' }, fetchData)
-      .subscribe();
+    if (hasSupabase && supabase) {
+      try {
+        const channel = supabase
+          .channel('patches_changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'patches' }, fetchData)
+          .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+        return () => {
+          if (supabase) supabase.removeChannel(channel);
+        };
+      } catch {
+        // ignore
+      }
+    }
   }, []);
 
   return (
@@ -156,8 +191,8 @@ function NLPromptBox() {
     setResult(null);
 
     try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
+      const session = await supabase?.auth.getSession();
+      const token = session?.data?.session?.access_token;
 
       const res = await fetch('http://localhost:4000/ai/patch', {
         method: 'POST',

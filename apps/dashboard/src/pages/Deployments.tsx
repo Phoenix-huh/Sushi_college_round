@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { hasSupabase, supabase } from '../lib/supabase';
 import type { Deployment, Version } from '@patchwork/shared';
 
 export function Deployments() {
@@ -7,33 +7,65 @@ export function Deployments() {
 
   useEffect(() => {
     const fetchDeployments = async () => {
-      const { data } = await supabase
-        .from('deployments')
-        .select(`*, versions (*)`)
-        .order('deployed_at', { ascending: false });
-      if (data) setDeployments(data as any);
+      let loaded: any[] = [];
+
+      if (hasSupabase && supabase) {
+        try {
+          const { data } = await supabase
+            .from('deployments')
+            .select(`*, versions (*)`)
+            .order('deployed_at', { ascending: false });
+          if (data && data.length > 0) {
+            loaded = data;
+          }
+        } catch {
+          // Fallback
+        }
+      }
+
+      if (loaded.length === 0) {
+        try {
+          const res = await fetch('http://localhost:4000/deployments');
+          if (res.ok) {
+            const list = await res.json();
+            loaded = list;
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      setDeployments(loaded);
     };
 
     fetchDeployments();
 
-    const channel = supabase
-      .channel('deployments_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'deployments' }, () => {
-        fetchDeployments();
-      })
-      .subscribe();
+    if (hasSupabase && supabase) {
+      try {
+        const channel = supabase
+          .channel('deployments_changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'deployments' }, () => {
+            fetchDeployments();
+          })
+          .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+        return () => {
+          if (supabase) supabase.removeChannel(channel);
+        };
+      } catch {
+        // offline
+      }
+    }
   }, []);
 
   const handleRollback = async () => {
-    // Basic rollback request (assumes server runs at localhost:4000)
+    const session = await supabase?.auth.getSession();
+    const token = session?.data?.session?.access_token || '';
+
     await fetch('http://localhost:4000/rollback', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });

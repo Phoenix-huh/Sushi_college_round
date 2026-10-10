@@ -43,6 +43,7 @@ await app.register(cors, { origin: CORS_ORIGINS });
 import { deployRoutes } from "./routes/deploy.js";
 import { verifyRoutes } from "./routes/verify.js";
 import { aiRoutes } from "./routes/ai.js";
+import { patchRoutes } from "./routes/patches.js";
 
 // Health check
 app.get("/health", async () => {
@@ -56,6 +57,7 @@ app.get("/health", async () => {
 app.register(deployRoutes);
 app.register(verifyRoutes);
 app.register(aiRoutes);
+app.register(patchRoutes);
 
 if (!hasSupabase) {
   console.warn("⚠️  Supabase not configured — server will run but DB routes won't work. Set vars in .env");

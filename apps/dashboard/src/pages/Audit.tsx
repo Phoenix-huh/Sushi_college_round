@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { hasSupabase, supabase } from '../lib/supabase';
 import type { AuditEvent } from '@patchwork/shared';
 
 export function Audit() {
@@ -7,17 +7,47 @@ export function Audit() {
 
   useEffect(() => {
     const fetchEvents = async () => {
-      const { data } = await supabase.from('audit_events').select('*').order('created_at', { ascending: false });
-      if (data) setEvents(data as AuditEvent[]);
+      let loadedEvents: AuditEvent[] = [];
+
+      if (hasSupabase && supabase) {
+        try {
+          const { data } = await supabase.from('audit_events').select('*').order('created_at', { ascending: false });
+          if (data && data.length > 0) {
+            loadedEvents = data as AuditEvent[];
+          }
+        } catch {
+          // Fallback
+        }
+      }
+
+      if (loadedEvents.length === 0) {
+        try {
+          const res = await fetch('http://localhost:4000/audit');
+          if (res.ok) {
+            const evts = await res.json();
+            loadedEvents = evts as AuditEvent[];
+          }
+        } catch {
+          // ignore
+        }
+      }
+
+      setEvents(loadedEvents);
     };
     fetchEvents();
 
-    const channel = supabase
-      .channel('audit_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_events' }, fetchEvents)
-      .subscribe();
+    if (hasSupabase && supabase) {
+      try {
+        const channel = supabase
+          .channel('audit_changes')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'audit_events' }, fetchEvents)
+          .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+        return () => { if (supabase) supabase.removeChannel(channel); };
+      } catch {
+        // offline
+      }
+    }
   }, []);
 
   return (
