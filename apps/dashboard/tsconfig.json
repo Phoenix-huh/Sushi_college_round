@@ -5,7 +5,8 @@
     "rootDir": "src",
     "jsx": "react-jsx",
     "paths": {
-      "@patchwork/shared": ["../../packages/shared/src"]
+      "@patchwork/shared": ["../../packages/shared/src"],
+      "@/*": ["./*"]
     }
   },
   "include": ["src"],
