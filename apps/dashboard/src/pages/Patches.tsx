@@ -93,6 +93,7 @@ export function Patches() {
               <th className="px-6 py-3 font-medium">Change Type</th>
               <th className="px-6 py-3 font-medium">Value</th>
               <th className="px-6 py-3 font-medium">Selector</th>
+              <th className="px-6 py-3 font-medium">Actions</th>
               <th className="px-6 py-3 font-medium">Details</th>
             </tr>
           </thead>
@@ -115,6 +116,38 @@ export function Patches() {
                     <td className="px-6 py-4 font-mono">{patch.change.type}</td>
                     <td className="px-6 py-4 truncate max-w-xs">{patch.change.value}</td>
                     <td className="px-6 py-4 font-mono text-xs text-slate-500">{patch.anchors.cssSelector}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`http://localhost:4100/?preview_patch=${patch.id}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded text-xs font-semibold"
+                          title="Open demo store in isolated preview mode"
+                        >
+                          👁️ Preview
+                        </a>
+                        {patch.status !== 'live' && (
+                          <button
+                            onClick={async () => {
+                              try {
+                                const res = await fetch(`http://localhost:4000/patches/${patch.id}/deploy`, { method: 'POST' });
+                                if (res.ok) {
+                                  setPatches((prev) => prev.map((p) => p.id === patch.id ? { ...p, status: 'live' } : p));
+                                  alert('🚀 Patch successfully deployed to live store!');
+                                }
+                              } catch (e: any) {
+                                alert(`Failed to deploy: ${e.message}`);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded text-xs font-semibold"
+                            title="Deploy this patch to live website"
+                          >
+                            🚀 Deploy
+                          </button>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       {patch.status === 'healed' && healEvt && (
                         <button
@@ -184,11 +217,13 @@ function NLPromptBox({ onCreated }: { onCreated?: (patch: Patch) => void }) {
   const [url, setUrl] = useState('http://localhost:4100/');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [result, setResult] = useState<string | null>(null);
+  const [createdPatch, setCreatedPatch] = useState<Patch | null>(null);
 
   const handleSubmit = async () => {
     if (!instruction.trim()) return;
     setStatus('loading');
     setResult(null);
+    setCreatedPatch(null);
 
     try {
       const session = await supabase?.auth.getSession();
@@ -215,8 +250,9 @@ function NLPromptBox({ onCreated }: { onCreated?: (patch: Patch) => void }) {
       const data = await res.json();
       setResult(`✅ Draft patch created: ${data.draft?.id ? data.draft.id.slice(0, 8) + '...' : 'Success'}`);
       setStatus('done');
-      if (data.draft && onCreated) {
-        onCreated(data.draft);
+      if (data.draft) {
+        setCreatedPatch(data.draft);
+        if (onCreated) onCreated(data.draft);
       }
     } catch (e: any) {
       setResult(`❌ ${e.message}`);
@@ -261,9 +297,39 @@ function NLPromptBox({ onCreated }: { onCreated?: (patch: Patch) => void }) {
         </button>
       </div>
       {result && (
-        <p className={`text-xs font-mono mt-1 ${status === 'done' ? 'text-emerald-700' : 'text-red-600'}`}>
-          {result}
-        </p>
+        <div className="pt-1 space-y-2">
+          <p className={`text-xs font-mono ${status === 'done' ? 'text-emerald-700' : 'text-red-600'}`}>
+            {result}
+          </p>
+          {createdPatch && (
+            <div className="flex items-center gap-3 pt-1">
+              <a
+                href={`http://localhost:4100/?preview_patch=${createdPatch.id}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors"
+              >
+                👁️ Preview on Demo Store (Draft Mode)
+              </a>
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch(`http://localhost:4000/patches/${createdPatch.id}/deploy`, { method: 'POST' });
+                    if (res.ok) {
+                      alert('🚀 Draft patch deployed to live website!');
+                      window.location.reload();
+                    }
+                  } catch (e: any) {
+                    alert(`Deploy failed: ${e.message}`);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors"
+              >
+                🚀 Deploy to Live Store
+              </button>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

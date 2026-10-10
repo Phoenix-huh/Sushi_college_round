@@ -9,7 +9,7 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 const PORT = Number(process.env.SERVER_PORT) || 4000;
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",");
+const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:4100").split(",");
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
@@ -41,7 +41,11 @@ export function createUserClient(token: string) {
 
 const app = Fastify({ logger: true });
 
-await app.register(cors, { origin: CORS_ORIGINS });
+await app.register(cors, {
+  origin: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+});
 
 import { deployRoutes } from "./routes/deploy.js";
 import { verifyRoutes } from "./routes/verify.js";

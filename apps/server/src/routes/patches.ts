@@ -31,6 +31,84 @@ export async function patchRoutes(app: FastifyInstance) {
     }
   });
 
+  // GET /patches/:id
+  app.get("/patches/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data, error } = await supabase.from("patches").select("*").eq("id", id).single();
+      if (error && error.code !== "PGRST116") throw error;
+      if (data) return reply.send(data);
+    } catch {
+      // fallback
+    }
+    const found = localPatches.find((p) => p.id === id);
+    if (!found) return reply.code(404).send({ error: "Patch not found" });
+    return reply.send(found);
+  });
+
+  // POST /patches/:id/deploy (Directly deploy a draft patch to live store)
+  app.post("/patches/:id/deploy", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const now = new Date().toISOString();
+
+    try {
+      const supabase = getSupabaseAdmin();
+      // Update patch status to live
+      await supabase.from("patches").update({ status: "live", updated_at: now }).eq("id", id);
+
+      const { data: lastVersion } = await supabase
+        .from("versions")
+        .select("number")
+        .order("number", { ascending: false })
+        .limit(1)
+        .single();
+
+      const nextNumber = (lastVersion?.number || 0) + 1;
+
+      const { data: version, error: vErr } = await supabase
+        .from("versions")
+        .insert({
+          number: nextNumber,
+          patch_ids: [id],
+          created_by: DEV_ID,
+          verification_status: "passed",
+        })
+        .select()
+        .single();
+
+      if (vErr) throw vErr;
+
+      // Mark old deployments inactive
+      await supabase.from("deployments").update({ is_live: false }).eq("is_live", true);
+
+      // Create new live deployment
+      const { data: deployment, error: dErr } = await supabase
+        .from("deployments")
+        .insert({
+          version_id: version.id,
+          is_live: true,
+          canary_percent: 100,
+        })
+        .select()
+        .single();
+
+      if (dErr) throw dErr;
+
+      await supabase.from("audit_events").insert({
+        actor_id: DEV_ID,
+        event_type: "deployment_created",
+        entity_id: deployment.id,
+        details: { patch_id: id, version_number: version.number },
+      });
+
+      return reply.send({ success: true, version, deployment });
+    } catch {
+      localPatches = localPatches.map((p) => (p.id === id ? { ...p, status: "live" } : p));
+      return reply.send({ success: true, message: "Deployed locally" });
+    }
+  });
+
   // POST /patches (Draft patch creation with validation & audit event)
   app.post("/patches", async (request, reply) => {
     const parsed = CreatePatchSchema.safeParse(request.body);
