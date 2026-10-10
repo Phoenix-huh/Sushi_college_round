@@ -87,7 +87,7 @@ export function Patches() {
   };
 
   const deploy = (p: Patch) =>
-    run(p.id, 'Deployed. The demo site picks it up within a couple of seconds.', () =>
+    run(p.id, '🚀 Deployed! Reload the demo site to see your change.', () =>
       api(`/patches/${p.id}/deploy`, { method: 'POST' }));
 
   const rollback = (p: Patch) => {
@@ -96,14 +96,17 @@ export function Patches() {
   };
 
   const submitPatch = (p: Patch) =>
-    run(p.id, 'Submitted for review.', async () => {
-      const res = await api<{ status: string; rebased?: boolean; conflicts?: any[] }>(`/patches/${p.id}/submit`, {
+    run(p.id, '✅ No conflicts found! Patch approved — click Deploy to make it live.', async () => {
+      const res = await api<{ status: string; rebased?: boolean; auto_approved?: boolean; conflicts?: any[] }>(`/patches/${p.id}/submit`, {
         method: 'POST',
       });
       if (res.status === 'conflicted') {
-        throw new Error('Conflict detected with another patch! Check the Conflicts page.');
+        throw new Error('⚠️ Conflict detected with another patch! Check the Conflicts page.');
+      } else if (res.status === 'stale') {
+        throw new Error('⚠️ Could not find the target element on the page. Check the selector.');
       } else if (res.rebased) {
-        show('Auto-rebased to latest live version and submitted for review.');
+        // Will show the okMessage but also note the rebase
+        show('Auto-rebased to latest live version. Patch approved — click Deploy to make it live.');
       }
     });
 
@@ -690,21 +693,59 @@ function NLPromptBox({
   const [instruction, setInstruction] = useState('');
   const [context, setContext] = useState('');
   const [loading, setLoading] = useState(false);
+  const [pendingPatch, setPendingPatch] = useState<{ id: string; title?: string } | null>(null);
+  const [deploying, setDeploying] = useState(false);
 
-  const submit = async () => {
+  const generate = async () => {
     if (!instruction.trim() || loading) return;
     setLoading(true);
+    setPendingPatch(null);
     try {
-      const data = await api<{ draft?: Patch }>('/ai/patch', {
+      const data = await api<{ draft?: { id: string; title?: string } }>('/ai/patch', {
         method: 'POST',
         body: JSON.stringify({ instruction, element_context: context, target_url: `${DEMO_URL}/` }),
       });
-      setInstruction('');
-      await onCreated(`Draft created${data.draft ? ` (${data.draft.id.slice(0, 8)})` : ''}. Review it in the table below.`);
+      if (data.draft) {
+        setPendingPatch(data.draft);
+        setInstruction('');
+        await onCreated(`Draft created. Review the selector below, then click Submit & Deploy.`);
+      } else {
+        await onCreated('Draft created. Find it in the table below.');
+      }
     } catch (e: any) {
       onError(e.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submitAndDeploy = async () => {
+    if (!pendingPatch) return;
+    setDeploying(true);
+    try {
+      // Step 1: Submit (validates + auto-approves if no conflicts)
+      const submitRes = await api<{ status: string; auto_approved?: boolean }>(`/patches/${pendingPatch.id}/submit`, {
+        method: 'POST',
+      });
+      if (submitRes.status === 'conflicted') {
+        onError('⚠️ Conflict detected with another patch! Check the Conflicts page.');
+        setPendingPatch(null);
+        return;
+      }
+      if (submitRes.status === 'stale') {
+        onError('⚠️ Target element not found on the page. Edit the patch in the table below.');
+        setPendingPatch(null);
+        return;
+      }
+      // Step 2: Deploy
+      await api(`/patches/${pendingPatch.id}/deploy`, { method: 'POST' });
+      setPendingPatch(null);
+      setContext('');
+      await onCreated('🚀 Patch is now live! Reload the demo site to see your change.');
+    } catch (e: any) {
+      onError(e.message);
+    } finally {
+      setDeploying(false);
     }
   };
 
@@ -722,18 +763,50 @@ function NLPromptBox({
         <input
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && submit()}
+          onKeyDown={(e) => e.key === 'Enter' && generate()}
           placeholder='e.g. "Change the logo text to SuperStore" or "Make the checkout button green"'
           className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
         />
         <button
-          onClick={submit}
-          disabled={loading}
+          onClick={generate}
+          disabled={loading || !instruction.trim()}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
         >
           {loading ? 'Generating...' : 'Generate patch'}
         </button>
       </div>
+
+      {/* Inline Submit & Deploy — shown immediately after draft creation */}
+      {pendingPatch && (
+        <div className="flex items-center justify-between gap-3 bg-indigo-100 border border-indigo-300 rounded-lg px-4 py-3">
+          <div className="text-sm text-indigo-900">
+            <span className="font-semibold">Draft ready</span>
+            {pendingPatch.title && (
+              <span className="ml-1 text-indigo-700">· {pendingPatch.title}</span>
+            )}
+            <span className="ml-2 font-mono text-indigo-500 text-xs">({pendingPatch.id.slice(0, 8)})</span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPendingPatch(null)}
+              className="text-xs text-indigo-600 hover:underline"
+            >
+              Dismiss
+            </button>
+            <button
+              onClick={submitAndDeploy}
+              disabled={deploying}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+            >
+              {deploying ? (
+                <span>Deploying...</span>
+              ) : (
+                <><span>🚀</span><span>Submit & Deploy</span></>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

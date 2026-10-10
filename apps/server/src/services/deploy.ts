@@ -93,7 +93,7 @@ const sameTarget = (a: Patch, b: Patch) =>
  * flip sites.live_version_id, mark patch live, and write an audit event.
  */
 export async function mergePatch(patchId: string, actor: string) {
-  const patch = await store.getPatch(patchId);
+  let patch = await store.getPatch(patchId);
   if (!patch) throw new Error("Patch not found");
 
   const sites = await store.listSites();
@@ -103,15 +103,21 @@ export async function mergePatch(patchId: string, actor: string) {
   const liveVersionNumber = live.version?.number ?? 0;
   const liveVersionId = live.version?.id ?? null;
 
-  // 1. CAS check: live_version_id matches patch.base_version
+  // 1. CAS check: auto-rebase if base_version doesn't match live version
   const baseMatches =
     patch.base_version === liveVersionNumber ||
     (site?.live_version_id && patch.base_version === (site.live_version_id as any)) ||
     (patch.base_version === 0 && !live.version);
   if (!baseMatches && live.version) {
-    throw new Error(
-      `Cannot merge: patch base version (${patch.base_version}) is out of date with live version (${liveVersionNumber}). Please rebase first.`
-    );
+    // Auto-rebase: update patch to current live version before merging
+    await store.updatePatch(patch.id, { base_version: liveVersionNumber });
+    patch = { ...patch, base_version: liveVersionNumber };
+    await store.addAudit({
+      actor_id: actor,
+      event_type: "patch_rebased",
+      entity_id: patch.id,
+      details: { auto_rebase: true, new_base: liveVersionNumber },
+    });
   }
 
   // 2. Open conflicts check

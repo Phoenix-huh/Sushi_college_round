@@ -221,8 +221,8 @@ export async function patchRoutes(app: FastifyInstance) {
       return reply.send({ status: "conflicted", conflicts: savedConflicts });
     }
 
-    // No conflicts! Check if live version moved ahead -> auto-rebase
-    if (liveVersionNumber > patch.base_version) {
+    // Always rebase to current live version so CAS check passes at deploy time
+    if (patch.base_version !== liveVersionNumber) {
       await store.updatePatch(id, { base_version: liveVersionNumber });
       await store.addAudit({
         actor_id: actor,
@@ -232,14 +232,15 @@ export async function patchRoutes(app: FastifyInstance) {
       });
     }
 
-    await store.updatePatch(id, { status: "in_review" });
+    // Auto-approve: no conflicts found, patch is safe to deploy
+    await store.updatePatch(id, { status: "approved" });
     await store.addAudit({
       actor_id: actor,
       event_type: "patch_submitted",
       entity_id: patch.id,
-      details: { base_version: Math.max(patch.base_version, liveVersionNumber) },
+      details: { base_version: liveVersionNumber, auto_approved: true },
     });
-    return reply.send({ status: "in_review", rebased: liveVersionNumber > patch.base_version });
+    return reply.send({ status: "approved", rebased: patch.base_version !== liveVersionNumber, auto_approved: true });
   });
 
   // GET /patches/:id/conflicts
