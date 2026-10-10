@@ -218,10 +218,10 @@ export function Patches() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Patches</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-3xl font-headline font-bold tracking-tight text-white">Patches</h1>
+          <p className="text-sm font-mono text-on-surface-variant mt-1">
             Live on demo site:{' '}
-            <strong className="text-slate-800">
+            <strong className="text-primary font-bold">
               {live?.version ? `version ${live.version.number}, ${live.patches.length} patch(es)` : 'original site (no patches)'}
             </strong>
           </p>
@@ -230,20 +230,11 @@ export function Patches() {
           {/* Rename "+ New patch" to "+ New website" */}
           <button
             onClick={() => setSiteModal(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 shadow-sm"
+            className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm"
           >
             <Globe className="w-4 h-4" />
             + New website
           </button>
-          <a
-            href={DEMO_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="border bg-white hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1.5 shadow-sm"
-          >
-            Open demo site
-            <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-          </a>
         </div>
       </div>
 
@@ -252,14 +243,14 @@ export function Patches() {
 
       {/* Sites tab indicator if multiple sites exist */}
       {sitesQ.data && sitesQ.data.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-          <span className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider">Site:</span>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
+          <span className="text-outline font-semibold uppercase text-[10px] tracking-wider">Site:</span>
           <button
             onClick={() => setActiveSiteId(null)}
-            className={`px-3 py-1 rounded-full border transition-all ${
+            className={`px-3 py-1 rounded-full border transition-all text-xs ${
               !activeSiteId
-                ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-semibold'
-                : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                ? 'bg-primary-container/20 border-primary-container text-white font-bold shadow-[0_0_12px_rgba(255,59,129,0.3)]'
+                : 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:text-white'
             }`}
           >
             All sites
@@ -268,10 +259,10 @@ export function Patches() {
             <button
               key={s.id}
               onClick={() => setActiveSiteId(s.id)}
-              className={`px-3 py-1 rounded-full border transition-all ${
+              className={`px-3 py-1 rounded-full border transition-all text-xs ${
                 activeSiteId === s.id
-                  ? 'bg-indigo-50 border-indigo-300 text-indigo-700 font-semibold'
-                  : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                  ? 'bg-primary-container/20 border-primary-container text-white font-bold shadow-[0_0_12px_rgba(255,59,129,0.3)]'
+                  : 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:text-white'
               }`}
             >
               {s.name}
@@ -290,22 +281,22 @@ export function Patches() {
       />
 
       {/* Patches Table */}
-      <div className="bg-white rounded-lg border shadow-sm overflow-x-auto">
-        <div className="px-4 py-3 border-b flex items-center justify-between bg-slate-50">
+      <div className="cyber-glass rounded-xl border border-outline-variant/30 shadow-lg overflow-x-auto">
+        <div className="px-4 py-3.5 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container/60">
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Patch Repository</h2>
-            <span className="text-xs text-slate-400 font-normal">({patches.length})</span>
+            <h2 className="text-xs font-headline font-bold text-white uppercase tracking-wider">Patch Repository</h2>
+            <span className="text-xs font-mono text-outline">({patches.length})</span>
           </div>
           {/* Secondary entry point for manual patch creation */}
           <button
             onClick={openCreate}
-            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline transition-colors"
+            className="text-xs font-mono font-bold text-primary hover:text-white underline transition-colors"
           >
-            Add patch manually
+            + Add patch manually
           </button>
         </div>
-        <table className="w-full text-sm text-left">
-          <thead className="bg-slate-50/75 border-b text-slate-500 uppercase text-xs">
+        <table className="w-full text-xs font-mono text-left">
+          <thead className="bg-surface-container-highest/50 border-b border-outline-variant/30 text-outline uppercase text-[11px]">
             <tr>
               <th className="px-4 py-3 font-medium">Status</th>
               <th className="px-4 py-3 font-medium">Title / Element</th>
@@ -315,7 +306,7 @@ export function Patches() {
               <th className="px-4 py-3 font-medium text-right">Actions</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-outline-variant/20">
             {patches.map((patch) => {
               const isLive = liveIds.has(patch.id);
               const busy = busyId === patch.id;
@@ -325,7 +316,7 @@ export function Patches() {
 
               return (
                 <Fragment key={patch.id}>
-                  <tr className="border-b hover:bg-slate-50/50 align-middle">
+                  <tr className="hover:bg-surface-container/40 align-middle transition-colors">
                     {/* Status Badge */}
                     <td className="px-4 py-3 whitespace-nowrap">
                       <StatusPill status={effectiveStatus} />
@@ -334,30 +325,34 @@ export function Patches() {
                     {/* Title & Selector */}
                     <td className="px-4 py-3 max-w-xs">
                       {patch.title ? (
-                        <div className="font-semibold text-slate-900 text-xs truncate" title={patch.title}>
+                        <div className="font-semibold text-white text-xs truncate" title={patch.title}>
                           {patch.title}
                         </div>
                       ) : null}
-                      <div className="font-mono text-xs text-slate-500 truncate" title={patch.anchors.cssSelector}>
+                      <div className="font-mono text-xs text-primary truncate" title={patch.anchors.cssSelector}>
                         {patch.anchors.cssSelector || '(text search)'}
                       </div>
                       {patch.anchors.textContent && (
-                        <div className="text-[11px] text-slate-400 truncate" title={patch.anchors.textContent}>
+                        <div className="text-[11px] text-outline truncate" title={patch.anchors.textContent}>
                           match: "{patch.anchors.textContent}"
                         </div>
                       )}
                     </td>
 
                     {/* Change Type */}
-                    <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">{patch.change.type}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-outline-variant whitespace-nowrap">
+                      <span className="bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant/30 text-on-surface">
+                        {patch.change.type}
+                      </span>
+                    </td>
 
                     {/* Value */}
-                    <td className="px-4 py-3 max-w-xs break-words text-xs">{patch.change.value}</td>
+                    <td className="px-4 py-3 max-w-xs break-words text-xs text-on-surface">{patch.change.value}</td>
 
                     {/* Author */}
-                    <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-slate-600">
+                    <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-on-surface-variant">
                       {getUserName(patch.author_id)}
-                      {isAuthor && <span className="ml-1 text-[10px] text-indigo-600 font-bold">(You)</span>}
+                      {isAuthor && <span className="ml-1 text-[10px] text-primary font-bold">(You)</span>}
                     </td>
 
                     {/* Actions — right aligned with icons flush right */}
@@ -368,7 +363,7 @@ export function Patches() {
                           href={`${DEMO_URL}/?preview_patch=${patch.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-2 py-1 rounded text-xs font-semibold"
+                          className="bg-surface-container hover:bg-surface-container-high text-white border border-outline-variant/40 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-colors"
                           title="Open the demo site with only this patch previewed"
                         >
                           Preview
@@ -378,7 +373,7 @@ export function Patches() {
                           <button
                             disabled={busy}
                             onClick={() => submitPatch(patch)}
-                            className="bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-2.5 py-1 rounded text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1"
+                            className="bg-primary-container/20 hover:bg-primary-container/30 text-primary border border-primary-container/50 px-2.5 py-1 rounded-md text-xs font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 transition-all"
                             title="Submit this patch for review and check for conflicts"
                           >
                             <Send className="w-3 h-3" />
@@ -641,19 +636,19 @@ export function Patches() {
 
 function StatusPill({ status }: { status: string }) {
   const badgeClasses: Record<string, string> = {
-    live: 'bg-emerald-100 text-emerald-800 border border-emerald-300',
-    approved: 'bg-purple-100 text-purple-800 border border-purple-300',
-    in_review: 'bg-amber-100 text-amber-800 border border-amber-300',
-    draft: 'bg-slate-100 text-slate-700 border border-slate-300',
-    conflicted: 'bg-rose-100 text-rose-800 border border-rose-300',
-    rejected: 'bg-red-100 text-red-800 border border-red-300',
-    stale: 'bg-orange-100 text-orange-800 border border-orange-300',
-    broken: 'bg-red-100 text-red-700 border border-red-200',
-    healed: 'bg-blue-100 text-blue-700 border border-blue-200',
+    live: 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/50',
+    approved: 'bg-purple-950/60 text-purple-300 border border-purple-500/50',
+    in_review: 'bg-amber-950/60 text-amber-300 border border-amber-500/50',
+    draft: 'bg-surface-container-high text-on-surface-variant border border-outline-variant/40',
+    conflicted: 'bg-rose-950/60 text-rose-300 border border-rose-500/50',
+    rejected: 'bg-red-950/60 text-red-300 border border-red-500/50',
+    stale: 'bg-orange-950/60 text-orange-300 border border-orange-500/50',
+    broken: 'bg-red-950/60 text-red-300 border border-red-500/50',
+    healed: 'bg-sky-950/60 text-sky-300 border border-sky-500/50',
   };
-  const style = badgeClasses[status] || 'bg-slate-100 text-slate-700 border border-slate-200';
+  const style = badgeClasses[status] || 'bg-surface-container text-on-surface-variant border border-outline-variant/40';
   return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold capitalize tracking-wide ${style}`}>
+    <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${style}`}>
       {status.replace(/_/g, ' ')}
     </span>
   );
@@ -750,14 +745,17 @@ function NLPromptBox({
   };
 
   return (
-    <div className="bg-gradient-to-br from-indigo-50 to-violet-50 border border-indigo-200 rounded-xl p-5 space-y-3">
-      <h3 className="text-sm font-bold text-indigo-800">Natural language patch (AI)</h3>
+    <div className="cyber-glass border border-outline-variant/30 rounded-xl p-5 space-y-3 shadow-lg">
+      <div className="flex items-center gap-2">
+        <span className="size-2 rounded-full bg-primary-container animate-ping" />
+        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-primary">Natural language patch (AI)</h3>
+      </div>
       <textarea
         value={context}
         onChange={(e) => setContext(e.target.value)}
         placeholder={'Paste the element\'s HTML (optional), e.g. <h3 class="product-title">Smart Watch</h3>'}
         rows={2}
-        className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 ring-indigo-300 outline-none"
+        className="w-full bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3 py-2 text-xs font-mono text-white focus:border-primary-container outline-none"
       />
       <div className="flex gap-2">
         <input
@@ -765,12 +763,12 @@ function NLPromptBox({
           onChange={(e) => setInstruction(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && generate()}
           placeholder='e.g. "Change the logo text to SuperStore" or "Make the checkout button green"'
-          className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
+          className="flex-1 bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3 py-2 text-xs font-mono text-white focus:border-primary-container outline-none"
         />
         <button
           onClick={generate}
           disabled={loading || !instruction.trim()}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+          className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 transition-all shadow-sm"
         >
           {loading ? 'Generating...' : 'Generate patch'}
         </button>
@@ -778,25 +776,25 @@ function NLPromptBox({
 
       {/* Inline Submit & Deploy — shown immediately after draft creation */}
       {pendingPatch && (
-        <div className="flex items-center justify-between gap-3 bg-indigo-100 border border-indigo-300 rounded-lg px-4 py-3">
-          <div className="text-sm text-indigo-900">
-            <span className="font-semibold">Draft ready</span>
+        <div className="flex items-center justify-between gap-3 bg-primary-container/20 border border-primary-container/50 rounded-lg px-4 py-3">
+          <div className="text-xs font-mono text-white">
+            <span className="font-bold text-primary">Draft ready</span>
             {pendingPatch.title && (
-              <span className="ml-1 text-indigo-700">· {pendingPatch.title}</span>
+              <span className="ml-1 text-on-surface">· {pendingPatch.title}</span>
             )}
-            <span className="ml-2 font-mono text-indigo-500 text-xs">({pendingPatch.id.slice(0, 8)})</span>
+            <span className="ml-2 font-mono text-outline text-[11px]">({pendingPatch.id.slice(0, 8)})</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <button
               onClick={() => setPendingPatch(null)}
-              className="text-xs text-indigo-600 hover:underline"
+              className="text-xs font-mono text-outline hover:text-white transition-colors"
             >
               Dismiss
             </button>
             <button
               onClick={submitAndDeploy}
               disabled={deploying}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 flex items-center gap-1.5 shadow-sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 shadow-sm transition-all"
             >
               {deploying ? (
                 <span>Deploying...</span>

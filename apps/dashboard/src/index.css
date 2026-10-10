@@ -1,3 +1,49 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px;
+    scrollbar-gutter: stable;
+    overflow-y: scroll;
+  }
+  body {
+    font-size: 1rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  p {
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+}
+
+.cyber-glow-primary {
+  box-shadow: 0 0 25px rgba(255, 59, 129, 0.55), 0 0 50px rgba(255, 59, 129, 0.25);
+}
+
+.cyber-glow-text {
+  text-shadow: 0 0 12px #ff3b81, 0 0 28px #ff3b81, 0 0 50px rgba(255, 59, 129, 0.8), 0 0 80px rgba(255, 59, 129, 0.4);
+}
+
+.cyber-glass {
+  background: rgba(19, 19, 23, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.floating-piece {
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
+}
+
+.floating-piece:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+/* Custom Retro Pixel Cursor matching uploaded design */
+html, body, a, button, input, select, textarea, [role="button"], label, tr, td, th {
+  cursor: url('/retro-cursor.svg') 0 0, url('/retro-cursor.png') 0 0, auto !important;
+}
+

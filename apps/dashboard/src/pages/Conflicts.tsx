@@ -76,8 +76,8 @@ export function Conflicts() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Conflicts</h1>
-        <p className="text-slate-500 text-sm mt-1">
+        <h1 className="text-3xl font-headline font-bold tracking-tight text-white">Conflicts</h1>
+        <p className="text-on-surface-variant font-mono text-sm mt-1">
           Concurrent edits targeting the same element and property. Compare the base against each author's patch, then choose a resolution.
         </p>
       </div>
@@ -87,10 +87,10 @@ export function Conflicts() {
 
       {pairs.length > 0 ? (
         <div className="space-y-6">
-          <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg flex items-center gap-3 text-sm">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-600" />
+          <div className="bg-amber-950/40 border border-amber-500/50 text-amber-200 p-4 rounded-xl flex items-center gap-3 text-xs font-mono backdrop-blur-md shadow-lg">
+            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-amber-400" />
             <div>
-              <strong>{pairs.length} conflict(s) detected.</strong> Choose "Use A", "Use B", or provide a custom value to merge.
+              <strong className="text-white">{pairs.length} conflict(s) detected.</strong> Choose "Use A", "Use B", or provide a custom value to merge.
             </div>
           </div>
 
@@ -106,40 +106,40 @@ export function Conflicts() {
             const isCustomOpen = !!showCustomFor[conflictKey];
 
             return (
-              <div key={conflictKey} className="bg-white rounded-xl border shadow-sm overflow-hidden">
+              <div key={conflictKey} className="cyber-glass rounded-xl border border-outline-variant/30 shadow-lg overflow-hidden">
                 {/* Header */}
-                <div className="px-6 py-3.5 bg-slate-50 border-b flex flex-wrap items-center justify-between gap-2">
+                <div className="px-6 py-3.5 bg-surface-container/60 border-b border-outline-variant/30 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <GitCompare className="w-4 h-4 text-indigo-600" />
-                    <span className="font-semibold text-sm text-slate-800">
-                      Target: <code className="font-mono text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">{a.anchors.cssSelector || '(text search)'}</code>
+                    <GitCompare className="w-4 h-4 text-primary-container" />
+                    <span className="font-semibold text-sm text-white font-headline">
+                      Target: <code className="font-mono text-primary bg-surface-container-highest px-1.5 py-0.5 rounded border border-outline-variant/30">{a.anchors.cssSelector || '(text search)'}</code>
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-mono">
+                  <div className="flex items-center gap-2 text-xs font-mono">
+                    <span className="bg-surface-container-highest text-on-surface px-2 py-0.5 rounded border border-outline-variant/30">
                       Property: <strong>{a.change.type}</strong>
                     </span>
-                    <span className="bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-semibold uppercase text-[10px]">
+                    <span className="bg-rose-950/60 text-rose-300 border border-rose-500/50 px-2 py-0.5 rounded font-bold uppercase text-[10px]">
                       {conflictRecord?.type || 'concurrent'}
                     </span>
                   </div>
                 </div>
 
                 {/* Three columns: Base value | Patch A | Patch B */}
-                <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-slate-200 text-sm">
+                <div className="grid md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-outline-variant/20 text-xs font-mono">
                   {/* Column 1: Base Value */}
-                  <div className="p-5 flex flex-col justify-between bg-slate-50/50">
+                  <div className="p-5 flex flex-col justify-between bg-surface-container/30">
                     <div>
-                      <div className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+                      <div className="text-[10px] font-bold uppercase tracking-wider text-outline mb-2">
                         1. Base Value (Live Main)
                       </div>
-                      <div className="text-xs text-slate-400 mb-1">Original before draft patches:</div>
-                      <div className="font-mono text-xs text-slate-800 bg-white p-3 rounded border break-words shadow-inner">
+                      <div className="text-outline text-[11px] mb-1">Original before draft patches:</div>
+                      <div className="text-on-surface bg-surface-container-lowest p-3 rounded-lg border border-outline-variant/30 break-words shadow-inner">
                         {baseValue}
                       </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t border-slate-200 text-[11px] text-slate-500">
-                      Base version: <strong>v{a.base_version}</strong>
+                    <div className="mt-4 pt-3 border-t border-outline-variant/20 text-[11px] text-outline">
+                      Base version: <strong className="text-white">v{a.base_version}</strong>
                     </div>
                   </div>
 
@@ -147,24 +147,24 @@ export function Conflicts() {
                   <div className="p-5 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-700">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
                           2. Patch A ({getUserName(a.author_id)})
                         </span>
-                        <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-mono bg-surface-container-high text-outline px-1.5 py-0.5 rounded">
                           {a.id.slice(0, 8)}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-400 mb-1">{a.title || 'Proposed Change:'}</div>
-                      <div className="font-bold text-xs text-slate-900 bg-indigo-50/60 border border-indigo-200 p-3 rounded break-words">
+                      <div className="text-[11px] text-outline mb-1">{a.title || 'Proposed Change:'}</div>
+                      <div className="font-bold text-white bg-primary-container/10 border border-primary-container/40 p-3 rounded-lg break-words">
                         "{a.change.value}"
                       </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t flex items-center justify-between gap-2">
+                    <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between gap-2">
                       <a
                         href={`${DEMO_URL}/?preview_patch=${a.id}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold inline-flex items-center gap-1"
+                        className="text-xs text-primary hover:text-white font-semibold inline-flex items-center gap-1 transition-colors"
                         title="Preview Patch A in isolation"
                       >
                         Preview A <ExternalLink className="w-3 h-3" />
@@ -172,7 +172,7 @@ export function Conflicts() {
                       <button
                         disabled={isBusy}
                         onClick={() => resolve(conflictId, a, b, 'a')}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm"
+                        className="bg-primary-container hover:bg-[#ff1e70] text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1 transition-all"
                       >
                         <Check className="w-3.5 h-3.5" /> Use A
                       </button>
@@ -183,24 +183,24 @@ export function Conflicts() {
                   <div className="p-5 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-700">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-secondary">
                           3. Patch B ({getUserName(b.author_id)})
                         </span>
-                        <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-mono bg-surface-container-high text-outline px-1.5 py-0.5 rounded">
                           {b.id.slice(0, 8)}
                         </span>
                       </div>
-                      <div className="text-xs text-slate-400 mb-1">{b.title || 'Proposed Change:'}</div>
-                      <div className="font-bold text-xs text-slate-900 bg-emerald-50/60 border border-emerald-200 p-3 rounded break-words">
+                      <div className="text-[11px] text-outline mb-1">{b.title || 'Proposed Change:'}</div>
+                      <div className="font-bold text-white bg-secondary-container/20 border border-secondary-container/50 p-3 rounded-lg break-words">
                         "{b.change.value}"
                       </div>
                     </div>
-                    <div className="mt-4 pt-3 border-t flex items-center justify-between gap-2">
+                    <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-between gap-2">
                       <a
                         href={`${DEMO_URL}/?preview_patch=${b.id}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-emerald-600 hover:text-emerald-800 font-semibold inline-flex items-center gap-1"
+                        className="text-xs text-secondary hover:text-white font-semibold inline-flex items-center gap-1 transition-colors"
                         title="Preview Patch B in isolation"
                       >
                         Preview B <ExternalLink className="w-3 h-3" />
@@ -208,7 +208,7 @@ export function Conflicts() {
                       <button
                         disabled={isBusy}
                         onClick={() => resolve(conflictId, a, b, 'b')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm"
+                        className="bg-secondary-container hover:bg-[#963467] text-white px-3 py-1.5 rounded-lg text-xs font-semibold disabled:opacity-50 inline-flex items-center gap-1 transition-all"
                       >
                         <Check className="w-3.5 h-3.5" /> Use B
                       </button>
@@ -217,14 +217,14 @@ export function Conflicts() {
                 </div>
 
                 {/* Bottom Custom Value Option */}
-                <div className="px-6 py-3 bg-slate-50 border-t flex flex-wrap items-center justify-between gap-3">
+                <div className="px-6 py-3 bg-surface-container/50 border-t border-outline-variant/30 flex flex-wrap items-center justify-between gap-3">
                   <button
                     onClick={() =>
                       setShowCustomFor((prev) => ({ ...prev, [conflictKey]: !prev[conflictKey] }))
                     }
-                    className="text-xs font-semibold text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                    className="text-xs font-mono font-semibold text-primary hover:text-white flex items-center gap-1 transition-colors"
                   >
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                    <Sparkles className="w-3.5 h-3.5 text-primary-container" />
                     {isCustomOpen ? 'Hide Custom Value' : 'Resolve with Custom Value...'}
                   </button>
 
@@ -236,12 +236,12 @@ export function Conflicts() {
                           setCustomInputs((prev) => ({ ...prev, [conflictKey]: e.target.value }))
                         }
                         placeholder={`Custom ${a.change.type} value...`}
-                        className="flex-1 px-3 py-1.5 border rounded text-xs font-mono focus:ring-2 ring-indigo-300 outline-none"
+                        className="flex-1 px-3 py-1.5 bg-surface-container border border-outline-variant/50 rounded-lg text-xs font-mono text-white focus:border-primary-container outline-none"
                       />
                       <button
                         disabled={isBusy || !customVal.trim()}
                         onClick={() => resolve(conflictId, a, b, 'custom', customVal.trim())}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded text-xs font-semibold disabled:opacity-50 whitespace-nowrap shadow-sm"
+                        className="bg-primary-container hover:bg-[#ff1e70] text-white px-3 py-1.5 rounded-lg text-xs font-mono font-semibold disabled:opacity-50 whitespace-nowrap shadow-sm transition-all"
                       >
                         Apply Custom
                       </button>
@@ -254,10 +254,10 @@ export function Conflicts() {
         </div>
       ) : (
         !loading && (
-          <div className="bg-white p-12 rounded-xl border text-center text-slate-500 space-y-2">
-            <Check className="w-8 h-8 text-emerald-500 mx-auto" />
-            <h3 className="text-base font-semibold text-slate-800">No open conflicts</h3>
-            <p className="text-sm text-slate-500">Every patch targets a distinct element or property.</p>
+          <div className="cyber-glass p-12 rounded-xl border border-outline-variant/30 text-center font-mono space-y-2 shadow-lg">
+            <Check className="w-8 h-8 text-emerald-400 mx-auto" />
+            <h3 className="text-base font-headline font-bold text-white">No open conflicts</h3>
+            <p className="text-xs text-outline">Every patch targets a distinct element or property.</p>
           </div>
         )
       )}

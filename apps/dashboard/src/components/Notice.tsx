@@ -17,15 +17,19 @@ export function useNotice() {
 export function Notice({ notice }: { notice: { kind: Kind; text: string } | null }) {
   if (!notice) return null;
   const style = notice.kind === 'error'
-    ? 'bg-red-50 border-red-200 text-red-800'
-    : 'bg-emerald-50 border-emerald-200 text-emerald-800';
-  return <div role="status" className={`border rounded-lg px-4 py-2 text-sm ${style}`}>{notice.text}</div>;
+    ? 'bg-red-950/40 border-red-500/50 text-red-200'
+    : 'bg-emerald-950/40 border-emerald-500/50 text-emerald-200';
+  return (
+    <div role="status" className={`border rounded-lg px-4 py-2.5 text-xs font-mono backdrop-blur-md shadow-lg ${style}`}>
+      {notice.text}
+    </div>
+  );
 }
 
 export function ErrorBanner({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <div className="bg-red-50 border border-red-200 text-red-800 rounded-lg px-4 py-3 text-sm">
+    <div className="bg-red-950/40 border border-red-500/50 text-red-200 rounded-lg px-4 py-3 text-xs font-mono backdrop-blur-md shadow-lg">
       {message}
     </div>
   );

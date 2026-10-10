@@ -48,8 +48,8 @@ export function Verification() {
     <div className="space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Verification Center</h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <h1 className="text-3xl font-headline font-bold tracking-tight text-white">Verification Center</h1>
+          <p className="text-on-surface-variant font-mono text-sm mt-1">
             Runs the checkout flow in a real browser with the version's patches applied, compares screenshots, and rolls back a live version that fails.
           </p>
         </div>
@@ -57,10 +57,10 @@ export function Verification() {
           <select
             value={versionId}
             onChange={(e) => setSelected(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm bg-white"
+            className="border border-outline-variant/40 rounded-lg px-3 py-2 text-xs font-mono bg-surface-container text-white focus:border-primary-container outline-none"
           >
             {versions.map((v) => (
-              <option key={v.id} value={v.id}>
+              <option key={v.id} value={v.id} className="bg-surface-container text-white">
                 Version {v.number} ({v.patch_ids.length} patch{v.patch_ids.length === 1 ? '' : 'es'}, {v.verification_status})
               </option>
             ))}
@@ -68,7 +68,7 @@ export function Verification() {
           <button
             onClick={run}
             disabled={running || !versionId}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50"
+            className="flex items-center gap-2 bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-semibold disabled:opacity-50 transition-all shadow-sm"
           >
             <Play className="w-4 h-4" /> {running ? 'Running...' : 'Run verification'}
           </button>
@@ -79,16 +79,16 @@ export function Verification() {
       <ErrorBanner message={versionsQ.error} />
 
       {last && (
-        <div className={`rounded-lg border p-5 flex items-start gap-3 ${last.passed ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}>
-          {last.passed ? <ShieldCheck className="w-6 h-6 text-emerald-600" /> : <ShieldAlert className="w-6 h-6 text-red-600" />}
-          <div className="text-sm">
-            <div className="font-semibold">{last.passed ? 'Passed' : 'Failed'}: Version {numberOf(last.version_id)}</div>
-            {last.passed && <div className="text-slate-600">{last.diffPixels} pixels differ from the unpatched page.</div>}
+        <div className={`rounded-xl border p-5 flex items-start gap-3 backdrop-blur-md ${last.passed ? 'bg-emerald-950/40 border-emerald-500/50' : 'bg-rose-950/40 border-rose-500/50'}`}>
+          {last.passed ? <ShieldCheck className="w-6 h-6 text-emerald-400" /> : <ShieldAlert className="w-6 h-6 text-rose-400" />}
+          <div className="text-xs font-mono">
+            <div className="font-bold text-white">{last.passed ? 'Passed' : 'Failed'}: Version {numberOf(last.version_id)}</div>
+            {last.passed && <div className="text-emerald-300 mt-1">{last.diffPixels} pixels differ from the unpatched page.</div>}
             {last.error && (
-              <div className="text-red-700 font-mono text-xs mt-1 break-words">
+              <div className="text-rose-300 font-mono text-xs mt-1 break-words">
                 {last.error}
                 {/Executable doesn't exist|playwright install/i.test(last.error) && (
-                  <div className="mt-1 font-sans">Browser missing: run <code>npx playwright install chromium</code> once on the server machine.</div>
+                  <div className="mt-1 font-sans text-white">Browser missing: run <code>npx playwright install chromium</code> once on the server machine.</div>
                 )}
               </div>
             )}
@@ -96,20 +96,25 @@ export function Verification() {
         </div>
       )}
 
-      <div className="bg-white rounded-lg border shadow-sm">
-        <div className="px-6 py-3 border-b text-sm font-semibold text-slate-700">Verification history</div>
-        <ul className="divide-y">
+      <div className="cyber-glass rounded-xl border border-outline-variant/30 shadow-lg overflow-hidden">
+        <div className="px-6 py-3.5 border-b border-outline-variant/30 text-xs font-headline font-bold text-white uppercase tracking-wider bg-surface-container/60">
+          Verification history
+        </div>
+        <ul className="divide-y divide-outline-variant/20">
           {history.map((e) => {
             const passed = e.event_type === 'verification_passed';
             const d = e.details as { diffPixels?: number; error?: string };
             return (
-              <li key={e.id} className="px-6 py-3 flex items-start gap-3 text-sm">
-                {passed ? <CheckCircle2 className="w-5 h-5 text-emerald-600 mt-0.5" /> : <XCircle className="w-5 h-5 text-red-600 mt-0.5" />}
+              <li key={e.id} className="px-6 py-3.5 flex items-start gap-3 text-xs font-mono">
+                {passed ? <CheckCircle2 className="w-5 h-5 text-emerald-400 mt-0.5 shrink-0" /> : <XCircle className="w-5 h-5 text-rose-400 mt-0.5 shrink-0" />}
                 <div className="flex-1">
-                  <div className="font-medium">
-                    Version {numberOf(e.entity_id) ?? e.entity_id.slice(0, 8)}: {passed ? 'passed' : 'failed'}
+                  <div className="font-semibold text-white">
+                    Version {numberOf(e.entity_id) ?? e.entity_id.slice(0, 8)}:{' '}
+                    <span className={passed ? 'text-emerald-400 uppercase font-bold' : 'text-rose-400 uppercase font-bold'}>
+                      {passed ? 'passed' : 'failed'}
+                    </span>
                   </div>
-                  <div className="text-xs text-slate-500">
+                  <div className="text-[11px] text-outline mt-0.5">
                     {new Date(e.created_at).toLocaleString()}
                     {passed && typeof d.diffPixels === 'number' ? ` · ${d.diffPixels} px diff` : ''}
                     {d.error ? ` · ${d.error}` : ''}
@@ -118,7 +123,7 @@ export function Verification() {
               </li>
             );
           })}
-          {history.length === 0 && <li className="px-6 py-6 text-slate-500 text-sm">No verification runs yet.</li>}
+          {history.length === 0 && <li className="px-6 py-6 text-outline text-xs font-mono text-center">No verification runs yet.</li>}
         </ul>
       </div>
     </div>
