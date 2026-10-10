@@ -10,6 +10,7 @@
     "demo": "concurrently -n demo,server,dash -c blue,green,magenta \"npm run dev -w apps/demo-site\" \"npm run dev -w apps/server\" \"npm run dev -w apps/dashboard\"",
     "seed": "tsx apps/server/src/seed.ts",
     "e2e": "tsx scripts/e2e-dashboard-to-site.ts",
+    "e2e:ext": "tsx scripts/e2e-extension.ts",
     "typecheck": "tsc --build",
     "test": "vitest run",
     "test:watch": "vitest"
