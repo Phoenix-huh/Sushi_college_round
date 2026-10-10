@@ -77,6 +77,52 @@ export function Patches() {
       }
     }
   }, []);
+  const [editingPatch, setEditingPatch] = useState<Patch | null>(null);
+  const [editForm, setEditForm] = useState<{ type: string; value: string; selector: string }>({
+    type: 'text',
+    value: '',
+    selector: '',
+  });
+
+  const openEditModal = (patch: Patch) => {
+    setEditingPatch(patch);
+    setEditForm({
+      type: patch.change.type,
+      value: patch.change.value,
+      selector: patch.anchors.cssSelector,
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPatch) return;
+    try {
+      const res = await fetch(`http://localhost:4000/patches/${editingPatch.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          change: {
+            ...editingPatch.change,
+            type: editForm.type,
+            value: editForm.value,
+          },
+          anchors: {
+            ...editingPatch.anchors,
+            cssSelector: editForm.selector,
+          },
+        }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setPatches((prev) => prev.map((p) => (p.id === editingPatch.id ? { ...p, ...updated } : p)));
+        setEditingPatch(null);
+      } else {
+        alert('Failed to update patch');
+      }
+    } catch (e: any) {
+      alert(`Error saving patch: ${e.message}`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -94,94 +140,147 @@ export function Patches() {
               <th className="px-6 py-3 font-medium">Value</th>
               <th className="px-6 py-3 font-medium">Selector</th>
               <th className="px-6 py-3 font-medium">Actions</th>
-              <th className="px-6 py-3 font-medium">Details</th>
+              <th className="px-6 py-3 font-medium">Edit</th>
             </tr>
           </thead>
           <tbody>
             {patches.map((patch) => {
-              const healEvt = healEvents[patch.id];
               return (
-                <>
-                  <tr key={patch.id} className="border-b hover:bg-slate-50/50">
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        patch.status === 'live' ? 'bg-emerald-100 text-emerald-700' :
-                        patch.status === 'healed' ? 'bg-blue-100 text-blue-700' :
-                        patch.status === 'broken' ? 'bg-red-100 text-red-700' :
-                        'bg-slate-100 text-slate-700'
-                      }`}>
-                        {patch.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 font-mono">{patch.change.type}</td>
-                    <td className="px-6 py-4 truncate max-w-xs">{patch.change.value}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-slate-500">{patch.anchors.cssSelector}</td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <a
-                          href={`http://localhost:4100/?preview_patch=${patch.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded text-xs font-semibold"
-                          title="Open demo store in isolated preview mode"
-                        >
-                          👁️ Preview
-                        </a>
-                        {patch.status !== 'live' && (
-                          <button
-                            onClick={async () => {
-                              try {
-                                const res = await fetch(`http://localhost:4000/patches/${patch.id}/deploy`, { method: 'POST' });
-                                if (res.ok) {
-                                  setPatches((prev) => prev.map((p) => p.id === patch.id ? { ...p, status: 'live' } : p));
-                                  alert('🚀 Patch successfully deployed to live store!');
-                                }
-                              } catch (e: any) {
-                                alert(`Failed to deploy: ${e.message}`);
-                              }
-                            }}
-                            className="inline-flex items-center gap-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded text-xs font-semibold"
-                            title="Deploy this patch to live website"
-                          >
-                            🚀 Deploy
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {patch.status === 'healed' && healEvt && (
+                <tr key={patch.id} className="border-b hover:bg-slate-50/50">
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      patch.status === 'live' ? 'bg-emerald-100 text-emerald-700' :
+                      patch.status === 'healed' ? 'bg-blue-100 text-blue-700' :
+                      patch.status === 'broken' ? 'bg-red-100 text-red-700' :
+                      'bg-slate-100 text-slate-700'
+                    }`}>
+                      {patch.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-mono">{patch.change.type}</td>
+                  <td className="px-6 py-4 truncate max-w-xs">{patch.change.value}</td>
+                  <td className="px-6 py-4 font-mono text-xs text-slate-500">{patch.anchors.cssSelector}</td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`http://localhost:4100/?preview_patch=${patch.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-2.5 py-1 rounded text-xs font-semibold"
+                        title="Open demo store in isolated preview mode"
+                      >
+                        Preview
+                      </a>
+                      {patch.status !== 'live' && (
                         <button
-                          onClick={() => setExpanded(expanded === patch.id ? null : patch.id)}
-                          className="text-blue-600 text-xs underline hover:no-underline"
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`http://localhost:4000/patches/${patch.id}/deploy`, { method: 'POST' });
+                              if (res.ok) {
+                                setPatches((prev) => prev.map((p) => p.id === patch.id ? { ...p, status: 'live' } : p));
+                                alert('Patch successfully deployed to live store!');
+                              }
+                            } catch (e: any) {
+                              alert(`Failed to deploy: ${e.message}`);
+                            }
+                          }}
+                          className="inline-flex items-center bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2.5 py-1 rounded text-xs font-semibold"
+                          title="Deploy this patch to live website"
                         >
-                          {expanded === patch.id ? 'Hide' : 'Why healed?'}
+                          Deploy
                         </button>
                       )}
-                    </td>
-                  </tr>
-
-                  {/* Healing explanation row */}
-                  {expanded === patch.id && healEvt && (
-                    <tr key={`${patch.id}-heal`} className="bg-blue-50">
-                      <td colSpan={5} className="px-6 py-4">
-                        <div className="space-y-3">
-                          <h4 className="font-semibold text-blue-800 text-sm">🩹 Auto-Heal Explanation</h4>
-                          <ScoreBreakdown details={healEvt.details} />
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      onClick={() => openEditModal(patch)}
+                      className="text-indigo-600 hover:text-indigo-800 text-xs font-semibold underline"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
               );
             })}
             {patches.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-6 py-8 text-center text-slate-500">No patches found</td>
+                <td colSpan={6} className="px-6 py-8 text-center text-slate-500">No patches found</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+
+      {/* Edit Patch Modal */}
+      {editingPatch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-xl shadow-xl border max-w-md w-full p-6 space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="text-lg font-bold text-slate-900">Edit Patch</h3>
+              <button
+                onClick={() => setEditingPatch(null)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-semibold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Target CSS Selector</label>
+                <input
+                  type="text"
+                  value={editForm.selector}
+                  onChange={(e) => setEditForm({ ...editForm, selector: e.target.value })}
+                  placeholder="e.g. #checkout-btn, .logo, .product-title"
+                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 ring-indigo-300 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Change Type</label>
+                <select
+                  value={editForm.type}
+                  onChange={(e) => setEditForm({ ...editForm, type: e.target.value })}
+                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
+                >
+                  <option value="text">text</option>
+                  <option value="style">style</option>
+                  <option value="visibility">visibility</option>
+                  <option value="script">script</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">Change Value</label>
+                <textarea
+                  value={editForm.value}
+                  onChange={(e) => setEditForm({ ...editForm, value: e.target.value })}
+                  rows={3}
+                  placeholder="e.g. New Text or background-color: #ef4444; color: white;"
+                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 ring-indigo-300 outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <button
+                onClick={() => setEditingPatch(null)}
+                className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -284,7 +383,7 @@ function NLPromptBox({ onCreated }: { onCreated?: (patch: Patch) => void }) {
           type="text"
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
-          placeholder='e.g. "Make the checkout button red and say Buy Now"'
+          placeholder='e.g. "Change logo text to SuperStore" or "Make product card background light yellow"'
           className="flex-1 border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
           onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
         />
@@ -307,25 +406,25 @@ function NLPromptBox({ onCreated }: { onCreated?: (patch: Patch) => void }) {
                 href={`http://localhost:4100/?preview_patch=${createdPatch.id}`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                className="inline-flex items-center bg-slate-800 hover:bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-colors"
               >
-                👁️ Preview on Demo Store (Draft Mode)
+                Preview on Demo Store (Draft Mode)
               </a>
               <button
                 onClick={async () => {
                   try {
                     const res = await fetch(`http://localhost:4000/patches/${createdPatch.id}/deploy`, { method: 'POST' });
                     if (res.ok) {
-                      alert('🚀 Draft patch deployed to live website!');
+                      alert('Draft patch deployed to live website!');
                       window.location.reload();
                     }
                   } catch (e: any) {
                     alert(`Deploy failed: ${e.message}`);
                   }
                 }}
-                className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors"
+                className="inline-flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium shadow-sm transition-colors"
               >
-                🚀 Deploy to Live Store
+                Deploy to Live Store
               </button>
             </div>
           )}

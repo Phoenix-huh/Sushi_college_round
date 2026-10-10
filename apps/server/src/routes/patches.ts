@@ -109,6 +109,57 @@ export async function patchRoutes(app: FastifyInstance) {
     }
   });
 
+  // PUT /patches/:id (Update/edit a draft patch)
+  app.put("/patches/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const body = request.body as Partial<Patch>;
+    const now = new Date().toISOString();
+
+    try {
+      const supabase = getSupabaseAdmin();
+      const updates: Record<string, unknown> = { updated_at: now };
+      if (body.change) updates.change = body.change;
+      if (body.anchors) updates.anchors = body.anchors;
+      if (body.status) updates.status = body.status;
+
+      const { data, error } = await supabase
+        .from("patches")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      await supabase.from("audit_events").insert({
+        actor_id: DEV_ID,
+        event_type: "patch_updated",
+        entity_id: id,
+        details: { updates },
+      });
+
+      return reply.send(data);
+    } catch {
+      let updated: Patch | null = null;
+      localPatches = localPatches.map((p) => {
+        if (p.id === id) {
+          updated = {
+            ...p,
+            change: body.change || p.change,
+            anchors: body.anchors || p.anchors,
+            status: body.status || p.status,
+            updated_at: now,
+          };
+          return updated;
+        }
+        return p;
+      });
+
+      if (!updated) return reply.code(404).send({ error: "Patch not found" });
+      return reply.send(updated);
+    }
+  });
+
   // POST /patches (Draft patch creation with validation & audit event)
   app.post("/patches", async (request, reply) => {
     const parsed = CreatePatchSchema.safeParse(request.body);
