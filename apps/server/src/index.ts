@@ -13,7 +13,7 @@ const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:5173").split
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || "";
 
 const hasSupabase = supabaseUrl.length > 0 && supabaseServiceKey.length > 0;
 

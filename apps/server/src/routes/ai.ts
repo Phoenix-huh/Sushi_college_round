@@ -1,24 +1,33 @@
-import type { FastifyInstance } from 'fastify';
-import { getSupabaseAdmin, createUserClient } from '../index.js';
-import { generatePatchFromInstruction } from '../services/ai.js';
-import { z } from 'zod';
+import type { FastifyInstance } from "fastify";
+import { getSupabaseAdmin, createUserClient } from "../index.js";
+import { generatePatchFromInstruction } from "../services/ai.js";
+import { DEV_ID, DEMO_PATCHES, DEMO_AUDIT_EVENTS } from "../seed.js";
+import type { Patch, AuditEvent } from "@patchwork/shared";
+import { z } from "zod";
+import crypto from "crypto";
 
 const AIPatchRequestSchema = z.object({
-  instruction: z.string().min(5).max(500),
-  element_context: z.string(),
-  target_url: z.string().url(),
+  instruction: z.string().min(2).max(500),
+  element_context: z.string().optional().default('<button id="checkout-btn">Checkout</button>'),
+  target_url: z.string().optional().default("http://localhost:4100/"),
   author_id: z.string().uuid().optional(),
 });
 
 export async function aiRoutes(app: FastifyInstance) {
   // POST /ai/patch — NL instruction → validated draft patch (never auto-applied)
-  app.post('/ai/patch', async (request, reply) => {
-    const token = request.headers.authorization?.replace('Bearer ', '');
-    if (!token) return reply.code(401).send({ error: 'Missing token' });
+  app.post("/ai/patch", async (request, reply) => {
+    let actorId = DEV_ID;
+    const token = request.headers.authorization?.replace("Bearer ", "");
 
-    const client = createUserClient(token);
-    const { data: user, error: userError } = await client.auth.getUser();
-    if (userError || !user?.user) return reply.code(401).send({ error: 'Invalid token' });
+    if (token) {
+      try {
+        const client = createUserClient(token);
+        const { data: user } = await client.auth.getUser();
+        if (user?.user) actorId = user.user.id;
+      } catch {
+        // Fall back to DEV_ID
+      }
+    }
 
     const parsed = AIPatchRequestSchema.safeParse(request.body);
     if (!parsed.success) {
@@ -27,39 +36,59 @@ export async function aiRoutes(app: FastifyInstance) {
 
     const { instruction, element_context, target_url } = parsed.data;
 
-    // Generate draft patch from AI
+    // Generate draft patch (either via Gemini API if key is present, or heuristic NL generator)
     let generatedPatch;
     try {
-      generatedPatch = await generatePatchFromInstruction(instruction, element_context);
+      generatedPatch = await generatePatchFromInstruction(instruction, element_context, target_url);
     } catch (e: any) {
-      return reply.code(422).send({ error: 'AI generation failed: ' + e.message });
+      return reply.code(422).send({ error: "Patch generation failed: " + e.message });
     }
 
-    // Ensure target_url is set from request
-    generatedPatch.target_url = target_url;
+    const patchId = crypto.randomUUID();
+    const now = new Date().toISOString();
 
-    // Save as a DRAFT (never auto-applied, requires reviewer approval)
-    const supabase = getSupabaseAdmin();
-    const { data: patch, error: patchErr } = await supabase
-      .from('patches')
-      .insert({
-        ...generatedPatch,
-        author_id: user.user.id,
-        status: 'draft',
-      })
-      .select()
-      .single();
+    const draftPatch: Patch = {
+      id: patchId,
+      ...generatedPatch,
+      author_id: actorId,
+      status: "draft",
+      created_at: now,
+      updated_at: now,
+    };
 
-    if (patchErr) return reply.code(500).send({ error: patchErr.message });
+    // Attempt to persist in Supabase, or fall back to local in-memory store
+    try {
+      const supabase = getSupabaseAdmin();
+      const { data: patch, error: patchErr } = await supabase
+        .from("patches")
+        .insert(draftPatch)
+        .select()
+        .single();
 
-    // Audit event
-    await supabase.from('audit_events').insert({
-      actor_id: user.user.id,
-      event_type: 'patch_created',
-      entity_id: patch.id,
-      details: { source: 'ai', instruction },
-    });
+      if (patchErr) throw patchErr;
 
-    return reply.send({ draft: patch, instruction });
+      await supabase.from("audit_events").insert({
+        actor_id: actorId,
+        event_type: "patch_created",
+        entity_id: patchId,
+        details: { source: "ai", instruction },
+      });
+
+      return reply.send({ draft: patch, instruction });
+    } catch {
+      // Local fallback
+      DEMO_PATCHES.unshift(draftPatch);
+      const auditEvt: AuditEvent = {
+        id: crypto.randomUUID(),
+        actor_id: actorId,
+        event_type: "patch_created",
+        entity_id: patchId,
+        details: { source: "ai", instruction },
+        created_at: now,
+      };
+      DEMO_AUDIT_EVENTS.unshift(auditEvt);
+
+      return reply.send({ draft: draftPatch, instruction });
+    }
   });
 }

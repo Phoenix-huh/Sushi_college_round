@@ -83,7 +83,7 @@ export function Patches() {
       <h1 className="text-3xl font-bold tracking-tight">Patches</h1>
 
       {/* Natural language patch prompt */}
-      <NLPromptBox />
+      <NLPromptBox onCreated={(newPatch) => setPatches((prev) => [newPatch, ...prev])} />
 
       <div className="bg-white rounded-lg border shadow-sm">
         <table className="w-full text-sm text-left">
@@ -178,10 +178,10 @@ function ScoreBreakdown({ details }: { details: Record<string, unknown> }) {
   );
 }
 
-function NLPromptBox() {
+function NLPromptBox({ onCreated }: { onCreated?: (patch: Patch) => void }) {
   const [instruction, setInstruction] = useState('');
-  const [context, setContext] = useState('');
-  const [url, setUrl] = useState('http://localhost:5174');
+  const [context, setContext] = useState('<button id="checkout-btn" class="btn-checkout">Checkout</button>');
+  const [url, setUrl] = useState('http://localhost:4100/');
   const [status, setStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [result, setResult] = useState<string | null>(null);
 
@@ -202,7 +202,7 @@ function NLPromptBox() {
         },
         body: JSON.stringify({
           instruction,
-          element_context: context || '<button id="checkout">Checkout</button>',
+          element_context: context || '<button id="checkout-btn">Checkout</button>',
           target_url: url,
         }),
       });
@@ -213,8 +213,11 @@ function NLPromptBox() {
       }
 
       const data = await res.json();
-      setResult(`✅ Draft patch created: ${data.draft?.id}`);
+      setResult(`✅ Draft patch created: ${data.draft?.id ? data.draft.id.slice(0, 8) + '...' : 'Success'}`);
       setStatus('done');
+      if (data.draft && onCreated) {
+        onCreated(data.draft);
+      }
     } catch (e: any) {
       setResult(`❌ ${e.message}`);
       setStatus('error');
