@@ -1,287 +1,128 @@
 import type { FastifyInstance } from "fastify";
-import { getSupabaseAdmin, createUserClient } from "../index.js";
-import { CreatePatchSchema, type Patch, type AuditEvent } from "@patchwork/shared";
-import { detectConflicts } from "../services/conflicts.js";
-import {
-  DEMO_PATCHES,
-  DEMO_AUDIT_EVENTS,
-  DEV_ID,
-} from "../seed.js";
 import crypto from "crypto";
+import { z } from "zod";
+import { CreatePatchSchema, PatchChangeSchema, type Patch } from "@patchwork/shared";
+import * as store from "../store.js";
+import { resolveActor } from "../auth.js";
+import { detectConflicts } from "../services/conflicts.js";
+import { deployPatch, undeployPatch, getLiveState } from "../services/deploy.js";
 
-// In-memory fallback cache if Supabase is offline
-let localPatches: Patch[] = [...DEMO_PATCHES];
-let localAuditEvents: AuditEvent[] = [...DEMO_AUDIT_EVENTS];
+const UpdatePatchSchema = z.object({
+  change: PatchChangeSchema.optional(),
+  anchors: z.object({ cssSelector: z.string().min(1) }).passthrough().optional(),
+  status: z.enum(["draft", "approved", "live", "broken", "healed"]).optional(),
+});
 
 export async function patchRoutes(app: FastifyInstance) {
-  // GET /patches
-  app.get("/patches", async (request, reply) => {
-    try {
-      const supabase = getSupabaseAdmin();
-      const { data, error } = await supabase
-        .from("patches")
-        .select("*")
-        .order("created_at", { ascending: false });
+  app.get("/patches", async () => store.listPatches());
 
-      if (error) throw error;
-      return reply.send(data || []);
-    } catch {
-      // Graceful offline fallback
-      return reply.send(localPatches);
-    }
-  });
-
-  // GET /patches/:id
   app.get("/patches/:id", async (request, reply) => {
     const { id } = request.params as { id: string };
-    try {
-      const supabase = getSupabaseAdmin();
-      const { data, error } = await supabase.from("patches").select("*").eq("id", id).single();
-      if (error && error.code !== "PGRST116") throw error;
-      if (data) return reply.send(data);
-    } catch {
-      // fallback
-    }
-    const found = localPatches.find((p) => p.id === id);
-    if (!found) return reply.code(404).send({ error: "Patch not found" });
-    return reply.send(found);
+    const patch = await store.getPatch(id);
+    return patch ?? reply.code(404).send({ error: "Patch not found" });
   });
 
-  // POST /patches/:id/deploy (Directly deploy a draft patch to live store)
-  app.post("/patches/:id/deploy", async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const now = new Date().toISOString();
-
-    try {
-      const supabase = getSupabaseAdmin();
-      // Update patch status to live
-      await supabase.from("patches").update({ status: "live", updated_at: now }).eq("id", id);
-
-      const { data: lastVersion } = await supabase
-        .from("versions")
-        .select("number")
-        .order("number", { ascending: false })
-        .limit(1)
-        .single();
-
-      const nextNumber = (lastVersion?.number || 0) + 1;
-
-      const { data: version, error: vErr } = await supabase
-        .from("versions")
-        .insert({
-          number: nextNumber,
-          patch_ids: [id],
-          created_by: DEV_ID,
-          verification_status: "passed",
-        })
-        .select()
-        .single();
-
-      if (vErr) throw vErr;
-
-      // Mark old deployments inactive
-      await supabase.from("deployments").update({ is_live: false }).eq("is_live", true);
-
-      // Create new live deployment
-      const { data: deployment, error: dErr } = await supabase
-        .from("deployments")
-        .insert({
-          version_id: version.id,
-          is_live: true,
-          canary_percent: 100,
-        })
-        .select()
-        .single();
-
-      if (dErr) throw dErr;
-
-      await supabase.from("audit_events").insert({
-        actor_id: DEV_ID,
-        event_type: "deployment_created",
-        entity_id: deployment.id,
-        details: { patch_id: id, version_number: version.number },
-      });
-
-      return reply.send({ success: true, version, deployment });
-    } catch {
-      localPatches = localPatches.map((p) => (p.id === id ? { ...p, status: "live" } : p));
-      return reply.send({ success: true, message: "Deployed locally" });
-    }
-  });
-
-  // PUT /patches/:id (Update/edit a draft patch)
-  app.put("/patches/:id", async (request, reply) => {
-    const { id } = request.params as { id: string };
-    const body = request.body as Partial<Patch>;
-    const now = new Date().toISOString();
-
-    try {
-      const supabase = getSupabaseAdmin();
-      const updates: Record<string, unknown> = { updated_at: now };
-      if (body.change) updates.change = body.change;
-      if (body.anchors) updates.anchors = body.anchors;
-      if (body.status) updates.status = body.status;
-
-      const { data, error } = await supabase
-        .from("patches")
-        .update(updates)
-        .eq("id", id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await supabase.from("audit_events").insert({
-        actor_id: DEV_ID,
-        event_type: "patch_updated",
-        entity_id: id,
-        details: { updates },
-      });
-
-      return reply.send(data);
-    } catch {
-      let updated: Patch | null = null;
-      localPatches = localPatches.map((p) => {
-        if (p.id === id) {
-          updated = {
-            ...p,
-            change: body.change || p.change,
-            anchors: body.anchors || p.anchors,
-            status: body.status || p.status,
-            updated_at: now,
-          };
-          return updated;
-        }
-        return p;
-      });
-
-      if (!updated) return reply.code(404).send({ error: "Patch not found" });
-      return reply.send(updated);
-    }
-  });
-
-  // POST /patches (Draft patch creation with validation & audit event)
   app.post("/patches", async (request, reply) => {
     const parsed = CreatePatchSchema.safeParse(request.body);
-    if (!parsed.success) {
-      return reply.code(400).send({ error: parsed.error });
-    }
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error });
 
-    const patchId = crypto.randomUUID();
+    const actor = await resolveActor(request.headers.authorization);
     const now = new Date().toISOString();
-    const newPatch: Patch = {
-      id: patchId,
+    const patch: Patch = {
+      id: crypto.randomUUID(),
       ...parsed.data,
+      author_id: parsed.data.author_id || actor,
       status: "draft",
       created_at: now,
       updated_at: now,
     };
-
-    let actorId = parsed.data.author_id || DEV_ID;
-
-    // Check optional bearer token
-    const token = request.headers.authorization?.replace("Bearer ", "");
-    if (token) {
-      try {
-        const client = createUserClient(token);
-        const { data: user } = await client.auth.getUser();
-        if (user?.user) actorId = user.user.id;
-      } catch {
-        // use actorId fallback
-      }
-    }
-
-    try {
-      const supabase = getSupabaseAdmin();
-      const { data, error } = await supabase.from("patches").insert(newPatch).select().single();
-      if (error) throw error;
-
-      await supabase.from("audit_events").insert({
-        actor_id: actorId,
-        event_type: "patch_created",
-        entity_id: patchId,
-        details: { selector: newPatch.anchors.cssSelector, change: newPatch.change },
-      });
-
-      return reply.code(201).send(data);
-    } catch {
-      // Save locally
-      localPatches.unshift(newPatch);
-      const auditEvt: AuditEvent = {
-        id: crypto.randomUUID(),
-        actor_id: actorId,
-        event_type: "patch_created",
-        entity_id: patchId,
-        details: { selector: newPatch.anchors.cssSelector, change: newPatch.change },
-        created_at: now,
-      };
-      localAuditEvents.unshift(auditEvt);
-
-      return reply.code(201).send(newPatch);
-    }
+    const saved = await store.insertPatch(patch);
+    await store.addAudit({
+      actor_id: actor,
+      event_type: "patch_created",
+      entity_id: saved.id,
+      details: { selector: saved.anchors.cssSelector, change: saved.change },
+    });
+    return reply.code(201).send(saved);
   });
 
-  // GET /conflicts
-  app.get("/conflicts", async (request, reply) => {
-    let patches = localPatches;
-    try {
-      const supabase = getSupabaseAdmin();
-      const { data } = await supabase.from("patches").select("*");
-      if (data?.length) patches = data as Patch[];
-    } catch {
-      // use local
-    }
+  // Edit a patch. If it is live, visitors get the edited version automatically
+  // because the live version references the patch by id.
+  app.put("/patches/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const parsed = UpdatePatchSchema.safeParse(request.body);
+    if (!parsed.success) return reply.code(400).send({ error: parsed.error });
 
-    const result = detectConflicts(patches);
-    return reply.send(result);
+    const existing = await store.getPatch(id);
+    if (!existing) return reply.code(404).send({ error: "Patch not found" });
+
+    const updates: Partial<Patch> = {};
+    if (parsed.data.change) updates.change = parsed.data.change;
+    if (parsed.data.anchors) updates.anchors = { ...existing.anchors, ...parsed.data.anchors };
+    if (parsed.data.status) updates.status = parsed.data.status;
+
+    const updated = await store.updatePatch(id, updates);
+    await store.addAudit({
+      actor_id: await resolveActor(request.headers.authorization),
+      event_type: "patch_updated",
+      entity_id: id,
+      details: { updates },
+    });
+    return updated;
   });
 
-  // POST /conflicts/resolve
+  app.delete("/patches/:id", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const actor = await resolveActor(request.headers.authorization);
+    const existing = await store.getPatch(id);
+    if (!existing) return reply.code(404).send({ error: "Patch not found" });
+
+    await undeployPatch(id, actor); // no-op when the patch is not live
+    await store.deletePatch(id);
+    return { ok: true };
+  });
+
+  // Put one patch live (on top of what is already live)
+  app.post("/patches/:id/deploy", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const result = await deployPatch(id, await resolveActor(request.headers.authorization));
+    if (!result) return reply.code(404).send({ error: "Patch not found" });
+    return { success: true, ...result };
+  });
+
+  // Take one patch off the live site (keeps every other live patch)
+  app.post("/patches/:id/undeploy", async (request, reply) => {
+    const { id } = request.params as { id: string };
+    const result = await undeployPatch(id, await resolveActor(request.headers.authorization));
+    if (!result) return reply.code(409).send({ error: "Patch is not live" });
+    return { success: true, ...result };
+  });
+
+  // Patches that were discarded in a resolution (status "broken") no longer count as conflicting.
+  app.get("/conflicts", async () =>
+    detectConflicts((await store.listPatches()).filter((p) => p.status !== "broken")),
+  );
+
   app.post("/conflicts/resolve", async (request, reply) => {
-    const { keptPatchId, discardedPatchId } = request.body as {
-      keptPatchId: string;
-      discardedPatchId: string;
+    const { keptPatchId, discardedPatchId } = (request.body ?? {}) as {
+      keptPatchId?: string;
+      discardedPatchId?: string;
     };
+    if (!keptPatchId || !discardedPatchId) return reply.code(400).send({ error: "Missing patch IDs" });
 
-    if (!keptPatchId || !discardedPatchId) {
-      return reply.code(400).send({ error: "Missing patch IDs" });
-    }
+    const live = await getLiveState();
+    const kept = await store.updatePatch(keptPatchId, { status: live.patches.some((p) => p.id === keptPatchId) ? "live" : "approved" });
+    await store.updatePatch(discardedPatchId, { status: "broken" });
+    if (!kept) return reply.code(404).send({ error: "Kept patch not found" });
 
-    try {
-      const supabase = getSupabaseAdmin();
-      await supabase.from("patches").update({ status: "approved" }).eq("id", keptPatchId);
-      await supabase.from("patches").update({ status: "broken" }).eq("id", discardedPatchId);
-
-      await supabase.from("audit_events").insert({
-        actor_id: DEV_ID,
-        event_type: "patch_approved",
-        entity_id: keptPatchId,
-        details: { resolved_against: discardedPatchId, action: "merged" },
-      });
-    } catch {
-      localPatches = localPatches.map((p) => {
-        if (p.id === keptPatchId) return { ...p, status: "approved" };
-        if (p.id === discardedPatchId) return { ...p, status: "broken" };
-        return p;
-      });
-    }
-
-    return reply.send({ ok: true, kept: keptPatchId, discarded: discardedPatchId });
+    await store.addAudit({
+      actor_id: await resolveActor(request.headers.authorization),
+      event_type: "patch_approved",
+      entity_id: keptPatchId,
+      details: { resolved_against: discardedPatchId, action: "merged" },
+    });
+    return { ok: true, kept: keptPatchId, discarded: discardedPatchId };
   });
 
-  // GET /audit
-  app.get("/audit", async (request, reply) => {
-    try {
-      const supabase = getSupabaseAdmin();
-      const { data, error } = await supabase
-        .from("audit_events")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return reply.send(data || []);
-    } catch {
-      return reply.send(localAuditEvents);
-    }
-  });
+  app.get("/audit", async () => store.listAudit());
 }

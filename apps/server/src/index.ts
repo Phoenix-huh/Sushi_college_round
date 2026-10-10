@@ -1,43 +1,11 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import dotenv from "dotenv";
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
-const PORT = Number(process.env.SERVER_PORT) || 4000;
-const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:5173,http://localhost:4100").split(",");
-
-const supabaseUrl = process.env.SUPABASE_URL || "";
-const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || "";
-
-const hasSupabase = supabaseUrl.length > 0 && supabaseServiceKey.length > 0;
-
-// Lazy-initialized admin client for server-side operations
-let _supabaseAdmin: SupabaseClient | null = null;
-export function getSupabaseAdmin(): SupabaseClient {
-  if (!_supabaseAdmin) {
-    if (!hasSupabase) {
-      throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_KEY in .env");
-    }
-    _supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-  }
-  return _supabaseAdmin;
-}
-
-// Create a request-scoped client from the user's token
-export function createUserClient(token: string) {
-  if (!hasSupabase) {
-    throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY in .env");
-  }
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-}
+import { PORT, hasSupabase } from "./db.js";
+import { initStore, storeMode } from "./store.js";
+import { deployRoutes } from "./routes/deploy.js";
+import { verifyRoutes } from "./routes/verify.js";
+import { aiRoutes } from "./routes/ai.js";
+import { patchRoutes } from "./routes/patches.js";
 
 const app = Fastify({ logger: true });
 
@@ -47,55 +15,68 @@ await app.register(cors, {
   credentials: true,
 });
 
-import { deployRoutes } from "./routes/deploy.js";
-import { verifyRoutes } from "./routes/verify.js";
-import { aiRoutes } from "./routes/ai.js";
-import { patchRoutes } from "./routes/patches.js";
-
-// Root endpoint
-app.get("/", async (request, reply) => {
-  return {
-    name: "Patchwork Server",
-    status: "online",
-    message: "Hotfix the Internet — API is active and ready",
-    timestamp: new Date().toISOString(),
-    endpoints: {
-      health: "GET /health",
-      patches: "GET /patches",
-      create_patch: "POST /patches",
-      deployments: "GET /deployments",
-      live_deployment: "GET /deployments/live",
-      conflicts: "GET /conflicts",
-      audit: "GET /audit",
-      verify: "POST /verify",
-      deploy: "POST /deploy",
-      rollback: "POST /rollback",
-      ai_patch: "POST /ai/patch",
-    },
-  };
+// Buttons like Deploy / Rollback POST with no body. Fastify rejects an empty body
+// when the content-type is JSON, so accept it and treat it as "no body".
+app.addContentTypeParser("application/json", { parseAs: "string" }, (_req, body, done) => {
+  try {
+    const text = typeof body === "string" ? body : body.toString();
+    done(null, text.trim() ? JSON.parse(text) : undefined);
+  } catch (e: any) {
+    e.statusCode = 400;
+    done(e, undefined);
+  }
 });
 
-// Health check
-app.get("/health", async () => {
-  return {
-    ok: true,
-    timestamp: new Date().toISOString(),
-    supabase: hasSupabase ? "connected" : "not configured",
-  };
-});
+await initStore(app.log);
+
+app.get("/", async () => ({
+  name: "Patchwork Server",
+  status: "online",
+  store: storeMode,
+  timestamp: new Date().toISOString(),
+  endpoints: {
+    versions: "GET /versions",
+    health: "GET /health",
+    patches: "GET /patches",
+    create_patch: "POST /patches",
+    edit_patch: "PUT /patches/:id",
+    delete_patch: "DELETE /patches/:id",
+    deploy_patch: "POST /patches/:id/deploy",
+    undeploy_patch: "POST /patches/:id/undeploy",
+    deployments: "GET /deployments",
+    live_deployment: "GET /deployments/live",
+    activate_deployment: "POST /deployments/:id/activate",
+    conflicts: "GET /conflicts",
+    audit: "GET /audit",
+    verify: "POST /verify",
+    deploy: "POST /deploy",
+    rollback: "POST /rollback",
+    ai_patch: "POST /ai/patch",
+  },
+}));
+
+app.get("/health", async () => ({
+  ok: true,
+  timestamp: new Date().toISOString(),
+  supabase: hasSupabase ? "configured" : "not configured",
+  store: storeMode,
+}));
 
 app.register(deployRoutes);
 app.register(verifyRoutes);
 app.register(aiRoutes);
 app.register(patchRoutes);
 
-if (!hasSupabase) {
-  console.warn("⚠️  Supabase not configured — server will run but DB routes won't work. Set vars in .env");
-}
+// Never leak internals, but never swallow errors silently either.
+app.setErrorHandler((err: any, _req, reply) => {
+  app.log.error(err);
+  const status = err?.statusCode && err.statusCode < 500 ? err.statusCode : 500;
+  reply.code(status).send({ error: err?.message ?? "Internal error" });
+});
 
 try {
   await app.listen({ port: PORT, host: "0.0.0.0" });
-  console.log(`🚀 Patchwork server running on http://localhost:${PORT}`);
+  console.log(`Patchwork server running on http://localhost:${PORT} (store: ${storeMode})`);
 } catch (err) {
   app.log.error(err);
   process.exit(1);

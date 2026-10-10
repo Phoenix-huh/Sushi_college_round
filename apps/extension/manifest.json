@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "Patchwork",
+  "version": "1.0.0",
+  "description": "Hotfix the internet without redeploying.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "background": {
+    "service_worker": "src/background.ts",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["src/content/picker.ts", "src/content/editor.ts", "src/content/healer.ts", "src/content/preview.ts", "src/content/canary.ts", "src/content/applier.ts"],
+      "run_at": "document_idle"
+    }
+  ]
+}

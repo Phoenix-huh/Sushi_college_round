@@ -1,0 +1,2 @@
+// Stub picker
+export {};
