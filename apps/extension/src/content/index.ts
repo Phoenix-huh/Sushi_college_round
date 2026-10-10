@@ -8,6 +8,7 @@ import { buildAnchor } from './anchor';
 import { createApplier } from './applier';
 import { attemptHeal } from './healer';
 import { startPicker } from './picker';
+import { openEditor } from './editor';
 
 const applier = createApplier({
   doc: document,
@@ -17,26 +18,43 @@ const applier = createApplier({
   heal: (patch, root) => attemptHeal(patch as Parameters<typeof attemptHeal>[0], root),
 });
 
+console.log('[Patchwork] content script loaded');
+
 applier.start().catch((e: unknown) => console.warn('[Patchwork] could not start:', e));
 
 // ---------- picker (started from the side panel) ----------
 
 let picker: { stop(): void } | null = null;
+let activeEditor: { close(): void } | null = null;
 
 function beginPicking() {
   if (picker) return; // already picking
+  activeEditor?.close();
+  activeEditor = null;
+
   picker = startPicker({
     doc: document,
     onPick: (element) => {
       picker = null;
       try {
+        const anchor = buildAnchor(element);
         const pick: Pick = {
-          anchor: buildAnchor(element),
+          anchor,
           tag: element.tagName.toLowerCase(),
           pageUrl: location.href,
           pickedAt: Date.now(),
         };
         send({ type: 'PICK_RESULT', pick }).catch((e: unknown) => console.warn('[Patchwork] could not report the pick:', e));
+
+        // Open floating editor panel on element
+        activeEditor = openEditor({
+          doc: document,
+          element,
+          anchor,
+          onClose: () => {
+            activeEditor = null;
+          },
+        });
       } catch (e) {
         console.warn('[Patchwork] could not build an anchor for that element:', e);
       }

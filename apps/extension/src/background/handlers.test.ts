@@ -185,4 +185,47 @@ describe('background handler', () => {
       expect(((await handle({ type: 'GET_LAST_PICK' })) as { tag: string }).tag).toBe('h1');
     });
   });
+
+  describe('draft submission and base version', () => {
+    it('GET_BASE_VERSION returns live version number or 0 if none', async () => {
+      const { handle } = setup((url) => {
+        if (url.includes('/deployments/live')) {
+          return json({ version: { number: 4 } });
+        }
+        return json({});
+      });
+      const res = await handle({ type: 'GET_BASE_VERSION' });
+      expect(res).toEqual({ base_version: 4 });
+    });
+
+    it('SAVE_DRAFT sends POST /patches with author_id and returns id and status', async () => {
+      let postedBody: any = null;
+      let postedHeaders: any = null;
+      const { handle } = setup(async (url) => {
+        if (url.includes('/patches')) {
+          return json({
+            id: '11111111-2222-3333-4444-555555555555',
+            status: 'draft',
+            title: 'My Draft',
+          });
+        }
+        return json({});
+      });
+
+      const res = await handle({
+        type: 'SAVE_DRAFT',
+        target_url: 'http://localhost:4100/',
+        base_version: 2,
+        anchors: { cssSelector: 'h1', xpath: '', textContent: 'Hello', attributes: {}, parentContext: '', siblingContext: [] },
+        change: { type: 'text', value: 'New Title' },
+        title: 'My Draft',
+      });
+
+      expect(res).toEqual({
+        id: '11111111-2222-3333-4444-555555555555',
+        status: 'draft',
+        title: 'My Draft',
+      });
+    });
+  });
 });

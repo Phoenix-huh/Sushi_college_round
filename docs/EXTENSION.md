@@ -1,8 +1,25 @@
 # Patchwork Chrome extension
 
-Status: **Phase 3** (element picker and anchor builder). The extension loads, opens a side panel
-that shows whether the Patchwork server is reachable, and applies the live patches to every page whose origin
-matches the patch's `target_url`, and lets you pick an element and see the anchor that finds it again. Editor and full healing arrive in later phases; this file grows with them.
+Status: **Phase 4** (element picker, editor panel, live preview, and draft submission). The extension loads, opens a side panel
+that shows whether the Patchwork server is reachable, applies live patches, lets you pick an element, and opens a floating editor panel on the selected element to preview and save drafts directly to the server.
+
+## Floating Editor Panel & Drafts (Phase 4)
+
+When an element is picked:
+- A floating editor panel opens in a closed shadow root on `<html>` positioned near the element.
+- Supported patch types:
+  - **Text**: modifies element `textContent`.
+  - **Style**: accepts standard CSS text (e.g. `color: #4f46e5; font-weight: bold;`) or JSON.
+  - **Visibility**: toggle element between hidden (`display: none`) and visible.
+  - **Script**: allows authoring a JavaScript snippet (e.g. `target.classList.add(...)`). A prominent warning indicates that content scripts do not evaluate JavaScript locally, and scripts will execute only in the live demo runtime once approved and deployed.
+- **Live Local Preview**:
+  - The "Preview" button applies the change immediately using `@patchwork/shared` `applyChange()` and stores the undo function.
+  - "Revert" restores the element to its original state.
+- **Draft Submission**:
+  - Clicking "Save Draft" sends a `SAVE_DRAFT` message to the background worker.
+  - Background worker obtains the live `base_version` and sends `POST /patches` to the Patchwork server with `status: 'draft'` and the user's `author_id`.
+  - The server records an `audit_events` row for `patch_created`.
+  - Upon successful save, the editor reverts the local preview (since changes remain drafts until approved/deployed) and closes. The new draft appears in the Patchwork Dashboard table.
 
 ## Build and load it (Chrome / Chromium 114 or newer)
 

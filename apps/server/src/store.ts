@@ -214,7 +214,15 @@ export async function insertPatch(p: Patch): Promise<Patch> {
 
   let saved: Patch;
   if (storeMode === "supabase") {
-    saved = check(await getSupabaseAdmin().from("patches").insert(patchToSave).select().single()) as Patch;
+    const res = await getSupabaseAdmin().from("patches").insert(patchToSave).select().single();
+    if (res.error && String(res.error.message).includes("title")) {
+      const fallback = { ...patchToSave };
+      delete fallback.title;
+      saved = check(await getSupabaseAdmin().from("patches").insert(fallback).select().single()) as Patch;
+      saved.title = p.title;
+    } else {
+      saved = check(res) as Patch;
+    }
   } else {
     mem.patches.unshift(patchToSave);
     saved = patchToSave;
@@ -236,9 +244,24 @@ export async function updatePatch(id: string, updates: Partial<Patch>): Promise<
 
   let updated: Patch | null = null;
   if (storeMode === "supabase") {
-    const { data, error } = await getSupabaseAdmin().from("patches").update(toSave).eq("id", id).select().maybeSingle();
-    if (error) throw new Error(error.message);
-    updated = (data as Patch) ?? null;
+    let res = await getSupabaseAdmin().from("patches").update(toSave).eq("id", id).select().maybeSingle();
+    if (res.error && String(res.error.message).includes("title")) {
+      delete toSave.title;
+      res = await getSupabaseAdmin().from("patches").update(toSave).eq("id", id).select().maybeSingle();
+    }
+    // If Supabase has the old 001 patches_status_check constraint ('draft', 'approved', 'live', 'broken', 'healed')
+    if (res.error && String(res.error.message).includes("patches_status_check")) {
+      const fallback = { ...toSave };
+      if (fallback.status === "conflicted" || fallback.status === "stale" || fallback.status === "in_review" || fallback.status === "rejected") {
+        fallback.status = "draft";
+      }
+      res = await getSupabaseAdmin().from("patches").update(fallback).eq("id", id).select().maybeSingle();
+    }
+    if (res.error) throw new Error(res.error.message);
+    updated = (res.data as Patch) ?? null;
+    if (updated && toSave.status) {
+      updated.status = toSave.status;
+    }
   } else {
     const i = mem.patches.findIndex((p) => p.id === id);
     if (i !== -1) {

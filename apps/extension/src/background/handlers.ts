@@ -70,6 +70,20 @@ export function createHandler(deps: HandlerDeps) {
       if (dropped > 0) console.warn(`[Patchwork] ignored ${dropped} live patch(es) with an unusable shape`);
       return { signature, patches };
     },
+    GET_BASE_VERSION: async () => {
+      const base_version = await api.getBaseVersion();
+      return { base_version };
+    },
+    SAVE_DRAFT: async (m) => {
+      const res = await api.createPatch({
+        target_url: m.target_url,
+        base_version: m.base_version,
+        anchors: m.anchors,
+        change: m.change,
+        title: m.title,
+      });
+      return { id: res.id, status: res.status, title: res.title };
+    },
   };
 
   /** Handles one validated message. Rejects with an Error whose message is safe to show to the user. */

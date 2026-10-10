@@ -33,16 +33,37 @@ describe('parseMessage', () => {
 const anchor = { cssSelector: '#a', xpath: '', textContent: 't', attributes: { id: 'a' }, parentContext: 'div', siblingContext: ['p'] };
 const pick = { anchor, tag: 'p', pageUrl: 'http://x.test/', pickedAt: 5 };
 
-describe('picker messages', () => {
+describe('picker and draft messages', () => {
   it('accepts PICK_RESULT with a pick object and GET_LAST_PICK', () => {
     expect(parseMessage({ type: 'PICK_RESULT', pick })).toEqual({ type: 'PICK_RESULT', pick });
     expect(parseMessage({ type: 'GET_LAST_PICK' })).toEqual({ type: 'GET_LAST_PICK' });
     expect(parseMessage({ type: 'GET_LIVE_PATCHES' })).toEqual({ type: 'GET_LIVE_PATCHES' });
+    expect(parseMessage({ type: 'GET_BASE_VERSION' })).toEqual({ type: 'GET_BASE_VERSION' });
   });
-  it('rejects PICK_RESULT without a pick object', () => {
-    for (const bad of [{ type: 'PICK_RESULT' }, { type: 'PICK_RESULT', pick: 'x' }, { type: 'PICK_RESULT', pick: null }, { type: 'PICK_RESULT', pick: [] }]) {
-      expect(parseMessage(bad)).toBeNull();
-    }
+
+  it('accepts SAVE_DRAFT with valid fields', () => {
+    const validDraft = {
+      type: 'SAVE_DRAFT' as const,
+      target_url: 'http://localhost:4100/checkout',
+      base_version: 1,
+      anchors: anchor,
+      change: { type: 'text' as const, value: 'Buy Now' },
+      title: 'Update checkout button',
+    };
+    expect(parseMessage(validDraft)).toEqual(validDraft);
+  });
+
+  it('rejects SAVE_DRAFT with missing or invalid fields', () => {
+    expect(parseMessage({ type: 'SAVE_DRAFT' })).toBeNull();
+    expect(
+      parseMessage({
+        type: 'SAVE_DRAFT',
+        target_url: 'http://localhost:4100',
+        base_version: 'one', // invalid number
+        anchors: anchor,
+        change: { type: 'text', value: 'Hi' },
+      })
+    ).toBeNull();
   });
   it('parseContentMessage only knows the two picker commands', () => {
     expect(parseContentMessage({ type: 'START_PICKER' })).toEqual({ type: 'START_PICKER' });

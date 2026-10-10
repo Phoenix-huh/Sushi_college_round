@@ -64,6 +64,19 @@ export interface MessageMap {
   PICK_RESULT: { request: { pick: Pick }; response: Record<never, never> };
   /** The last picked element (chrome.storage.session), or null. */
   GET_LAST_PICK: { request: Record<never, never>; response: Pick | null };
+  /** Current live deployment base version number (0 if none). */
+  GET_BASE_VERSION: { request: Record<never, never>; response: { base_version: number } };
+  /** Save a draft patch to the server. */
+  SAVE_DRAFT: {
+    request: {
+      target_url: string;
+      base_version: number;
+      anchors: PatchAnchor;
+      change: PatchChange;
+      title?: string;
+    };
+    response: { id: string; status: string; title?: string };
+  };
 }
 
 export type MessageType = keyof MessageMap;
@@ -89,6 +102,15 @@ const validators: { [K in MessageType]: (m: Record<string, unknown>) => boolean 
   GET_LIVE_PATCHES: () => true,
   PICK_RESULT: (m) => isRecord(m.pick),
   GET_LAST_PICK: () => true,
+  GET_BASE_VERSION: () => true,
+  SAVE_DRAFT: (m) =>
+    typeof m.target_url === 'string' &&
+    typeof m.base_version === 'number' &&
+    isRecord(m.anchors) &&
+    isRecord(m.change) &&
+    typeof (m.change as { type?: unknown }).type === 'string' &&
+    typeof (m.change as { value?: unknown }).value === 'string' &&
+    (m.title === undefined || typeof m.title === 'string'),
 };
 
 /** Returns the message if it is a well-formed, known message; otherwise null. */

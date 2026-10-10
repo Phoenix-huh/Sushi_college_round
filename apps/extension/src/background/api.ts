@@ -114,6 +114,40 @@ export function createApi(deps: ApiDeps) {
       return { signature: body.signature, patches, dropped: body.patches.length - patches.length };
     },
 
+    /** GET /deployments/live base version number. */
+    async getBaseVersion(): Promise<number> {
+      try {
+        const body = await request<unknown>('GET', '/deployments/live');
+        if (isRecord(body) && isRecord(body.version) && typeof (body.version as { number?: unknown }).number === 'number') {
+          return (body.version as { number: number }).number;
+        }
+      } catch {
+        // Fall back to 0 if server or live deployment isn't ready
+      }
+      return 0;
+    },
+
+    /** POST /patches to create a draft patch. */
+    async createPatch(patch: {
+      target_url: string;
+      base_version: number;
+      anchors: unknown;
+      change: unknown;
+      author_id?: string;
+      title?: string;
+    }): Promise<{ id: string; status: string; title?: string }> {
+      const { authorId } = await deps.getSettings();
+      const payload = {
+        ...patch,
+        author_id: patch.author_id || authorId,
+      };
+      const res = await request<{ id: string; status: string; title?: string }>('POST', '/patches', payload);
+      if (!isRecord(res) || typeof res.id !== 'string') {
+        throw new ApiError('Server response missing patch id', null);
+      }
+      return res;
+    },
+
     /** GET /health. Rejects unless the answer looks like a Patchwork server. */
     async health(): Promise<HealthResponse> {
       const h = await request<{ ok?: unknown; store?: unknown } | undefined>('GET', '/health');
