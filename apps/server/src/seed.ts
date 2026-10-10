@@ -3,8 +3,11 @@ import dotenv from "dotenv";
 import crypto from "crypto";
 import type { Patch, Version, Deployment, AuditEvent } from "@patchwork/shared";
 
-dotenv.config({ path: "../../.env" });
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY || "";
 

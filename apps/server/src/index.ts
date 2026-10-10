@@ -3,8 +3,11 @@ import cors from "@fastify/cors";
 import dotenv from "dotenv";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-dotenv.config({ path: "../../.env" });
+import path from "path";
+import { fileURLToPath } from "url";
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 const PORT = Number(process.env.SERVER_PORT) || 4000;
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",");
 
