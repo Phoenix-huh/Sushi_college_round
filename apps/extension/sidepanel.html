@@ -5,14 +5,50 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Patchwork</title>
   <style>
-    body { margin: 0; min-width: 320px; padding: 16px; font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #1e293b; }
-    h1 { margin: 0 0 8px; font-size: 18px; color: #4f46e5; }
-    p { margin: 4px 0; color: #475569; }
+    :root { color-scheme: light; }
+    body { margin: 0; min-width: 320px; padding: 16px; font: 14px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: #1e293b; background: #fff; }
+    h1 { margin: 0 0 12px; font-size: 18px; color: #4f46e5; }
+    h2 { margin: 20px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #64748b; }
+    .conn { display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; }
+    .dot { flex: none; width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; background: #94a3b8; }
+    .dot[data-state="connected"] { background: #16a34a; }
+    .dot[data-state="offline"] { background: #dc2626; }
+    #conn-text { flex: 1; word-break: break-word; }
+    .hint { margin: 4px 0 0; font-size: 12px; color: #64748b; }
+    label { display: block; margin-top: 10px; font-size: 12px; font-weight: 600; color: #475569; }
+    input { box-sizing: border-box; width: 100%; margin-top: 4px; padding: 7px 8px; border: 1px solid #cbd5e1; border-radius: 6px; font: inherit; }
+    input:focus { outline: 2px solid #818cf8; outline-offset: 1px; }
+    button { padding: 7px 12px; border: 0; border-radius: 6px; background: #4f46e5; color: #fff; font: inherit; font-weight: 600; cursor: pointer; }
+    button.secondary { background: #e2e8f0; color: #334155; }
+    button:disabled { opacity: .6; cursor: default; }
+    .row { display: flex; gap: 8px; margin-top: 12px; }
+    #settings-msg { min-height: 1.4em; margin: 8px 0 0; font-size: 12px; }
+    #settings-msg[data-kind="ok"] { color: #15803d; }
+    #settings-msg[data-kind="error"] { color: #b91c1c; }
   </style>
 </head>
 <body>
   <h1>Patchwork</h1>
-  <p id="status">Loading...</p>
+
+  <div class="conn" role="status" aria-live="polite">
+    <span id="conn-dot" class="dot" data-state="checking" aria-hidden="true"></span>
+    <div>
+      <div id="conn-text">Checking connection...</div>
+      <p id="conn-hint" class="hint"></p>
+    </div>
+  </div>
+  <div class="row"><button id="conn-recheck" type="button" class="secondary">Check again</button></div>
+
+  <h2>Settings</h2>
+  <form id="settings-form" novalidate>
+    <label for="serverUrl">Server URL</label>
+    <input id="serverUrl" name="serverUrl" type="text" autocomplete="off" spellcheck="false">
+    <label for="authorId">Author id</label>
+    <input id="authorId" name="authorId" type="text" autocomplete="off" spellcheck="false">
+    <div class="row"><button id="settings-save" type="submit">Save</button></div>
+    <p id="settings-msg" role="status" aria-live="polite"></p>
+  </form>
+
   <script src="sidepanel.js"></script>
 </body>
 </html>

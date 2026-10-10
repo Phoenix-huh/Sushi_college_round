@@ -1,7 +1,8 @@
 # Patchwork Chrome extension
 
-Status: **Phase 0** (skeleton). It loads, opens an empty side panel and injects an empty content
-script. Picker, editor, live-patch applier and healing arrive in later phases; this file grows with them.
+Status: **Phase 1** (settings, typed messages, connection status). The extension loads, opens a side panel
+that shows whether the Patchwork server is reachable, and lets you change the server URL and author id.
+Picker, editor, live-patch applier and healing arrive in later phases; this file grows with them.
 
 ## Build and load it (Chrome / Chromium 114 or newer)
 
@@ -30,6 +31,18 @@ then reload any page you are testing (content scripts are only injected when a p
 Always build before loading: `dist/` is generated and git-ignored. `npx tsc --build` writes to
 `apps/extension/.tsc-out`, never to `dist`, so the two do not interfere.
 
+## Settings
+
+Set in the side panel, stored in `chrome.storage.local`:
+
+| Setting | Default | Notes |
+| --- | --- | --- |
+| Server URL | `http://localhost:4000` | Must be `http://` or `https://`. Any path or trailing slash is dropped. |
+| Author id | `00000000-0000-0000-0000-000000000001` | Must be a UUID. Sent as the `x-actor-id` header and (from Phase 4) as the patch `author_id`. |
+
+No login is needed; the server falls back to the demo developer. A change applies immediately (the
+background worker reads settings on every request).
+
 ## Where to look for errors
 
 The extension has three separate consoles:
@@ -41,6 +54,8 @@ The extension has three separate consoles:
 | Side panel | Right-click inside the side panel -> **Inspect**. |
 
 The service worker is stopped by Chrome when idle. Its console may then show "inactive"; that is normal.
+When the server is down, Chrome itself may log `net::ERR_CONNECTION_REFUSED` in the service worker
+console. That is the browser's network log, not an extension error: the panel shows the reason in plain words.
 
 ## Layout of `apps/extension`
 
@@ -48,35 +63,72 @@ The service worker is stopped by Chrome when idle. Its console may then show "in
 | --- | --- |
 | `manifest.json` | The MV3 manifest, copied unchanged into `dist`. Paths in it point at **built** files. |
 | `build.mjs` | esbuild script. Bundles each entry into one self-contained file and fails the build if the manifest references a file that was not produced. |
-| `sidepanel.html` | The side panel page. |
-| `src/background/index.ts` | Service worker -> `dist/background.js` |
+| `sidepanel.html` | The side panel page (static skeleton; the script fills it in with `textContent`, never `innerHTML`). |
+| `src/messages.ts` | **The** message protocol shared by every part: message types, runtime validation, and `send()`. |
+| `src/settings.ts` | Defaults, validation, load/save. |
+| `src/background/index.ts` | Service worker -> `dist/background.js`. Registers the message listener. |
+| `src/background/handlers.ts` | What the worker does for each message (dependencies injected, so it is unit-tested without Chrome). |
+| `src/background/api.ts` | Server client: `x-actor-id` header, 5 s timeout, readable errors. |
 | `src/content/index.ts` | Content script -> `dist/content.js` |
 | `src/sidepanel/index.ts` | Side panel script -> `dist/sidepanel.js` |
 
 Other files under `src/content/` (`applier`, `healer`, `preview`, `canary`, `picker`, `editor`) are earlier
 stubs that are **not built yet**. They are replaced in the phases that implement them.
 
-## Phase 0: manual checklist
+### Rules the code follows
+
+- Content scripts and the side panel never call the server. They send a message (`send({ type: ... })`) and the
+  background worker calls the server. To add a message: one entry in `MessageMap`, one validator in `messages.ts`,
+  one handler in `background/handlers.ts`. The compiler rejects a missing handler.
+- MV3 service workers sleep. The worker keeps nothing in variables: settings are in `storage.local`, the last
+  connection result in `storage.session`.
+- Do not call the global `fetch` as a method of another object in the worker ("Illegal invocation"); `index.ts`
+  passes an arrow wrapper for that reason.
+
+## Manual checklists
+
+### Phase 0
 
 | # | Do this | Expect |
 | --- | --- | --- |
 | 1 | Load unpacked as above | A card "Patchwork 0.1.0" with **no** red Errors button and no warnings |
 | 2 | Click the card's **service worker** link | DevTools opens with no red errors |
 | 3 | Open any http(s) page, press F12, look at the Console | `[Patchwork] content script loaded` and no errors; the page looks and behaves as before |
-| 4 | Click the Patchwork toolbar icon | The side panel opens showing "Extension loaded (phase 0 skeleton)." |
+| 4 | Click the Patchwork toolbar icon | The side panel opens with the heading "Patchwork", a connection indicator and a Settings form |
 | 5 | Open a `chrome://` page or the Chrome Web Store | No Patchwork log line (Chrome does not allow extensions there; this is expected) |
+
+### Phase 1
+
+Start the server first: `npm run demo` (or only the server: `npm run dev -w apps/server`).
+
+| # | Do this | Expect |
+| --- | --- | --- |
+| 1 | Reload the extension at `chrome://extensions`, click the toolbar icon | Side panel: **green** dot, "Connected to http://localhost:4000", "Data store: memory" (or "supabase") |
+| 2 | Stop the server (Ctrl+C in its terminal), click **Check again** (or wait up to 5 s) | **Red** dot, "Not connected: Cannot reach http://localhost:4000. Is the Patchwork server running?" |
+| 3 | Start the server again, wait up to 5 s | Dot turns green by itself |
+| 4 | Server URL: type `banana`, click **Save** | Red message "Server URL is not a valid URL...". Close and reopen the panel: the field shows the old good value |
+| 5 | Server URL: type `http://localhost:4000/` (trailing slash), **Save** | "Saved." and the field now shows `http://localhost:4000` |
+| 6 | Author id: type `abc`, **Save** | Red message "Author id must be a UUID..." |
+| 7 | Server URL: type `http://localhost:9`, **Save** | "Saved.", then red dot (nothing listens there). Put `http://localhost:4000` back, **Save**: green |
+| 8 | Close and reopen the panel; also restart Chrome | Settings are still there |
+| 9 | At `chrome://extensions` click **service worker**, leave it ~30 s | It shows "inactive". Open the side panel: it still works (the worker woke up) |
+| 10 | Right-click in the side panel -> Inspect -> Console | No red errors |
 
 ## Automated checks
 
 ```bash
-npx vitest run                       # includes apps/extension/src/build.test.ts
-npx tsx scripts/e2e-extension.ts     # real Chromium; HEADED=1 to watch it
+npx vitest run                       # includes apps/extension/src/**/*.test.ts
+npx tsx scripts/e2e-extension.ts     # real Chrome; HEADED=1 to watch it (also: npm run e2e:ext)
 ```
 
-`scripts/e2e-extension.ts` builds the extension, loads `apps/extension/dist` into Chromium, and checks
-the service worker, the content script and the side panel page for correct behaviour and for console
-errors (service worker errors are read over the DevTools Protocol). It needs Playwright's Chromium:
-`npx playwright install chromium`.
+`scripts/e2e-extension.ts` builds the extension, loads `apps/extension/dist` into Chromium, and checks the
+service worker, the content script and the side panel page for correct behaviour and for console errors
+(service worker errors are read over the DevTools Protocol). Phase 1 checks run against a tiny fake server
+that only implements `GET /health`, and put the service worker to sleep mid-test to prove state survives.
 
-It cannot open the real side panel UI or click the toolbar icon (browser automation cannot do either),
-so checklist step 4 is manual.
+It needs a Chromium that can load extensions: `npx playwright install chromium`, or point it at an installed
+Chrome with `CHROME_PATH` (macOS: `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`;
+Windows PowerShell: `$env:CHROME_PATH="C:\Program Files\Google\Chrome\Application\chrome.exe"`).
+
+It cannot open the real docked side panel or click the toolbar icon (browser automation cannot do either); it
+loads `sidepanel.html` as a normal tab instead. Checklist step "click the toolbar icon" is therefore manual.
