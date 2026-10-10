@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Shield, Layers, Layout, GitCommit, FileText, UserCheck, Code } from 'lucide-react';
+import { Shield, Layers, Layout, GitCommit, FileText } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { useActingUser } from '../lib/api';
 
 export function SidebarLayout() {
+  const { user, setUser, users } = useActingUser();
   const [role, setRole] = useState<'developer' | 'reviewer'>('developer');
 
   return (
@@ -25,39 +27,31 @@ export function SidebarLayout() {
           <NavItem to="/audit" icon={<FileText className="w-4 h-4" />}>Audit</NavItem>
         </div>
 
-        {/* Role switcher */}
+        {/* Acting as User Switcher */}
         <div className="p-3 bg-slate-100 rounded-lg border border-slate-200">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-            Active Role
+            Acting as
           </div>
-          <div className="grid grid-cols-2 gap-1 bg-white p-1 rounded-md border border-slate-200">
-            <button
-              onClick={() => setRole('developer')}
-              className={cn(
-                "flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all",
-                role === 'developer'
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <Code className="w-3 h-3" />
-              Dev
-            </button>
-            <button
-              onClick={() => setRole('reviewer')}
-              className={cn(
-                "flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all",
-                role === 'reviewer'
-                  ? "bg-emerald-600 text-white shadow-sm"
-                  : "text-slate-600 hover:text-slate-900"
-              )}
-            >
-              <UserCheck className="w-3 h-3" />
-              Reviewer
-            </button>
+          <div className="grid grid-cols-3 gap-1 bg-white p-1 rounded-md border border-slate-200">
+            {users.map((u) => (
+              <button
+                key={u.id}
+                onClick={() => setUser(u)}
+                className={cn(
+                  "py-1 px-1.5 rounded text-xs font-medium text-center transition-all",
+                  user.id === u.id
+                    ? "bg-indigo-600 text-white shadow-sm font-semibold"
+                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                )}
+                title={u.email}
+              >
+                {u.name}
+              </button>
+            ))}
           </div>
-          <div className="mt-2 text-[11px] text-slate-500 truncate">
-            {role === 'developer' ? 'dev@patchwork.io' : 'reviewer@patchwork.io'}
+          <div className="mt-2 text-[11px] text-slate-500 truncate flex items-center justify-between">
+            <span>{user.email}</span>
+            <span className="font-semibold text-indigo-600 uppercase text-[9px]">{user.name}</span>
           </div>
         </div>
       </aside>

@@ -39,13 +39,15 @@ export async function deployRoutes(app: FastifyInstance) {
       return reply.code(404).send({ error: "One or more patches do not exist" });
     }
     return deployPatchSet(parsed.data.patch_ids, {
-      actor: await resolveActor(request.headers.authorization),
+      actor: await resolveActor(request.headers.authorization, request.headers["x-actor-id"] as string),
       canary_percent: parsed.data.canary_percent,
     });
   });
 
   app.post("/rollback", async (request, reply) => {
-    const result = await rollbackLive(await resolveActor(request.headers.authorization));
+    const result = await rollbackLive(
+      await resolveActor(request.headers.authorization, request.headers["x-actor-id"] as string)
+    );
     if (!result) return reply.code(400).send({ error: "No live deployment to rollback" });
     return { success: true, rolled_back_deployment: result.rolled_back, restored_deployment: result.restored };
   });
@@ -53,7 +55,10 @@ export async function deployRoutes(app: FastifyInstance) {
   // Redeploy an older deployment
   app.post("/deployments/:id/activate", async (request, reply) => {
     const { id } = request.params as { id: string };
-    const dep = await activateDeployment(id, await resolveActor(request.headers.authorization));
+    const dep = await activateDeployment(
+      id,
+      await resolveActor(request.headers.authorization, request.headers["x-actor-id"] as string)
+    );
     if (!dep) return reply.code(404).send({ error: "Deployment not found" });
     return { success: true, deployment: dep };
   });

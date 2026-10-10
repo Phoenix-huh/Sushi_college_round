@@ -119,3 +119,58 @@ function calculateSiblingScore(anchorSiblings: string[], element: Element): numb
   
   return matchCount / anchorSiblings.length;
 }
+
+export function calculateAnchorSimilarity(a: PatchAnchor, b: PatchAnchor): number {
+  const textScore = calculateTextScore(a.textContent || "", b.textContent || "");
+
+  const aKeys = Object.keys(a.attributes || {});
+  const bKeys = Object.keys(b.attributes || {});
+  const allKeys = Array.from(new Set([...aKeys, ...bKeys]));
+  let attrScore = 0;
+  if (allKeys.length > 0) {
+    let matchCount = 0;
+    for (const key of allKeys) {
+      if (a.attributes?.[key] && b.attributes?.[key] && a.attributes[key] === b.attributes[key]) {
+        matchCount++;
+      }
+    }
+    attrScore = matchCount / allKeys.length;
+  }
+
+  let parentScore = 0;
+  if (a.parentContext && b.parentContext && a.parentContext === b.parentContext) {
+    parentScore = 1;
+  }
+
+  const aSibs = a.siblingContext || [];
+  const bSibs = b.siblingContext || [];
+  let siblingScore = 0;
+  if (aSibs.length > 0 && bSibs.length > 0) {
+    let count = 0;
+    for (const s of aSibs) {
+      if (bSibs.some((x) => x.toLowerCase() === s.toLowerCase())) count++;
+    }
+    siblingScore = count / Math.max(aSibs.length, bSibs.length);
+  }
+
+  return textScore * 0.4 + attrScore * 0.3 + parentScore * 0.2 + siblingScore * 0.1;
+}
+
+const norm = (s?: string) => (s ?? '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+export function targetsSameElement(a: PatchAnchor, b: PatchAnchor): boolean {
+  const ta = norm(a.textContent);
+  const tb = norm(b.textContent);
+
+  const sameSelector =
+    (!!a.cssSelector && !!b.cssSelector && a.cssSelector === b.cssSelector) ||
+    (!!a.xpath && !!b.xpath && a.xpath === b.xpath);
+
+  if (sameSelector) {
+    if (ta && tb && ta !== tb) return false;
+    return true;
+  }
+
+  return calculateAnchorSimilarity(a, b) >= 0.8;
+}
+
