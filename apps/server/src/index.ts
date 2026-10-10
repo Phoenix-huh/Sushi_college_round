@@ -45,6 +45,29 @@ import { verifyRoutes } from "./routes/verify.js";
 import { aiRoutes } from "./routes/ai.js";
 import { patchRoutes } from "./routes/patches.js";
 
+// Root endpoint
+app.get("/", async (request, reply) => {
+  return {
+    name: "Patchwork Server",
+    status: "online",
+    message: "Hotfix the Internet — API is active and ready",
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      health: "GET /health",
+      patches: "GET /patches",
+      create_patch: "POST /patches",
+      deployments: "GET /deployments",
+      live_deployment: "GET /deployments/live",
+      conflicts: "GET /conflicts",
+      audit: "GET /audit",
+      verify: "POST /verify",
+      deploy: "POST /deploy",
+      rollback: "POST /rollback",
+      ai_patch: "POST /ai/patch",
+    },
+  };
+});
+
 // Health check
 app.get("/health", async () => {
   return {
