@@ -425,7 +425,8 @@ export function openEditor(options: EditorOptions): { close(): void } {
   // 1. Text Tab Fields
   const textContainer = doc.createElement('div');
   textContainer.setAttribute('style', 'display:flex;flex-direction:column;gap:4px;');
-  const textInclude = createIncludeBanner('Text', true);
+  // Default unchecked — user must explicitly include text changes to avoid silent no-op patches
+  const textInclude = createIncludeBanner('Text', false);
   textContainer.appendChild(textInclude.row);
 
   const textLabel = doc.createElement('label');
@@ -433,7 +434,8 @@ export function openEditor(options: EditorOptions): { close(): void } {
   textLabel.setAttribute('style', 'font-size:11px;font-weight:600;color:#475569;');
   const textArea = doc.createElement('textarea');
   textArea.rows = 4;
-  textArea.value = element.textContent?.trim() ?? '';
+  const originalElementText = element.textContent?.trim() ?? '';
+  textArea.value = originalElementText;
   textArea.setAttribute('style', 'width:100%;box-sizing:border-box;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;font-family:inherit;');
   textContainer.appendChild(textLabel);
   textContainer.appendChild(textArea);
@@ -981,7 +983,10 @@ export function openEditor(options: EditorOptions): { close(): void } {
 
   function getSingleChange(type: TabType): { type: TabType; label: string; change: PatchChange } | null {
     if (type === 'text') {
-      return { type: 'text', label: 'Text', change: { type: 'text', value: textArea.value } };
+      const val = textArea.value;
+      // Skip if empty or unchanged from original (would be a no-op patch)
+      if (!val || val === originalElementText) return null;
+      return { type: 'text', label: 'Text', change: { type: 'text', value: val } };
     }
     if (type === 'style') {
       const val = styleArea.value.trim();
@@ -1208,7 +1213,11 @@ export function openEditor(options: EditorOptions): { close(): void } {
   }
 
   // Auto-check events
-  textArea.addEventListener('input', () => { textInclude.check.checked = true; updateChangesSummary(); });
+  textArea.addEventListener('input', () => {
+    // Only mark as included when text actually differs from original
+    textInclude.check.checked = textArea.value.length > 0 && textArea.value !== originalElementText;
+    updateChangesSummary();
+  });
   styleArea.addEventListener('input', () => { styleInclude.check.checked = true; updateChangesSummary(); });
   visSelect.addEventListener('change', () => { visInclude.check.checked = true; updateChangesSummary(); });
   scriptArea.addEventListener('input', () => { scriptInclude.check.checked = true; updateChangesSummary(); });

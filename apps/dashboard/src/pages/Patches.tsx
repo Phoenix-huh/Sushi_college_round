@@ -22,6 +22,39 @@ type FormState = { title: string; type: string; value: string; selector: string;
 const EMPTY_FORM: FormState = { title: '', type: 'text', value: '', selector: '', text: '' };
 const TEXT_SEARCH_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, span, a, button, label, li, td, th, strong, em, b, small, div';
 
+/** Convert a raw change value to a short, human-readable description. */
+function formatChangeValue(type: string, value: string): string {
+  try {
+    if (type === 'attribute') {
+      const av = JSON.parse(value) as { name?: string; value?: string; remove?: boolean };
+      if (av.remove) return `remove attr: ${av.name}`;
+      return `${av.name} = "${av.value}"`;
+    }
+    if (type === 'move') {
+      const mv = JSON.parse(value) as { to?: string; ref?: { cssSelector?: string } };
+      const sel = mv.ref?.cssSelector ?? '?';
+      return `${mv.to ?? '?'} relative to: ${sel.length > 30 ? sel.slice(0, 30) + '…' : sel}`;
+    }
+    if (type === 'behavior') {
+      const bv = JSON.parse(value) as { action?: string; url?: string; message?: string };
+      if (bv.action === 'navigate') return `click → navigate to ${bv.url ?? '?'}`;
+      if (bv.action === 'confirm') return `click → confirm: "${bv.message ?? '?'}"`;
+      if (bv.action === 'disable') return 'click → disable element';
+      if (bv.action === 'toggle') return 'click → toggle element';
+      if (bv.action === 'scroll_to') return 'click → scroll to element';
+      return `behavior: ${bv.action ?? '?'}`;
+    }
+    if (type === 'remove') return '🗑 Remove element from DOM';
+    if (type === 'visibility') return value === 'hidden' || value === 'hide' ? '👁 Hide element' : '👁 Show element';
+  } catch {
+    // fall through to raw value
+  }
+  // Text/style or unknown — truncate long values
+  return value.length > 60 ? value.slice(0, 60) + '…' : value;
+}
+
+
+
 export function Patches() {
   const { user: actingUser } = useActingUser();
   const outlet = useOutletContext<{ role: 'developer' | 'reviewer' } | null>();
@@ -349,7 +382,9 @@ export function Patches() {
                     </td>
 
                     {/* Value */}
-                    <td className="px-4 py-3 max-w-xs break-words text-xs text-on-surface">{patch.change.value}</td>
+                    <td className="px-4 py-3 max-w-xs break-words text-xs text-on-surface" title={patch.change.value}>
+                      {formatChangeValue(patch.change.type, patch.change.value)}
+                    </td>
 
                     {/* Author */}
                     <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-on-surface-variant">

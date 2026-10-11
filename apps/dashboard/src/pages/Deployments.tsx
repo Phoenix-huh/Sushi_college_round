@@ -5,6 +5,31 @@ import { ErrorBanner, Notice, useNotice } from '../components/Notice';
 
 type DeploymentRow = Deployment & { versions: Version | null };
 
+/** Convert a raw change value to a short, human-readable description. */
+function formatChangeValue(type: string, value: string): string {
+  try {
+    if (type === 'attribute') {
+      const av = JSON.parse(value) as { name?: string; value?: string; remove?: boolean };
+      if (av.remove) return `remove attr: ${av.name}`;
+      return `${av.name} = "${av.value}"`;
+    }
+    if (type === 'move') {
+      const mv = JSON.parse(value) as { to?: string; ref?: { cssSelector?: string } };
+      const sel = mv.ref?.cssSelector ?? '?';
+      return `${mv.to ?? '?'} rel: ${sel.length > 25 ? sel.slice(0, 25) + '…' : sel}`;
+    }
+    if (type === 'behavior') {
+      const bv = JSON.parse(value) as { action?: string; url?: string };
+      if (bv.action === 'navigate') return `→ ${bv.url ?? '?'}`;
+      return `click: ${bv.action ?? '?'}`;
+    }
+    if (type === 'remove') return '🗑 remove';
+    if (type === 'visibility') return /^(hidden|hide|none|invisible)$/i.test(value) ? '👁 hide' : '👁 show';
+  } catch { /* fall through */ }
+  return value.length > 50 ? value.slice(0, 50) + '…' : value;
+}
+
+
 export function Deployments() {
   const depsQ = usePolling(() => api<DeploymentRow[]>('/deployments'));
   const patchesQ = usePolling(() => api<Patch[]>('/patches'), 5000);
@@ -78,7 +103,7 @@ export function Deployments() {
                             <span>
                               <code className="text-primary">{p.anchors.cssSelector}</code>{' '}
                               <span className="text-outline">[{p.change.type}]</span>{' '}
-                              <span className="text-on-surface">{p.change.value.slice(0, 50)}</span>
+                              <span className="text-on-surface" title={p.change.value}>{formatChangeValue(p.change.type, p.change.value)}</span>
                             </span>
                           ) : (
                             <span className="text-outline">{id.slice(0, 8)} (deleted)</span>

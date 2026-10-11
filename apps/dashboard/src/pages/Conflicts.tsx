@@ -4,6 +4,29 @@ import type { Patch, Conflict } from '@patchwork/shared';
 import { api, usePolling, DEMO_URL, getUserName } from '../lib/api';
 import { ErrorBanner, Notice, useNotice } from '../components/Notice';
 
+function formatChangeValue(type: string, value: string): string {
+  try {
+    if (type === 'attribute') {
+      const av = JSON.parse(value) as { name?: string; value?: string; remove?: boolean };
+      if (av.remove) return `remove attr: ${av.name}`;
+      return `${av.name} = "${av.value}"`;
+    }
+    if (type === 'move') {
+      const mv = JSON.parse(value) as { to?: string; ref?: { cssSelector?: string } };
+      return `${mv.to ?? '?'} rel: ${mv.ref?.cssSelector ?? '?'}`;
+    }
+    if (type === 'behavior') {
+      const bv = JSON.parse(value) as { action?: string; url?: string };
+      if (bv.action === 'navigate') return `→ ${bv.url ?? '?'}`;
+      return `click: ${bv.action ?? '?'}`;
+    }
+    if (type === 'remove') return '🗑 Remove element from DOM';
+    if (type === 'visibility') return /^(hidden|hide|none|invisible)$/i.test(value) ? '👁 Hide element' : '👁 Show element';
+  } catch { /* fall through */ }
+  return value.length > 80 ? value.slice(0, 80) + '…' : value;
+}
+
+
 interface EnrichedConflict extends Conflict {
   patchA?: Patch;
   patchB?: Patch;
