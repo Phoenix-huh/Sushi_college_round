@@ -41,7 +41,35 @@
     var type = change.type, value = change.value;
 
     if (type === 'text') {
-      el.textContent = value;
+      if (el.children && el.children.length > 0) {
+        var replaced = false;
+        var textNodes = [];
+        var walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+        var tn;
+        while ((tn = walk.nextNode())) textNodes.push(tn);
+
+        for (var i = 0; i < textNodes.length; i++) {
+          var node = textNodes[i];
+          var raw = node.nodeValue;
+          var trimmed = raw ? raw.trim() : '';
+          if (trimmed.length > 0 && value.indexOf(trimmed) === -1) {
+            var prevText = i > 0 ? textNodes[i - 1].nodeValue.trim() : '';
+            var nextText = i < textNodes.length - 1 ? textNodes[i + 1].nodeValue.trim() : '';
+            var start = prevText ? value.indexOf(prevText) + prevText.length : 0;
+            var end = nextText ? value.indexOf(nextText, Math.max(0, start)) : value.length;
+            if (start !== -1 && end !== -1 && end >= start) {
+              var replacement = value.slice(start, end).trim();
+              if (replacement) {
+                node.nodeValue = replacement;
+                replaced = true;
+              }
+            }
+          }
+        }
+        if (!replaced) el.textContent = value;
+      } else {
+        el.textContent = value;
+      }
 
     } else if (type === 'style') {
       parseDeclarations(value).forEach(function (d) {

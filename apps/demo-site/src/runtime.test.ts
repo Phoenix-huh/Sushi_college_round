@@ -94,6 +94,24 @@ describe('patchwork runtime', () => {
     expect($('.logo').textContent).toBe('SuperStore');
   });
 
+  test('text patch on a container element (cart-panel) preserves inner buttons and replaces child text', () => {
+    const pw = load('v1', { patches: [], signature: 's' });
+    const cart = document.querySelector('.cart-panel')!;
+    const originalBtn = cart.querySelector('#checkout-btn');
+    expect(originalBtn).not.toBeNull();
+
+    // Text patch targeting .cart-panel with "Wireless Headphones" replaced by "Wired Headphones"
+    const originalText = cart.textContent || '';
+    const newText = originalText.replace('Wireless Headphones', 'Wired Headphones');
+    pw.applyPatches([mkPatch('.cart-panel', 'text', newText, { textContent: originalText })]);
+
+    // Button and structure are preserved
+    expect(cart.querySelector('#checkout-btn')).not.toBeNull();
+    // Inner span text is updated
+    expect(cart.textContent).toContain('Wired Headphones');
+    expect(cart.textContent).not.toContain('Wireless Headphones');
+  });
+
   describe('several elements share one selector (three .product-title headings)', () => {
     const titleOf = () => Array.from(document.querySelectorAll('.product-title')).map((e) => e.textContent);
     const titlePatch = (anchorText: string, selector: string, value: string, attrs: Record<string, string> = {}) =>

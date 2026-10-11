@@ -51,7 +51,35 @@ export async function verifyPatches(targetUrl: string, patches: Patch[]): Promis
                 (el as HTMLElement).style.visibility = 'visible';
               }
             } else if (p.change.type === 'text') {
-              el.textContent = p.change.value;
+              if (el.children && el.children.length > 0) {
+                let replaced = false;
+                const textNodes: Node[] = [];
+                const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+                let tn: Node | null;
+                while ((tn = walk.nextNode())) textNodes.push(tn);
+                const val = p.change.value;
+                for (let i = 0; i < textNodes.length; i++) {
+                  const node = textNodes[i];
+                  const raw = node.nodeValue;
+                  const trimmed = raw ? raw.trim() : '';
+                  if (trimmed.length > 0 && val.indexOf(trimmed) === -1) {
+                    const prevText = i > 0 ? (textNodes[i - 1].nodeValue || '').trim() : '';
+                    const nextText = i < textNodes.length - 1 ? (textNodes[i + 1].nodeValue || '').trim() : '';
+                    const start = prevText ? val.indexOf(prevText) + prevText.length : 0;
+                    const end = nextText ? val.indexOf(nextText, Math.max(0, start)) : val.length;
+                    if (start !== -1 && end !== -1 && end >= start) {
+                      const rep = val.slice(start, end).trim();
+                      if (rep) {
+                        node.nodeValue = rep;
+                        replaced = true;
+                      }
+                    }
+                  }
+                }
+                if (!replaced) el.textContent = p.change.value;
+              } else {
+                el.textContent = p.change.value;
+              }
             } else if (p.change.type === 'style') {
               (el as HTMLElement).style.cssText += p.change.value;
             } else if (p.change.type === 'attribute') {

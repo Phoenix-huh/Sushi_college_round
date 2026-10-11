@@ -319,7 +319,37 @@ export function applyChange(el: Element, change: PatchChange, opts: ApplyOptions
 
   if (change.type === "text") {
     const originalNodes = Array.from(el.childNodes); // keep the real nodes so listeners and structure survive a revert
-    el.textContent = change.value;
+    if (el.children.length > 0) {
+      let replaced = false;
+      const textNodes: Node[] = [];
+      const doc = el.ownerDocument || document;
+      const walk = doc.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+      let tn: Node | null;
+      while ((tn = walk.nextNode())) textNodes.push(tn);
+
+      const value = change.value;
+      for (let i = 0; i < textNodes.length; i++) {
+        const node = textNodes[i];
+        const raw = node.nodeValue;
+        const trimmed = raw ? raw.trim() : '';
+        if (trimmed.length > 0 && value.indexOf(trimmed) === -1) {
+          const prevText = i > 0 ? (textNodes[i - 1].nodeValue || '').trim() : '';
+          const nextText = i < textNodes.length - 1 ? (textNodes[i + 1].nodeValue || '').trim() : '';
+          const start = prevText ? value.indexOf(prevText) + prevText.length : 0;
+          const end = nextText ? value.indexOf(nextText, Math.max(0, start)) : value.length;
+          if (start !== -1 && end !== -1 && end >= start) {
+            const replacement = value.slice(start, end).trim();
+            if (replacement) {
+              node.nodeValue = replacement;
+              replaced = true;
+            }
+          }
+        }
+      }
+      if (!replaced) el.textContent = value;
+    } else {
+      el.textContent = change.value;
+    }
     return undoOf(() => el.replaceChildren(...originalNodes));
   }
 
