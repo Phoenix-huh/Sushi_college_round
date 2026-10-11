@@ -424,18 +424,81 @@ export function openEditor(options: EditorOptions): { close(): void } {
 
   // 1. Text Tab Fields
   const textContainer = doc.createElement('div');
-  textContainer.setAttribute('style', 'display:flex;flex-direction:column;gap:4px;');
+  textContainer.setAttribute('style', 'display:flex;flex-direction:column;gap:6px;');
   // Default unchecked — user must explicitly include text changes to avoid silent no-op patches
   const textInclude = createIncludeBanner('Text', false);
   textContainer.appendChild(textInclude.row);
+
+  // Discover inner text elements if this element has children
+  const childTextElements: Element[] = [];
+  if (element.children.length > 0) {
+    const all = Array.from(element.querySelectorAll('*'));
+    for (const c of all) {
+      if (c.children.length === 0 && (c.textContent || '').trim().length > 0) {
+        childTextElements.push(c);
+      }
+    }
+  }
+
+  let activeTextTarget: Element = childTextElements.length > 0 ? childTextElements[0] : element;
+  let activeTextAnchor: PatchAnchor = buildAnchor(activeTextTarget);
+  let originalActiveText: string = activeTextTarget.textContent?.trim() ?? '';
+
+  if (childTextElements.length > 0) {
+    const targetPickerBox = doc.createElement('div');
+    targetPickerBox.setAttribute(
+      'style',
+      'background:#f8fafc;border:1px solid #cbd5e1;border-radius:6px;padding:6px 8px;display:flex;flex-direction:column;gap:4px;'
+    );
+    const targetPickerLabel = doc.createElement('label');
+    targetPickerLabel.textContent = '🎯 Target inner element to edit text:';
+    targetPickerLabel.setAttribute('style', 'font-size:10px;font-weight:700;color:#334155;');
+    targetPickerBox.appendChild(targetPickerLabel);
+
+    const targetSelect = doc.createElement('select');
+    targetSelect.setAttribute(
+      'style',
+      'width:100%;padding:4px 6px;border:1px solid #cbd5e1;border-radius:4px;font-size:11px;background:#ffffff;color:#1e293b;font-family:inherit;'
+    );
+    for (let i = 0; i < childTextElements.length; i++) {
+      const c = childTextElements[i];
+      const opt = doc.createElement('option');
+      opt.value = String(i);
+      const tag = c.tagName.toLowerCase();
+      const snippet = truncateText(c.textContent, 28);
+      opt.textContent = `<${tag}> "${snippet}"`;
+      targetSelect.appendChild(opt);
+    }
+    const wholeOpt = doc.createElement('option');
+    wholeOpt.value = 'all';
+    wholeOpt.textContent = `⚠️ Whole <${element.tagName.toLowerCase()}> (replaces all inner HTML)`;
+    targetSelect.appendChild(wholeOpt);
+
+    targetSelect.addEventListener('change', () => {
+      if (targetSelect.value === 'all') {
+        activeTextTarget = element;
+        activeTextAnchor = anchor;
+        originalActiveText = element.textContent?.trim() ?? '';
+      } else {
+        const idx = parseInt(targetSelect.value, 10);
+        activeTextTarget = childTextElements[idx];
+        activeTextAnchor = buildAnchor(activeTextTarget);
+        originalActiveText = activeTextTarget.textContent?.trim() ?? '';
+      }
+      textArea.value = originalActiveText;
+      textInclude.check.checked = false;
+      updateChangesSummary();
+    });
+    targetPickerBox.appendChild(targetSelect);
+    textContainer.appendChild(targetPickerBox);
+  }
 
   const textLabel = doc.createElement('label');
   textLabel.textContent = 'New text content:';
   textLabel.setAttribute('style', 'font-size:11px;font-weight:600;color:#475569;');
   const textArea = doc.createElement('textarea');
-  textArea.rows = 4;
-  const originalElementText = element.textContent?.trim() ?? '';
-  textArea.value = originalElementText;
+  textArea.rows = 3;
+  textArea.value = originalActiveText;
   textArea.setAttribute('style', 'width:100%;box-sizing:border-box;padding:6px 9px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;resize:vertical;font-family:inherit;');
   textContainer.appendChild(textLabel);
   textContainer.appendChild(textArea);
@@ -981,12 +1044,19 @@ export function openEditor(options: EditorOptions): { close(): void } {
     if (type === 'behavior') bhInclude.check.checked = inc;
   }
 
-  function getSingleChange(type: TabType): { type: TabType; label: string; change: PatchChange } | null {
+  function getSingleChange(type: TabType): { type: TabType; label: string; change: PatchChange; anchor?: PatchAnchor; targetElement?: Element } | null {
     if (type === 'text') {
       const val = textArea.value;
       // Skip if empty or unchanged from original (would be a no-op patch)
-      if (!val || val === originalElementText) return null;
-      return { type: 'text', label: 'Text', change: { type: 'text', value: val } };
+      if (!val || val === originalActiveText) return null;
+      const tagLabel = activeTextTarget !== element ? `<${activeTextTarget.tagName.toLowerCase()}>` : '';
+      return {
+        type: 'text',
+        label: tagLabel ? `Text (${tagLabel})` : 'Text',
+        change: { type: 'text', value: val },
+        anchor: activeTextAnchor,
+        targetElement: activeTextTarget,
+      };
     }
     if (type === 'style') {
       const val = styleArea.value.trim();
@@ -1215,7 +1285,7 @@ export function openEditor(options: EditorOptions): { close(): void } {
   // Auto-check events
   textArea.addEventListener('input', () => {
     // Only mark as included when text actually differs from original
-    textInclude.check.checked = textArea.value.length > 0 && textArea.value !== originalElementText;
+    textInclude.check.checked = textArea.value.length > 0 && textArea.value !== originalActiveText;
     updateChangesSummary();
   });
   styleArea.addEventListener('input', () => { styleInclude.check.checked = true; updateChangesSummary(); });
@@ -1799,7 +1869,8 @@ export function openEditor(options: EditorOptions): { close(): void } {
         showStatus('Local script preview is disabled for security.', 'info');
         continue;
       }
-      const res = applyChange(element, ch.change, { allowScript: false });
+      const targetEl = (ch as any).targetElement || element;
+      const res = applyChange(targetEl, ch.change, { allowScript: false });
       if ('skipped' in res) {
         showStatus(`Preview skipped for ${ch.type}: ${res.skipped}`, 'error');
       } else {
@@ -1845,7 +1916,8 @@ export function openEditor(options: EditorOptions): { close(): void } {
     const undos: Undo[] = [];
     for (const ch of changes) {
       if (ch.type === 'script') continue;
-      const res = applyChange(element, ch.change, { allowScript: false });
+      const targetEl = (ch as any).targetElement || element;
+      const res = applyChange(targetEl, ch.change, { allowScript: false });
       if (!('skipped' in res)) undos.push(res);
     }
 
@@ -1856,14 +1928,16 @@ export function openEditor(options: EditorOptions): { close(): void } {
     const baseTitle = titleInput.value.trim() || defaultTitle;
 
     for (const ch of changes) {
+      const targetEl = (ch as any).targetElement || element;
+      const targetAnch = (ch as any).anchor || anchor;
       stagedBatch.push({
         id: Math.random().toString(36).slice(2),
         targetUrl,
         baseVersion: 0,
-        anchor,
+        anchor: targetAnch,
         change: ch.change,
         title: changes.length > 1 ? `${baseTitle} - ${ch.label}` : baseTitle,
-        element,
+        element: targetEl,
         undo: undos.shift(),
       });
     }
@@ -1904,11 +1978,12 @@ export function openEditor(options: EditorOptions): { close(): void } {
         const savedIds: string[] = [];
         for (const ch of changes) {
           const patchTitle = changes.length > 1 ? `${baseTitle} - ${ch.label}` : baseTitle;
+          const patchAnchor = (ch as any).anchor || anchor;
           const saved = await send({
             type: 'SAVE_DRAFT',
             target_url: targetUrl,
             base_version,
-            anchors: anchor,
+            anchors: patchAnchor,
             change: ch.change,
             title: patchTitle,
           });
