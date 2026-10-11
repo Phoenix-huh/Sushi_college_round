@@ -7,6 +7,7 @@ import {
   AuditEventSchema,
   DeploymentSchema
 } from "./schema.js";
+import { validateChange } from "./changes.js";
 
 describe("PatchSchema", () => {
   it("parses a valid patch successfully", () => {
@@ -62,15 +63,100 @@ describe("PatchSchema", () => {
 });
 
 describe("PatchChangeSchema", () => {
-  it("validates each change type", () => {
+  it("validates all 8 change types at schema level", () => {
+    // original 4
     expect(PatchChangeSchema.safeParse({ type: "text", value: "x" }).success).toBe(true);
     expect(PatchChangeSchema.safeParse({ type: "style", value: "x" }).success).toBe(true);
     expect(PatchChangeSchema.safeParse({ type: "visibility", value: "x" }).success).toBe(true);
     expect(PatchChangeSchema.safeParse({ type: "script", value: "x" }).success).toBe(true);
+    // new 4
+    expect(PatchChangeSchema.safeParse({ type: "attribute", value: '{"name":"href","value":"https://example.com"}' }).success).toBe(true);
+    expect(PatchChangeSchema.safeParse({ type: "attribute", value: '{"name":"alt","remove":true}' }).success).toBe(true);
+    expect(PatchChangeSchema.safeParse({ type: "remove", value: "remove" }).success).toBe(true);
+    expect(PatchChangeSchema.safeParse({
+      type: "move",
+      value: '{"to":"before","ref":{"cssSelector":"h1","xpath":"","textContent":"","attributes":{},"parentContext":"","siblingContext":[]}}',
+    }).success).toBe(true);
+    expect(PatchChangeSchema.safeParse({ type: "behavior", value: '{"action":"navigate","url":"https://example.com"}' }).success).toBe(true);
+    expect(PatchChangeSchema.safeParse({ type: "behavior", value: '{"action":"disable"}' }).success).toBe(true);
+    expect(PatchChangeSchema.safeParse({ type: "behavior", value: '{"action":"confirm","message":"Are you sure?"}' }).success).toBe(true);
   });
 
   it("rejects invalid change type", () => {
     expect(PatchChangeSchema.safeParse({ type: "html", value: "x" }).success).toBe(false);
+    expect(PatchChangeSchema.safeParse({ type: "delete", value: "x" }).success).toBe(false);
+    expect(PatchChangeSchema.safeParse({ type: "", value: "x" }).success).toBe(false);
+  });
+});
+
+describe("validateChange — attribute", () => {
+  it("accepts a valid attribute set", () => {
+    const r = validateChange({ type: "attribute", value: '{"name":"href","value":"https://ok.com"}' });
+    expect(r.ok).toBe(true);
+  });
+
+  it("rejects a blocked on* attribute", () => {
+    const r = validateChange({ type: "attribute", value: '{"name":"onclick","value":"alert(1)"}' });
+    expect(r.ok).toBe(false);
+  });
+
+  it("rejects a blocked style/id/srcdoc/is attribute", () => {
+    expect(validateChange({ type: "attribute", value: '{"name":"style","value":"color:red"}' }).ok).toBe(false);
+    expect(validateChange({ type: "attribute", value: '{"name":"id","value":"foo"}' }).ok).toBe(false);
+  });
+
+  it("rejects bad JSON", () => {
+    expect(validateChange({ type: "attribute", value: "not-json" }).ok).toBe(false);
+  });
+});
+
+describe("validateChange — remove", () => {
+  it("accepts value 'remove'", () => {
+    expect(validateChange({ type: "remove", value: "remove" }).ok).toBe(true);
+  });
+
+  it("rejects any other value", () => {
+    expect(validateChange({ type: "remove", value: "delete" }).ok).toBe(false);
+  });
+});
+
+describe("validateChange — move", () => {
+  const refAnchor = { cssSelector: "#target", xpath: "", textContent: "", attributes: {}, parentContext: "", siblingContext: [] };
+
+  it("accepts all valid placements", () => {
+    for (const to of ["before", "after", "first", "last"]) {
+      expect(validateChange({ type: "move", value: JSON.stringify({ to, ref: refAnchor }) }).ok).toBe(true);
+    }
+  });
+
+  it("rejects invalid placement", () => {
+    expect(validateChange({ type: "move", value: JSON.stringify({ to: "inside", ref: refAnchor }) }).ok).toBe(false);
+  });
+
+  it("rejects missing ref", () => {
+    expect(validateChange({ type: "move", value: JSON.stringify({ to: "before" }) }).ok).toBe(false);
+  });
+});
+
+describe("validateChange — behavior", () => {
+  it("accepts navigate with safe URL", () => {
+    expect(validateChange({ type: "behavior", value: '{"action":"navigate","url":"https://example.com"}' }).ok).toBe(true);
+  });
+
+  it("rejects navigate with javascript: URL", () => {
+    expect(validateChange({ type: "behavior", value: '{"action":"navigate","url":"javascript:alert(1)"}' }).ok).toBe(false);
+  });
+
+  it("accepts disable", () => {
+    expect(validateChange({ type: "behavior", value: '{"action":"disable"}' }).ok).toBe(true);
+  });
+
+  it("rejects confirm without message", () => {
+    expect(validateChange({ type: "behavior", value: '{"action":"confirm","message":""}' }).ok).toBe(false);
+  });
+
+  it("rejects unknown action", () => {
+    expect(validateChange({ type: "behavior", value: '{"action":"explode"}' }).ok).toBe(false);
   });
 });
 

@@ -54,6 +54,31 @@ export async function verifyPatches(targetUrl: string, patches: Patch[]): Promis
               el.textContent = p.change.value;
             } else if (p.change.type === 'style') {
               (el as HTMLElement).style.cssText += p.change.value;
+            } else if (p.change.type === 'attribute') {
+              try {
+                const av = JSON.parse(p.change.value);
+                const name = (av.name || '').toLowerCase();
+                if (name && !/^on/.test(name) && !['style', 'id', 'srcdoc', 'is'].includes(name)) {
+                  if (av.remove) el.removeAttribute(name);
+                  else el.setAttribute(name, String(av.value ?? ''));
+                }
+              } catch { /* skip */ }
+            } else if (p.change.type === 'remove') {
+              if (!/^(html|head|body)$/i.test(el.tagName)) el.parentNode?.removeChild(el);
+            } else if (p.change.type === 'move') {
+              try {
+                const mv = JSON.parse(p.change.value);
+                let ref: Element | null = null;
+                if (mv?.ref?.cssSelector) {
+                  ref = document.querySelector(mv.ref.cssSelector);
+                }
+                if (ref && ref.parentNode && !ref.contains(el)) {
+                  if (mv.to === 'before') ref.parentNode.insertBefore(el, ref);
+                  else if (mv.to === 'after') ref.parentNode.insertBefore(el, ref.nextSibling);
+                  else if (mv.to === 'first') ref.insertBefore(el, ref.firstChild);
+                  else ref.appendChild(el);
+                }
+              } catch { /* skip */ }
             }
           }
         }

@@ -34,21 +34,138 @@
     return out;
   }
 
+  // Attributes that must never be changed (mirrors changes.ts BLOCKED_ATTRS)
+  var BLOCKED_ATTRS = { style: 1, id: 1, srcdoc: 1, is: 1 };
+
   function applyChange(el, change) {
     var type = change.type, value = change.value;
+
     if (type === 'text') {
       el.textContent = value;
+
     } else if (type === 'style') {
       parseDeclarations(value).forEach(function (d) {
         var important = /!important\s*$/.test(d[1]);
         el.style.setProperty(d[0], d[1].replace(/!important\s*$/, '').trim(), important ? 'important' : '');
       });
+
     } else if (type === 'visibility') {
       var hide = /^(hidden|hide|none|invisible)$/i.test(String(value).trim());
       el.style.display = hide ? 'none' : '';
+
     } else if (type === 'script') {
       try { new Function('target', value)(el); }
       catch (err) { console.warn('[Patchwork] script patch failed:', err); }
+
+    } else if (type === 'attribute') {
+      // { name, value } sets an attribute; { name, remove: true } removes it.
+      // Event-handler attrs (on*) and a short block-list are refused.
+      try {
+        var av = JSON.parse(value);
+        var attrName = (typeof av.name === 'string' ? av.name : '').trim().toLowerCase();
+        if (!attrName || /^on/.test(attrName) || BLOCKED_ATTRS[attrName]) {
+          console.warn('[Patchwork] attribute patch blocked:', attrName);
+          return;
+        }
+        if (av.remove === true) {
+          el.removeAttribute(attrName);
+        } else {
+          el.setAttribute(attrName, typeof av.value === 'string' ? av.value : '');
+        }
+      } catch (err) {
+        console.warn('[Patchwork] bad attribute patch value:', err);
+      }
+
+    } else if (type === 'remove') {
+      // Take the element out of the page entirely.
+      // Guard against removing structural elements (html/head/body).
+      if (/^(html|head|body)$/i.test(el.tagName)) {
+        console.warn('[Patchwork] refusing to remove <' + el.tagName.toLowerCase() + '>');
+        return;
+      }
+      if (el.parentNode) el.parentNode.removeChild(el);
+
+    } else if (type === 'move') {
+      // { to: "before"|"after"|"first"|"last", ref: PatchAnchor }
+      // Resolves the reference element with the same findTarget helper used for patches,
+      // then repositions the element relative to it.
+      if (/^(html|head|body)$/i.test(el.tagName)) {
+        console.warn('[Patchwork] refusing to move <' + el.tagName.toLowerCase() + '>');
+        return;
+      }
+      try {
+        var mv = JSON.parse(value);
+        var refHit = findTarget({ id: 'move-ref', anchors: mv.ref, change: { type: 'text', value: '' } });
+        if (!refHit) { console.warn('[Patchwork] move: reference element not found'); return; }
+        var ref = refHit.el;
+        if (ref === el || el.contains(ref)) { console.warn('[Patchwork] move: cannot move element into itself'); return; }
+        var to = mv.to;
+        if (to === 'before') {
+          if (!ref.parentNode) { console.warn('[Patchwork] move: ref has no parent'); return; }
+          ref.parentNode.insertBefore(el, ref);
+        } else if (to === 'after') {
+          if (!ref.parentNode) { console.warn('[Patchwork] move: ref has no parent'); return; }
+          ref.parentNode.insertBefore(el, ref.nextSibling);
+        } else if (to === 'first') {
+          ref.insertBefore(el, ref.firstChild);
+        } else { // 'last'
+          ref.appendChild(el);
+        }
+      } catch (err) {
+        console.warn('[Patchwork] bad move patch value:', err);
+      }
+
+    } else if (type === 'behavior') {
+      // Declarative click-time actions. All use capture-phase listeners so they
+      // run before the page's own handlers. No code is evaluated.
+      try {
+        var bv = JSON.parse(value);
+        var stopEvent = function (e) { e.preventDefault(); e.stopImmediatePropagation(); };
+
+        if (bv.action === 'navigate') {
+          if (!bv.url) { console.warn('[Patchwork] behavior navigate: missing url'); return; }
+          el.addEventListener('click', function (e) {
+            stopEvent(e);
+            if (bv.newTab) window.open(bv.url, '_blank', 'noopener,noreferrer');
+            else window.location.assign(bv.url);
+          }, true);
+
+        } else if (bv.action === 'confirm') {
+          if (!bv.message) { console.warn('[Patchwork] behavior confirm: missing message'); return; }
+          el.addEventListener('click', function (e) {
+            if (!window.confirm(bv.message)) stopEvent(e); // Cancel blocks the click; OK lets it through
+          }, true);
+
+        } else if (bv.action === 'disable') {
+          el.setAttribute('aria-disabled', 'true');
+          if (/^(button|input|select|textarea)$/i.test(el.tagName)) el.setAttribute('disabled', '');
+          el.addEventListener('click', stopEvent, true);
+
+        } else if (bv.action === 'toggle') {
+          var toggleRef = findTarget({ id: 'toggle-ref', anchors: bv.ref, change: { type: 'text', value: '' } });
+          if (!toggleRef) { console.warn('[Patchwork] behavior toggle: reference element not found'); return; }
+          var toggleEl = toggleRef.el;
+          el.addEventListener('click', function (e) {
+            stopEvent(e);
+            if (toggleEl.style.display === 'none') toggleEl.style.removeProperty('display');
+            else toggleEl.style.setProperty('display', 'none');
+          }, true);
+
+        } else if (bv.action === 'scroll_to') {
+          var scrollRef = findTarget({ id: 'scroll-ref', anchors: bv.ref, change: { type: 'text', value: '' } });
+          if (!scrollRef) { console.warn('[Patchwork] behavior scroll_to: reference element not found'); return; }
+          var scrollEl = scrollRef.el;
+          el.addEventListener('click', function (e) {
+            stopEvent(e);
+            scrollEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, true);
+
+        } else {
+          console.warn('[Patchwork] unknown behavior action:', bv.action);
+        }
+      } catch (err) {
+        console.warn('[Patchwork] bad behavior patch value:', err);
+      }
     }
   }
 

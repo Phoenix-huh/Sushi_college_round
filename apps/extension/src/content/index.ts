@@ -54,6 +54,35 @@ function beginPicking() {
           onClose: () => {
             activeEditor = null;
           },
+          onPickNext: () => {
+            activeEditor = null;
+            beginPicking();
+          },
+          onPickRef: (resolve) => {
+            // Activate the picker in "ref-pick" mode; the editor panel has hidden itself.
+            const refPicker = startPicker({
+              doc: document,
+              onPick: (refEl) => {
+                try {
+                  resolve(buildAnchor(refEl));
+                } catch {
+                  resolve(null);
+                }
+              },
+              onCancel: () => {
+                resolve(null);
+              },
+            });
+            // Guard: if the active editor closes while picking, stop the ref picker
+            const origClose = activeEditor?.close;
+            if (origClose) {
+              (activeEditor as { close(): void }).close = () => {
+                refPicker.stop();
+                resolve(null);
+                origClose.call(activeEditor);
+              };
+            }
+          },
         });
       } catch (e) {
         console.warn('[Patchwork] could not build an anchor for that element:', e);
