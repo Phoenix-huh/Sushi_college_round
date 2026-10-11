@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 
 interface Particle {
   x: number;
@@ -13,6 +14,8 @@ interface Particle {
 
 export function BinaryCursorTrail() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const location = useLocation();
+  const isArchitecture = location.pathname === '/architecture';
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -114,10 +117,14 @@ export function BinaryCursorTrail() {
     };
   }, []);
 
+  if (isArchitecture) {
+    return null;
+  }
+
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-[9999]"
+      className="fixed inset-0 pointer-events-none z-0 opacity-10"
       aria-hidden="true"
     />
   );
