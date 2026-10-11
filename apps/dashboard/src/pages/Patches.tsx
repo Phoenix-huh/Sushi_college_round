@@ -728,42 +728,72 @@ export function Patches() {
 
       {/* Modal: New Website */}
       {siteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-xl shadow-xl border max-w-md w-full p-6 space-y-4">
-            <div className="flex justify-between items-center border-b pb-3">
-              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Globe className="w-5 h-5 text-indigo-600" />
-                Add New Website
-              </h3>
-              <button onClick={() => setSiteModal(false)} className="text-slate-400 hover:text-slate-600 text-sm font-semibold">
-                Close
-              </button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(2,6,23,0.75)',backdropFilter:'blur(8px)'}}>
+          <div style={{background:'linear-gradient(135deg,#0f172a 0%,#1e1b4b 100%)',border:'1px solid rgba(99,102,241,0.35)',borderRadius:'16px',boxShadow:'0 0 0 1px rgba(99,102,241,0.15),0 24px 60px rgba(0,0,0,0.6)',maxWidth:'440px',width:'100%',padding:'28px',display:'flex',flexDirection:'column',gap:'22px'}}>
+
+            {/* Header */}
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <div style={{display:'flex',alignItems:'center',gap:'10px'}}>
+                <div style={{width:'36px',height:'36px',borderRadius:'10px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',display:'flex',alignItems:'center',justifyContent:'center',boxShadow:'0 0 16px rgba(99,102,241,0.5)'}}>
+                  <Globe style={{width:'18px',height:'18px',color:'#fff'}} />
+                </div>
+                <div>
+                  <h3 style={{margin:0,fontSize:'15px',fontWeight:700,color:'#f1f5f9',letterSpacing:'-0.01em'}}>Add New Website</h3>
+                  <p style={{margin:0,fontSize:'11px',color:'#94a3b8',marginTop:'1px'}}>Register a site to manage patches for it</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSiteModal(false)}
+                style={{background:'rgba(148,163,184,0.1)',border:'1px solid rgba(148,163,184,0.2)',borderRadius:'8px',color:'#94a3b8',fontSize:'18px',lineHeight:1,cursor:'pointer',width:'30px',height:'30px',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s'}}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(239,68,68,0.15)';(e.currentTarget as HTMLButtonElement).style.color='#f87171';}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(148,163,184,0.1)';(e.currentTarget as HTMLButtonElement).style.color='#94a3b8';}}
+              >×</button>
             </div>
-            <div className="space-y-3 text-sm">
-              <label className="block">
-                <span className="block text-xs font-semibold text-slate-600 mb-1">Website Name</span>
+
+            {/* Divider */}
+            <div style={{height:'1px',background:'linear-gradient(90deg,transparent,rgba(99,102,241,0.4),transparent)'}} />
+
+            {/* Fields */}
+            <div style={{display:'flex',flexDirection:'column',gap:'16px'}}>
+              <label style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                <span style={{fontSize:'11px',fontWeight:600,color:'#a5b4fc',textTransform:'uppercase',letterSpacing:'0.06em'}}>Website Name</span>
                 <input
                   value={newSiteName}
                   onChange={(e) => setNewSiteName(e.target.value)}
                   placeholder="e.g. Production Store, Staging Site"
-                  className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
+                  style={{background:'rgba(15,23,42,0.8)',border:'1px solid rgba(99,102,241,0.3)',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#f1f5f9',outline:'none',transition:'border-color 0.2s,box-shadow 0.2s'}}
+                  onFocus={e=>{e.currentTarget.style.borderColor='rgba(99,102,241,0.8)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(99,102,241,0.15)';}}
+                  onBlur={e=>{e.currentTarget.style.borderColor='rgba(99,102,241,0.3)';e.currentTarget.style.boxShadow='none';}}
                 />
               </label>
-              <label className="block">
-                <span className="block text-xs font-semibold text-slate-600 mb-1">Website URL</span>
+              <label style={{display:'flex',flexDirection:'column',gap:'6px'}}>
+                <span style={{fontSize:'11px',fontWeight:600,color:'#a5b4fc',textTransform:'uppercase',letterSpacing:'0.06em'}}>Website URL</span>
                 <input
                   value={newSiteUrl}
                   onChange={(e) => setNewSiteUrl(e.target.value)}
-                  placeholder="e.g. http://localhost:4100/"
-                  className="w-full border rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 ring-indigo-300 outline-none"
+                  placeholder="http://localhost:4100/"
+                  style={{background:'rgba(15,23,42,0.8)',border:'1px solid rgba(99,102,241,0.3)',borderRadius:'10px',padding:'10px 14px',fontSize:'13px',color:'#f1f5f9',fontFamily:'"JetBrains Mono",monospace',outline:'none',transition:'border-color 0.2s,box-shadow 0.2s'}}
+                  onFocus={e=>{e.currentTarget.style.borderColor='rgba(99,102,241,0.8)';e.currentTarget.style.boxShadow='0 0 0 3px rgba(99,102,241,0.15)';}}
+                  onBlur={e=>{e.currentTarget.style.borderColor='rgba(99,102,241,0.3)';e.currentTarget.style.boxShadow='none';}}
                 />
               </label>
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t">
-              <button onClick={() => setSiteModal(false)} className="px-4 py-2 border rounded-lg text-sm font-medium hover:bg-slate-50">
-                Cancel
-              </button>
-              <button onClick={createWebsite} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium">
+
+            {/* Actions */}
+            <div style={{display:'flex',justifyContent:'flex-end',gap:'10px',paddingTop:'4px'}}>
+              <button
+                onClick={() => setSiteModal(false)}
+                style={{padding:'9px 18px',background:'transparent',border:'1px solid rgba(148,163,184,0.25)',borderRadius:'10px',color:'#94a3b8',fontSize:'13px',fontWeight:600,cursor:'pointer',transition:'all 0.15s'}}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.background='rgba(148,163,184,0.08)';(e.currentTarget as HTMLButtonElement).style.color='#cbd5e1';}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.background='transparent';(e.currentTarget as HTMLButtonElement).style.color='#94a3b8';}}
+              >Cancel</button>
+              <button
+                onClick={createWebsite}
+                style={{padding:'9px 20px',background:'linear-gradient(135deg,#6366f1,#8b5cf6)',border:'none',borderRadius:'10px',color:'#fff',fontSize:'13px',fontWeight:700,cursor:'pointer',boxShadow:'0 4px 15px rgba(99,102,241,0.4)',transition:'all 0.15s',display:'flex',alignItems:'center',gap:'6px'}}
+                onMouseEnter={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(-1px)';(e.currentTarget as HTMLButtonElement).style.boxShadow='0 6px 20px rgba(99,102,241,0.55)';}}
+                onMouseLeave={e=>{(e.currentTarget as HTMLButtonElement).style.transform='translateY(0)';(e.currentTarget as HTMLButtonElement).style.boxShadow='0 4px 15px rgba(99,102,241,0.4)';}}
+              >
+                <Globe style={{width:'13px',height:'13px'}} />
                 Create Website
               </button>
             </div>
@@ -993,6 +1023,7 @@ function NLPromptBox({
         placeholder={'Paste the element\'s HTML (optional), e.g. <h3 class="product-title">Smart Watch</h3>'}
         rows={2}
         className="w-full bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white focus:border-primary-container outline-none"
+        style={{ color: '#ffffff' }}
       />
       <div className="flex gap-2">
         <input
@@ -1001,6 +1032,7 @@ function NLPromptBox({
           onKeyDown={(e) => e.key === 'Enter' && generate()}
           placeholder='e.g. "Change the logo text to SuperStore" or "Make the checkout button green"'
           className="flex-1 bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white focus:border-primary-container outline-none"
+          style={{ color: '#ffffff' }}
         />
         <button
           onClick={generate}
