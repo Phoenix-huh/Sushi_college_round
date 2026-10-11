@@ -15,7 +15,6 @@ export function TopologyDiagram({
   activeNodeId,
   onSelectNode,
 }: TopologyDiagramProps) {
-  // Pre-mapped component detail objects
   const nodeDetailsMap: Record<string, NodeDetail> = {
     extension: {
       id: 'extension',
@@ -203,9 +202,9 @@ export function TopologyDiagram({
   };
 
   return (
-    <div className="space-y-6">
-      {/* Interactive SVG Diagram */}
-      <div className="p-4 sm:p-6 rounded-2xl cyber-glass border border-outline-variant/40 shadow-xl overflow-hidden relative">
+    <div className="space-y-6 w-full">
+      {/* Wide Interactive SVG Diagram */}
+      <div className="p-5 sm:p-8 rounded-3xl cyber-glass border border-outline-variant/40 shadow-2xl overflow-hidden relative w-full">
         <style>{`
           @media (prefers-reduced-motion: reduce) {
             .topology-dot {
@@ -214,7 +213,7 @@ export function TopologyDiagram({
           }
         `}</style>
         <svg
-          viewBox="0 0 900 470"
+          viewBox="0 0 1160 480"
           className="w-full h-auto select-none"
           role="img"
           aria-labelledby="topology-title topology-desc"
@@ -226,13 +225,13 @@ export function TopologyDiagram({
 
           <defs>
             {/* Glow Filter */}
-            <filter id="pink-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#ff3b81" floodOpacity="0.8" />
+            <filter id="pink-glow-wide" x="-20%" y="-20%" width="140%" height="140%">
+              <feDropShadow dx="0" dy="0" stdDeviation="5" floodColor="#ff3b81" floodOpacity="0.85" />
             </filter>
 
             {/* Marker Arrowheads */}
             <marker
-              id="arrow-pink"
+              id="arrow-pink-wide"
               viewBox="0 0 10 10"
               refX="6"
               refY="5"
@@ -244,7 +243,7 @@ export function TopologyDiagram({
             </marker>
 
             <marker
-              id="arrow-slate"
+              id="arrow-slate-wide"
               viewBox="0 0 10 10"
               refX="6"
               refY="5"
@@ -256,129 +255,123 @@ export function TopologyDiagram({
             </marker>
 
             {/* Motion Paths for Traveling Dots */}
-            <path id="path-ext-server" d="M 160 100 L 160 160" />
-            <path id="path-dash-server" d="M 450 100 L 450 160" />
-            <path id="path-server-runtime" d="M 740 160 L 740 100" />
+            <path id="path-ext-server-wide" d="M 220 105 L 220 165" />
+            <path id="path-dash-server-wide" d="M 580 105 L 580 165" />
+            <path id="path-server-runtime-wide" d="M 940 165 L 940 105" />
           </defs>
 
           {/* ═══════════════════════════════════════════════════ */}
-          {/* CONNECTING ARROWS & LABELS */}
+          {/* CONNECTING ARROWS & NUMBERED BADGES */}
           {/* ═══════════════════════════════════════════════════ */}
 
           {/* 1. Extension -> Server (Save patch) */}
           <line
-            x1="160"
-            y1="100"
-            x2="160"
-            y2="155"
+            x1="220"
+            y1="105"
+            x2="220"
+            y2="160"
             stroke="#ff3b81"
-            strokeWidth="2"
-            markerEnd="url(#arrow-pink)"
+            strokeWidth="2.5"
+            markerEnd="url(#arrow-pink-wide)"
           />
-          {/* Traveling dot on arrow 1 */}
-          <circle r="3.5" fill="#ffb1c2" className="topology-dot">
+          <circle r="4" fill="#ffb1c2" className="topology-dot">
             <animateMotion dur="2.4s" repeatCount="indefinite">
-              <mpath href="#path-ext-server" />
+              <mpath href="#path-ext-server-wide" />
             </animateMotion>
           </circle>
-          {/* Badge 1 */}
-          <g transform="translate(160, 130)">
-            <circle cx="0" cy="0" r="11" fill="#ff3b81" />
-            <text x="0" y="4" fill="#ffffff" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+          <g transform="translate(220, 135)">
+            <circle cx="0" cy="0" r="12" fill="#ff3b81" />
+            <text x="0" y="4.5" fill="#ffffff" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
               1
             </text>
           </g>
 
           {/* 2. Dashboard <-> Server (Review and deploy) */}
           <line
-            x1="450"
-            y1="105"
-            x2="450"
-            y2="155"
+            x1="580"
+            y1="110"
+            x2="580"
+            y2="160"
             stroke="#ff3b81"
-            strokeWidth="2"
-            markerEnd="url(#arrow-pink)"
-            markerStart="url(#arrow-pink)"
+            strokeWidth="2.5"
+            markerEnd="url(#arrow-pink-wide)"
+            markerStart="url(#arrow-pink-wide)"
           />
-          {/* Traveling dot on arrow 2 */}
-          <circle r="3.5" fill="#ffb1c2" className="topology-dot">
+          <circle r="4" fill="#ffb1c2" className="topology-dot">
             <animateMotion dur="2.8s" repeatCount="indefinite">
-              <mpath href="#path-dash-server" />
+              <mpath href="#path-dash-server-wide" />
             </animateMotion>
           </circle>
-          {/* Badge 2 */}
-          <g transform="translate(450, 130)">
-            <circle cx="0" cy="0" r="11" fill="#ff3b81" />
-            <text x="0" y="4" fill="#ffffff" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+          <g transform="translate(580, 135)">
+            <circle cx="0" cy="0" r="12" fill="#ff3b81" />
+            <text x="0" y="4.5" fill="#ffffff" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
               2
             </text>
           </g>
 
           {/* 3. Server -> Page Runtime (Runtime polls live version) */}
           <line
-            x1="740"
-            y1="160"
-            x2="740"
-            y2="105"
+            x1="940"
+            y1="165"
+            x2="940"
+            y2="110"
             stroke="#ff3b81"
-            strokeWidth="2"
-            markerEnd="url(#arrow-pink)"
+            strokeWidth="2.5"
+            markerEnd="url(#arrow-pink-wide)"
           />
-          {/* Traveling dot on arrow 3 */}
-          <circle r="3.5" fill="#ffb1c2" className="topology-dot">
+          <circle r="4" fill="#ffb1c2" className="topology-dot">
             <animateMotion dur="2.2s" repeatCount="indefinite">
-              <mpath href="#path-server-runtime" />
+              <mpath href="#path-server-runtime-wide" />
             </animateMotion>
           </circle>
-          {/* Badge 3 */}
-          <g transform="translate(740, 130)">
-            <circle cx="0" cy="0" r="11" fill="#ff3b81" />
-            <text x="0" y="4" fill="#ffffff" fontSize="11" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
+          <g transform="translate(940, 135)">
+            <circle cx="0" cy="0" r="12" fill="#ff3b81" />
+            <text x="0" y="4.5" fill="#ffffff" fontSize="12" fontWeight="bold" textAnchor="middle" fontFamily="monospace">
               3
             </text>
           </g>
 
           {/* Server <-> Database Store */}
           <line
-            x1="160"
-            y1="225"
-            x2="160"
-            y2="275"
+            x1="220"
+            y1="235"
+            x2="220"
+            y2="285"
             stroke="#aa888e"
-            strokeWidth="1.5"
-            markerEnd="url(#arrow-slate)"
-            markerStart="url(#arrow-slate)"
+            strokeWidth="2"
+            markerEnd="url(#arrow-slate-wide)"
+            markerStart="url(#arrow-slate-wide)"
           />
 
           {/* Server -> Playwright */}
           <line
-            x1="450"
-            y1="225"
-            x2="450"
-            y2="275"
+            x1="580"
+            y1="235"
+            x2="580"
+            y2="285"
             stroke="#aa888e"
-            strokeWidth="1.5"
-            markerEnd="url(#arrow-slate)"
+            strokeWidth="2"
+            markerEnd="url(#arrow-slate-wide)"
           />
 
           {/* Server -> Gemini */}
           <line
-            x1="740"
-            y1="225"
-            x2="740"
-            y2="275"
+            x1="940"
+            y1="235"
+            x2="940"
+            y2="285"
             stroke="#aa888e"
-            strokeWidth="1.5"
-            markerEnd="url(#arrow-slate)"
+            strokeWidth="2"
+            markerEnd="url(#arrow-slate-wide)"
           />
 
           {/* Connectors to packages/shared */}
           <path
-            d="M 160 345 L 160 380 L 450 380 L 450 390 M 740 345 L 740 380"
+            d="M 220 365 L 220 395 L 580 395 L 580 405 M 940 365 L 940 395"
             fill="none"
             stroke="#5a4045"
-            strokeWidth="1.5"
-            strokeDasharray="4 4"
+            strokeWidth="1.8"
+            strokeDasharray="5 5"
           />
 
           {/* ═══════════════════════════════════════════════════ */}
@@ -395,21 +388,21 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="40"
+              x="60"
               y="30"
-              width="240"
-              height="70"
-              rx="12"
+              width="320"
+              height="75"
+              rx="14"
               fill="#1b1b20"
               stroke={activeNodeId === 'extension' ? '#ff3b81' : '#aa888e'}
-              strokeWidth={activeNodeId === 'extension' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'extension' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'extension' ? '2.5' : '1.4'}
+              filter={activeNodeId === 'extension' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <circle cx="65" cy="53" r="5" fill="#ff3b81" />
-            <text x="78" y="57" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <circle cx="90" cy="55" r="5.5" fill="#ff3b81" />
+            <text x="106" y="60" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
               Chrome Extension
             </text>
-            <text x="65" y="80" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="90" y="85" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               MV3 visual DOM editor
             </text>
           </g>
@@ -424,21 +417,21 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="330"
+              x="420"
               y="30"
-              width="240"
-              height="70"
-              rx="12"
+              width="320"
+              height="75"
+              rx="14"
               fill="#1b1b20"
               stroke={activeNodeId === 'dashboard' ? '#ff3b81' : '#aa888e'}
-              strokeWidth={activeNodeId === 'dashboard' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'dashboard' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'dashboard' ? '2.5' : '1.4'}
+              filter={activeNodeId === 'dashboard' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <circle cx="355" cy="53" r="5" fill="#ffb1c2" />
-            <text x="368" y="57" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <circle cx="450" cy="55" r="5.5" fill="#ffb1c2" />
+            <text x="466" y="60" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
               Dashboard Console
             </text>
-            <text x="355" y="80" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="450" y="85" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Vite cockpit on :5173
             </text>
           </g>
@@ -453,21 +446,21 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="620"
+              x="780"
               y="30"
-              width="240"
-              height="70"
-              rx="12"
+              width="320"
+              height="75"
+              rx="14"
               fill="#1b1b20"
               stroke={activeNodeId === 'runtime' ? '#ff3b81' : '#aa888e'}
-              strokeWidth={activeNodeId === 'runtime' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'runtime' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'runtime' ? '2.5' : '1.4'}
+              filter={activeNodeId === 'runtime' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <circle cx="645" cy="53" r="5" fill="#ff3b81" />
-            <text x="658" y="57" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <circle cx="810" cy="55" r="5.5" fill="#ff3b81" />
+            <text x="826" y="60" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
               Page Runtime
             </text>
-            <text x="645" y="80" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="810" y="85" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Live script polling manifest
             </text>
           </g>
@@ -484,23 +477,23 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="40"
-              y="160"
-              width="820"
-              height="65"
-              rx="14"
+              x="60"
+              y="165"
+              width="1040"
+              height="70"
+              rx="16"
               fill="#24232a"
               stroke={activeNodeId === 'server' ? '#ff3b81' : '#5a4045'}
-              strokeWidth={activeNodeId === 'server' ? '2.5' : '1.4'}
-              filter={activeNodeId === 'server' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'server' ? '2.8' : '1.5'}
+              filter={activeNodeId === 'server' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <text x="70" y="198" fill="#ffffff" fontSize="15" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <text x="95" y="206" fill="#ffffff" fontSize="16" fontWeight="bold" fontFamily="Syne, sans-serif">
               Fastify API Server
             </text>
-            <text x="235" y="198" fill="#ffb1c2" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="290" y="206" fill="#ffb1c2" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Port 4000 control plane & CAS engine
             </text>
-            <text x="590" y="198" fill="#aa888e" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="880" y="206" fill="#aa888e" fontSize="12" fontFamily="JetBrains Mono, monospace">
               apps/server
             </text>
           </g>
@@ -519,20 +512,20 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="40"
-              y="275"
-              width="240"
-              height="70"
-              rx="12"
+              x="60"
+              y="290"
+              width="320"
+              height="75"
+              rx="14"
               fill="#1b1b20"
               stroke={activeNodeId === 'store' ? '#ff3b81' : '#5a4045'}
-              strokeWidth={activeNodeId === 'store' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'store' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'store' ? '2.5' : '1.3'}
+              filter={activeNodeId === 'store' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <text x="65" y="303" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <text x="90" y="320" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
               Database Store
             </text>
-            <text x="65" y="325" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="90" y="344" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Supabase or memory fallback
             </text>
           </g>
@@ -547,20 +540,20 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="330"
-              y="275"
-              width="240"
-              height="70"
-              rx="12"
+              x="420"
+              y="290"
+              width="320"
+              height="75"
+              rx="14"
               fill="#1b1b20"
               stroke={activeNodeId === 'playwright' ? '#ff3b81' : '#5a4045'}
-              strokeWidth={activeNodeId === 'playwright' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'playwright' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'playwright' ? '2.5' : '1.3'}
+              filter={activeNodeId === 'playwright' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <text x="355" y="303" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <text x="450" y="320" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
               Playwright Sandbox
             </text>
-            <text x="355" y="325" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="450" y="344" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Headless checkout verification
             </text>
           </g>
@@ -575,20 +568,20 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="620"
-              y="275"
-              width="240"
-              height="70"
-              rx="12"
+              x="780"
+              y="290"
+              width="320"
+              height="75"
+              rx="14"
               fill="#1b1b20"
               stroke={activeNodeId === 'gemini' ? '#ff3b81' : '#5a4045'}
-              strokeWidth={activeNodeId === 'gemini' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'gemini' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'gemini' ? '2.5' : '1.3'}
+              filter={activeNodeId === 'gemini' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <text x="645" y="303" fill="#ffffff" fontSize="13" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <text x="810" y="320" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
               Gemini 3.8 Flash
             </text>
-            <text x="645" y="325" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="810" y="344" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Natural language AI route
             </text>
           </g>
@@ -605,88 +598,89 @@ export function TopologyDiagram({
             className="cursor-pointer transition-transform hover:opacity-95 focus:outline-none"
           >
             <rect
-              x="40"
-              y="390"
-              width="820"
+              x="60"
+              y="410"
+              width="1040"
               height="55"
-              rx="12"
+              rx="14"
               fill="#151419"
               stroke={activeNodeId === 'shared' ? '#ff3b81' : '#353439'}
-              strokeWidth={activeNodeId === 'shared' ? '2.5' : '1.2'}
-              filter={activeNodeId === 'shared' ? 'url(#pink-glow)' : undefined}
+              strokeWidth={activeNodeId === 'shared' ? '2.5' : '1.3'}
+              filter={activeNodeId === 'shared' ? 'url(#pink-glow-wide)' : undefined}
             />
-            <text x="70" y="423" fill="#ffffff" fontSize="14" fontWeight="bold" fontFamily="Syne, sans-serif">
+            <text x="95" y="443" fill="#ffffff" fontSize="15" fontWeight="bold" fontFamily="Syne, sans-serif">
               packages/shared
             </text>
-            <text x="210" y="423" fill="#d4b8be" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="270" y="443" fill="#d4b8be" fontSize="12" fontFamily="JetBrains Mono, monospace">
               Schemas, targeting locators, and conflict rules
             </text>
-            <text x="710" y="423" fill="#aa888e" fontSize="11" fontFamily="JetBrains Mono, monospace">
+            <text x="880" y="443" fill="#aa888e" fontSize="12" fontFamily="JetBrains Mono, monospace">
               TypeScript Monorepo Core
             </text>
           </g>
         </svg>
 
         {/* Legend for 1, 2, 3 numbered badges */}
-        <div className="flex flex-wrap items-center justify-center gap-6 pt-3 border-t border-outline-variant/30 text-[11px] font-mono">
+        <div className="flex flex-wrap items-center justify-center gap-8 pt-4 border-t border-outline-variant/30 text-xs font-mono">
           <div className="flex items-center gap-2">
-            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[10px]">
+            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[11px]">
               1
             </span>
             <span className="text-on-surface">Save patch</span>
-            <span className="text-outline text-[10px]">({getRouteString('POST', '/patches')})</span>
+            <span className="text-outline text-[11px]">({getRouteString('POST', '/patches')})</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[10px]">
+            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[11px]">
               2
             </span>
             <span className="text-on-surface">Review and deploy</span>
-            <span className="text-outline text-[10px]">({getRouteString('POST', '/deploy')})</span>
+            <span className="text-outline text-[11px]">({getRouteString('POST', '/deploy')})</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[10px]">
+            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[11px]">
               3
             </span>
             <span className="text-on-surface">Runtime polls live version</span>
-            <span className="text-outline text-[10px]">({getRouteString('GET', '/deployments/live')})</span>
+            <span className="text-outline text-[11px]">({getRouteString('GET', '/deployments/live')})</span>
           </div>
         </div>
       </div>
 
-      {/* Horizontal Lifecycle Stepper */}
-      <div className="p-5 rounded-2xl cyber-glass border border-outline-variant/40 space-y-3 font-mono">
-        <div className="flex items-center justify-between">
+      {/* 7-Stage Lifecycle Stepper: Zero Scroll Wheel / Zero Horizontal Scrollbar */}
+      <div className="p-6 rounded-3xl cyber-glass border border-outline-variant/40 space-y-4 font-mono shadow-xl w-full">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 pb-3">
           <span className="text-xs font-bold text-white uppercase tracking-wider">
             7-Stage Hotfix Lifecycle Stepper
           </span>
-          <span className="text-[11px] text-outline">Click any pill for details</span>
+          <span className="text-[11px] text-outline">Click any stage pill for complete details</span>
         </div>
 
-        {/* Stepper pills row */}
-        <div className="relative pt-2 pb-1 overflow-x-auto">
-          <div className="flex items-center justify-between min-w-[700px] gap-2">
-            {LIFECYCLE_STAGES.map((stage, idx) => {
-              const isSelected = activeNodeId === stage.id;
-              return (
-                <React.Fragment key={stage.id}>
-                  <button
-                    onClick={() => handleStageClick(idx)}
-                    className={`px-3 py-2 rounded-xl text-left border transition-all text-xs font-mono shrink-0 flex items-center gap-2 focus:outline-none focus:ring-1 focus:ring-primary ${
-                      isSelected
-                        ? 'bg-primary-container text-white border-primary-container shadow-md cyber-glow-tab'
-                        : 'bg-surface-container/80 text-on-surface hover:text-white border-outline-variant/30 hover:border-primary/50'
-                    }`}
-                  >
-                    <span className="text-[10px] font-bold opacity-80">0{stage.step}</span>
-                    <span className="font-semibold">{stage.name}</span>
-                  </button>
-                  {idx < LIFECYCLE_STAGES.length - 1 && (
-                    <div className="flex-1 h-0.5 bg-outline-variant/40 min-w-[12px]" />
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </div>
+        {/* Responsive grid that fits all 7 items on desktop with zero scrollbar */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
+          {LIFECYCLE_STAGES.map((stage, idx) => {
+            const isSelected = activeNodeId === stage.id;
+            return (
+              <button
+                key={stage.id}
+                onClick={() => handleStageClick(idx)}
+                className={`p-3 rounded-2xl text-left border transition-all text-xs font-mono flex flex-col justify-between gap-2 focus:outline-none focus:ring-1 focus:ring-primary ${
+                  isSelected
+                    ? 'bg-primary-container text-white border-primary-container shadow-lg cyber-glow-tab'
+                    : 'bg-surface-container/70 text-on-surface hover:text-white border-outline-variant/30 hover:border-primary/50'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="text-[10px] font-bold opacity-80 px-1.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/20">
+                    0{stage.step}
+                  </span>
+                  <span className="text-[10px] text-outline truncate max-w-[85px]" title={stage.resultingStatus}>
+                    {stage.resultingStatus}
+                  </span>
+                </div>
+                <span className="font-semibold text-xs leading-snug">{stage.name}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

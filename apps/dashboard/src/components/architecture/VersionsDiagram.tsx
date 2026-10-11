@@ -3,7 +3,7 @@ import type { AuditEvent } from '@patchwork/shared';
 import { api, usePolling } from '../../lib/api';
 import { getRouteString } from '../../lib/lifecycle';
 import type { NodeDetail } from './NodeDetailPanel';
-import { RotateCcw, AlertTriangle, ArrowRight, Play, CheckCircle2 } from 'lucide-react';
+import { RotateCcw, ArrowRight, Play } from 'lucide-react';
 
 interface VersionsDiagramProps {
   activeNodeId: string | null;
@@ -147,11 +147,9 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
 
   // Simulate POST /rollback
   const handleRollback = () => {
-    // Find current index
     const curIdx = versions.findIndex((v) => v.id === currentLiveId);
     if (curIdx <= 0) return;
 
-    // Find the most recent earlier version that is not rolled back
     let targetIdx = -1;
     for (let i = curIdx - 1; i >= 0; i--) {
       if (!versions[i].isRolledBack) {
@@ -164,7 +162,6 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
     const rolledBackVersion = versions[curIdx];
     const targetVersion = versions[targetIdx];
 
-    // Mark current as rolled back
     setVersions((prev) =>
       prev.map((v) => (v.id === rolledBackVersion.id ? { ...v, isRolledBack: true } : v))
     );
@@ -246,14 +243,14 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full">
       {/* Simulation Controls & Status Banner */}
-      <div className="p-4 rounded-2xl cyber-glass border border-outline-variant/40 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+      <div className="p-5 rounded-3xl cyber-glass border border-outline-variant/40 flex flex-wrap items-center justify-between gap-4 shadow-lg w-full">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-xs font-mono text-outline font-semibold uppercase">Simulate Actions:</span>
           <button
             onClick={handleUndeploy}
-            className="px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-white font-mono text-xs font-bold transition-all flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-white font-mono text-xs font-bold transition-all flex items-center gap-2"
             title="Create a new version without a specific patch"
           >
             <Play className="w-3.5 h-3.5 text-primary" />
@@ -261,7 +258,7 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
           </button>
           <button
             onClick={handleRollback}
-            className="px-3 py-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-rose-500/30 text-rose-300 font-mono text-xs font-bold transition-all flex items-center gap-1.5"
+            className="px-4 py-2 rounded-xl bg-surface-container hover:bg-surface-container-high border border-rose-500/30 text-rose-300 font-mono text-xs font-bold transition-all flex items-center gap-2"
             title="Reactivate previous non-rolled-back deployment"
           >
             <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
@@ -269,7 +266,7 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
           </button>
           <button
             onClick={handleReset}
-            className="px-2.5 py-1.5 rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-outline hover:text-white font-mono text-xs transition-colors"
+            className="px-3 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/20 text-outline hover:text-white font-mono text-xs transition-colors"
             title="Reset simulation"
           >
             Reset
@@ -277,20 +274,20 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
         </div>
 
         {simulationLog && (
-          <p className="text-[11px] font-mono text-primary-fixed-dim bg-primary-container/10 px-3 py-1 rounded-lg border border-primary-container/30">
+          <p className="text-xs font-mono text-primary-fixed-dim bg-primary-container/10 px-3.5 py-1.5 rounded-xl border border-primary-container/30">
             {simulationLog}
           </p>
         )}
       </div>
 
-      {/* Version Rail Interactive SVG */}
-      <div className="p-4 sm:p-6 rounded-2xl cyber-glass border border-outline-variant/40 shadow-xl overflow-hidden relative font-mono">
+      {/* Version Rail Interactive SVG: Wide & Clean */}
+      <div className="p-5 sm:p-8 rounded-3xl cyber-glass border border-outline-variant/40 shadow-2xl overflow-hidden relative font-mono w-full">
         <span className="text-xs uppercase font-bold text-white block mb-4">
           Immutable Version Rail & Active Deployment Pointer
         </span>
 
         <svg
-          viewBox="0 0 900 180"
+          viewBox="0 0 1160 170"
           className="w-full h-auto select-none"
           role="img"
           aria-labelledby="rail-title rail-desc"
@@ -301,13 +298,12 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
           </desc>
 
           {/* Background Rail Track Line */}
-          <line x1="60" y1="90" x2="840" y2="90" stroke="#353439" strokeWidth="4" strokeLinecap="round" />
+          <line x1="80" y1="85" x2="1080" y2="85" stroke="#353439" strokeWidth="5" strokeLinecap="round" />
 
           {/* Render Version Nodes */}
           {versions.map((ver, idx) => {
             const total = versions.length;
-            // Distribute evenly along rail
-            const x = 80 + (idx / Math.max(1, total - 1)) * 740;
+            const x = 120 + (idx / Math.max(1, total - 1)) * 920;
             const isLive = ver.id === currentLiveId;
             const isRolledBack = ver.isRolledBack;
             const isSelected = activeNodeId === ver.id;
@@ -323,24 +319,24 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
                 className="cursor-pointer transition-transform focus:outline-none"
               >
                 {/* Connecting tick */}
-                <line x1={x} y1="80" x2={x} y2="100" stroke={isLive ? '#ff3b81' : '#aa888e'} strokeWidth="2" />
+                <line x1={x} y1="75" x2={x} y2="95" stroke={isLive ? '#ff3b81' : '#aa888e'} strokeWidth="2.5" />
 
                 {/* Circle Dot */}
                 <circle
                   cx={x}
-                  cy="90"
-                  r={isLive ? '14' : '10'}
+                  cy="85"
+                  r={isLive ? '16' : '11'}
                   fill={isRolledBack ? '#381017' : isLive ? '#ff3b81' : '#1b1b20'}
                   stroke={isRolledBack ? '#f43f5e' : isLive ? '#ffb1c2' : isSelected ? '#ff3b81' : '#5a4045'}
-                  strokeWidth={isLive || isSelected ? '3' : '1.5'}
+                  strokeWidth={isLive || isSelected ? '3.5' : '1.8'}
                 />
 
                 {/* Label text */}
                 <text
                   x={x}
-                  y="125"
+                  y="122"
                   fill={isRolledBack ? '#fca5a5' : '#ffffff'}
-                  fontSize="12"
+                  fontSize="13"
                   fontWeight="bold"
                   textAnchor="middle"
                   fontFamily="Syne, sans-serif"
@@ -351,7 +347,7 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
                   x={x}
                   y="142"
                   fill="#aa888e"
-                  fontSize="11"
+                  fontSize="12"
                   textAnchor="middle"
                   fontFamily="monospace"
                 >
@@ -360,30 +356,29 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
 
                 {/* LIVE Pointer Pill on Top */}
                 {isLive && (
-                  <g transform={`translate(${x}, 40)`}>
+                  <g transform={`translate(${x}, 32)`}>
                     <rect
-                      x="-32"
+                      x="-36"
                       y="-18"
-                      width="64"
-                      height="24"
-                      rx="12"
+                      width="72"
+                      height="26"
+                      rx="13"
                       fill="#ff3b81"
                       stroke="#ffffff"
-                      strokeWidth="1.5"
+                      strokeWidth="1.8"
                     />
                     <text
                       x="0"
-                      y="-2"
+                      y="-1"
                       fill="#ffffff"
-                      fontSize="11"
+                      fontSize="12"
                       fontWeight="bold"
                       textAnchor="middle"
                       fontFamily="monospace"
                     >
                       LIVE
                     </text>
-                    {/* Downward triangle pointer */}
-                    <polygon points="-5,6 5,6 0,13" fill="#ff3b81" />
+                    <polygon points="-6,8 6,8 0,16" fill="#ff3b81" />
                   </g>
                 )}
               </g>
@@ -391,26 +386,26 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
           })}
         </svg>
 
-        <div className="flex items-center justify-between pt-2 border-t border-outline-variant/20 text-[11px] text-outline">
+        <div className="flex items-center justify-between pt-3 border-t border-outline-variant/20 text-xs text-outline">
           <span>Click any version dot to inspect its ops snapshot and deployment metadata</span>
           <span>GET /versions</span>
         </div>
       </div>
 
-      {/* Live Audit Event Timeline */}
-      <div className="p-5 rounded-2xl cyber-glass border border-outline-variant/40 space-y-4 font-mono">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-primary-container animate-pulse" />
+      {/* Live Audit Event Timeline: Zero Scrollbar */}
+      <div className="p-6 rounded-3xl cyber-glass border border-outline-variant/40 space-y-4 font-mono shadow-xl w-full">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/20 pb-3">
+          <div className="flex items-center gap-2.5">
+            <span className="size-2.5 rounded-full bg-primary-container animate-pulse" />
             <h4 className="text-xs font-bold text-white uppercase tracking-wider">
               Audit Event Log (GET /audit)
             </h4>
           </div>
 
-          <div className="flex items-center gap-2 text-[11px]">
+          <div className="flex items-center gap-3 text-xs">
             {auditLoading && <span className="text-outline">Syncing...</span>}
             {auditError && (
-              <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                 Sample fallback data
               </span>
             )}
@@ -429,21 +424,21 @@ export function VersionsDiagram({ activeNodeId, onSelectNode }: VersionsDiagramP
               <button
                 key={evt.id}
                 onClick={() => handleSelectAudit(evt)}
-                className="w-full py-2.5 px-3 flex items-center justify-between gap-3 hover:bg-surface-container/60 rounded-lg text-left transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full py-3 px-3.5 flex items-center justify-between gap-4 hover:bg-surface-container/60 rounded-xl text-left transition-colors focus:outline-none focus:ring-1 focus:ring-primary"
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-3">
                   <span
                     className={`size-2 rounded-full shrink-0 ${
                       isRollback ? 'bg-rose-400' : isApproved ? 'bg-emerald-400' : isDeploy ? 'bg-primary' : 'bg-outline'
                     }`}
                   />
-                  <span className="font-bold text-white">{evt.event_type}</span>
-                  <span className="text-[11px] text-outline font-mono hidden sm:inline">
+                  <span className="font-bold text-white text-xs">{evt.event_type}</span>
+                  <span className="text-xs text-outline font-mono hidden sm:inline">
                     entity: {evt.entity_id.slice(0, 8)}...
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-[11px] text-outline">
+                <div className="flex items-center gap-3 text-xs text-outline">
                   <span>{new Date(evt.created_at).toLocaleTimeString()}</span>
                   <ArrowRight className="w-3.5 h-3.5 text-outline-variant" />
                 </div>

@@ -46,11 +46,11 @@ export function Architecture() {
 
   return (
     <div className="w-full min-h-[calc(100vh-5rem)] flex flex-col justify-between font-body text-on-surface">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-14 w-full space-y-10">
+      <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-8 xl:px-12 py-10 md:py-14 space-y-10">
         {/* Hero Header Banner */}
         <div className="relative p-8 md:p-10 rounded-3xl cyber-glass border border-outline-variant/40 overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-primary-container/15 blur-[120px] pointer-events-none rounded-full" />
-          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-secondary-container/20 blur-[100px] pointer-events-none rounded-full" />
+          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary-container/15 blur-[140px] pointer-events-none rounded-full" />
+          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-secondary-container/20 blur-[120px] pointer-events-none rounded-full" />
 
           <div className="flex flex-wrap items-center justify-between gap-4 mb-6 relative z-10">
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-container/90 border border-primary-container/40 text-xs font-mono shadow-sm">
@@ -67,7 +67,7 @@ export function Architecture() {
                 href={DEMO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-white font-mono text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
+                className="px-4 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-white font-mono text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm"
               >
                 <span>Live Demo</span>
                 <ExternalLink className="w-3.5 h-3.5 text-primary" />
@@ -87,13 +87,13 @@ export function Architecture() {
             <span className="text-primary">DOM Runtime Architecture</span>
           </h1>
 
-          <p className="font-mono text-sm sm:text-base text-on-surface-variant max-w-3xl leading-relaxed relative z-10">
+          <p className="font-mono text-sm sm:text-base text-on-surface-variant max-w-4xl leading-relaxed relative z-10">
             Diagram-first inspection of the Patchwork monorepo. Click any node in the diagrams below to inspect its exact implementation details, API routes, and codebase facts.
           </p>
 
-          {/* Codebase Facts Bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 border-t border-outline-variant/30 mt-6 relative z-10 font-mono text-xs">
-            <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/20">
+          {/* Codebase Facts Bar: Spans Wide */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/30 mt-6 relative z-10 font-mono text-xs">
+            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
               <span className="text-[11px] text-outline uppercase block">Locators</span>
               <span className="text-white font-bold text-sm mt-0.5 block">
                 {CODEBASE_FACTS.anchorCount} Anchor Fields
@@ -103,7 +103,7 @@ export function Architecture() {
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/20">
+            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
               <span className="text-[11px] text-outline uppercase block">Change Types</span>
               <span className="text-white font-bold text-sm mt-0.5 block">
                 {CODEBASE_FACTS.changeTypeCount} Types Supported
@@ -113,7 +113,7 @@ export function Architecture() {
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/20">
+            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
               <span className="text-[11px] text-outline uppercase block">Visual Verification</span>
               <span className="text-white font-bold text-sm mt-0.5 block">
                 Playwright + Pixelmatch
@@ -123,7 +123,7 @@ export function Architecture() {
               </span>
             </div>
 
-            <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/20">
+            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
               <span className="text-[11px] text-outline uppercase block">AI Model</span>
               <span className="text-white font-bold text-sm mt-0.5 block">
                 {CODEBASE_FACTS.geminiModel}
@@ -139,7 +139,7 @@ export function Architecture() {
         <div
           role="tablist"
           aria-label="Architecture Diagrams"
-          className="flex flex-wrap items-center gap-2 p-1.5 rounded-2xl cyber-glass border border-outline-variant/40"
+          className="flex flex-wrap items-center gap-2.5 p-2 rounded-2xl cyber-glass border border-outline-variant/40 shadow-md w-full"
         >
           {ARCH_TABS.map((tab) => {
             const Icon = tab.icon;
@@ -153,7 +153,7 @@ export function Architecture() {
                 aria-controls={`panel-${tab.id}`}
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-mono text-xs font-bold transition-all focus:outline-none focus:ring-1 focus:ring-primary ${
+                className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all focus:outline-none focus:ring-1 focus:ring-primary ${
                   isSelected
                     ? 'bg-primary-container text-white border border-primary-container shadow-md cyber-glow-tab'
                     : 'text-on-surface-variant hover:text-white hover:bg-surface-container/60 border border-transparent'
@@ -167,7 +167,7 @@ export function Architecture() {
         </div>
 
         {/* ═════════════════════════════════════════════════════════════════════ */}
-        {/* ACTIVE DIAGRAM SECTION */}
+        {/* ACTIVE DIAGRAM SECTION: FULL-WIDTH, WIDE & BIG, ZERO SCROLL WHEEL */}
         {/* ═════════════════════════════════════════════════════════════════════ */}
 
         {/* TAB 1: SYSTEM TOPOLOGY */}
@@ -176,7 +176,7 @@ export function Architecture() {
             id="panel-topology"
             role="tabpanel"
             aria-labelledby="tab-topology"
-            className="space-y-6"
+            className="space-y-6 w-full"
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
@@ -194,21 +194,17 @@ export function Architecture() {
               </p>
             </div>
 
-            {/* Main Visual + Detail Panel Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <div className="lg:col-span-8">
-                <TopologyDiagram
-                  activeNodeId={selectedNode?.id ?? null}
-                  onSelectNode={setSelectedNode}
-                />
-              </div>
-              <div className="lg:col-span-4 lg:sticky lg:top-6">
-                <NodeDetailPanel
-                  selectedNode={selectedNode}
-                  onClose={() => setSelectedNode(null)}
-                />
-              </div>
-            </div>
+            {/* Visual Map (Full Width) */}
+            <TopologyDiagram
+              activeNodeId={selectedNode?.id ?? null}
+              onSelectNode={setSelectedNode}
+            />
+
+            {/* Detail Inspector Panel (Full Width, Zero Scroll Wheel) */}
+            <NodeDetailPanel
+              selectedNode={selectedNode}
+              onClose={() => setSelectedNode(null)}
+            />
           </section>
         )}
 
@@ -218,7 +214,7 @@ export function Architecture() {
             id="panel-healer"
             role="tabpanel"
             aria-labelledby="tab-healer"
-            className="space-y-6"
+            className="space-y-6 w-full"
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
@@ -236,21 +232,17 @@ export function Architecture() {
               </p>
             </div>
 
-            {/* Main Visual + Detail Panel Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <div className="lg:col-span-8">
-                <HealerDiagram
-                  activeNodeId={selectedNode?.id ?? null}
-                  onSelectNode={setSelectedNode}
-                />
-              </div>
-              <div className="lg:col-span-4 lg:sticky lg:top-6">
-                <NodeDetailPanel
-                  selectedNode={selectedNode}
-                  onClose={() => setSelectedNode(null)}
-                />
-              </div>
-            </div>
+            {/* Visual Map (Full Width) */}
+            <HealerDiagram
+              activeNodeId={selectedNode?.id ?? null}
+              onSelectNode={setSelectedNode}
+            />
+
+            {/* Detail Inspector Panel (Full Width, Zero Scroll Wheel) */}
+            <NodeDetailPanel
+              selectedNode={selectedNode}
+              onClose={() => setSelectedNode(null)}
+            />
           </section>
         )}
 
@@ -260,7 +252,7 @@ export function Architecture() {
             id="panel-conflicts"
             role="tabpanel"
             aria-labelledby="tab-conflicts"
-            className="space-y-6"
+            className="space-y-6 w-full"
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
@@ -278,21 +270,17 @@ export function Architecture() {
               </p>
             </div>
 
-            {/* Main Visual + Detail Panel Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <div className="lg:col-span-8">
-                <ConflictDiagram
-                  activeNodeId={selectedNode?.id ?? null}
-                  onSelectNode={setSelectedNode}
-                />
-              </div>
-              <div className="lg:col-span-4 lg:sticky lg:top-6">
-                <NodeDetailPanel
-                  selectedNode={selectedNode}
-                  onClose={() => setSelectedNode(null)}
-                />
-              </div>
-            </div>
+            {/* Visual Map (Full Width) */}
+            <ConflictDiagram
+              activeNodeId={selectedNode?.id ?? null}
+              onSelectNode={setSelectedNode}
+            />
+
+            {/* Detail Inspector Panel (Full Width, Zero Scroll Wheel) */}
+            <NodeDetailPanel
+              selectedNode={selectedNode}
+              onClose={() => setSelectedNode(null)}
+            />
           </section>
         )}
 
@@ -302,7 +290,7 @@ export function Architecture() {
             id="panel-versions"
             role="tabpanel"
             aria-labelledby="tab-versions"
-            className="space-y-6"
+            className="space-y-6 w-full"
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
@@ -320,21 +308,17 @@ export function Architecture() {
               </p>
             </div>
 
-            {/* Main Visual + Detail Panel Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              <div className="lg:col-span-8">
-                <VersionsDiagram
-                  activeNodeId={selectedNode?.id ?? null}
-                  onSelectNode={setSelectedNode}
-                />
-              </div>
-              <div className="lg:col-span-4 lg:sticky lg:top-6">
-                <NodeDetailPanel
-                  selectedNode={selectedNode}
-                  onClose={() => setSelectedNode(null)}
-                />
-              </div>
-            </div>
+            {/* Visual Map (Full Width) */}
+            <VersionsDiagram
+              activeNodeId={selectedNode?.id ?? null}
+              onSelectNode={setSelectedNode}
+            />
+
+            {/* Detail Inspector Panel (Full Width, Zero Scroll Wheel) */}
+            <NodeDetailPanel
+              selectedNode={selectedNode}
+              onClose={() => setSelectedNode(null)}
+            />
           </section>
         )}
       </div>

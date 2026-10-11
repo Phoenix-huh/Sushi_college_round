@@ -1,5 +1,5 @@
 import React from 'react';
-import { Info, X, ExternalLink, Code2 } from 'lucide-react';
+import { Info, X, Code2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 export interface NodeDetail {
@@ -31,20 +31,24 @@ export function NodeDetailPanel({
     return (
       <div
         className={cn(
-          'p-5 rounded-2xl cyber-glass border border-outline-variant/30 flex flex-col items-center justify-center text-center font-mono min-h-[220px]',
+          'p-4 rounded-2xl cyber-glass border border-outline-variant/30 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-xs',
           className
         )}
       >
-        <div className="w-10 h-10 rounded-full bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-outline mb-3">
-          <Info className="w-5 h-5 text-primary" />
+        <div className="flex items-center gap-3">
+          <div className="size-9 rounded-xl bg-surface-container-high border border-outline-variant/40 flex items-center justify-center text-primary shrink-0">
+            <Info className="w-4 h-4 text-primary" />
+          </div>
+          <div>
+            <span className="text-white font-headline font-bold text-sm block">
+              Node Inspector
+            </span>
+            <span className="text-on-surface-variant text-xs">
+              Click any box, arrow, or status pill in the diagram above to inspect exact implementation details, API routes, and codebase facts.
+            </span>
+          </div>
         </div>
-        <h4 className="text-white font-headline font-bold text-sm mb-1">
-          Node Inspector
-        </h4>
-        <p className="text-xs text-on-surface-variant max-w-xs leading-relaxed">
-          Click any box or status pill in the diagram to inspect exact implementation details, API routes, and codebase facts.
-        </p>
-        <span className="mt-3 text-[11px] text-outline px-2.5 py-1 rounded-full bg-surface-container-lowest border border-outline-variant/20">
+        <span className="text-[11px] text-outline px-3 py-1 rounded-full bg-surface-container-lowest border border-outline-variant/20 shrink-0 hidden sm:inline">
           Keyboard: Tab + Enter / Space
         </span>
       </div>
@@ -63,31 +67,31 @@ export function NodeDetailPanel({
   return (
     <div
       className={cn(
-        'p-5 rounded-2xl cyber-glass border border-outline-variant/40 font-mono space-y-4 shadow-xl relative overflow-hidden',
+        'p-6 rounded-2xl cyber-glass border border-outline-variant/40 font-mono space-y-5 shadow-2xl relative',
         className
       )}
       tabIndex={-1}
       aria-live="polite"
     >
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex items-start justify-between gap-4 border-b border-outline-variant/20 pb-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <span
               className={cn(
-                'text-[11px] px-2 py-0.5 rounded-full border uppercase font-bold tracking-wider',
+                'text-[11px] px-2.5 py-0.5 rounded-full border uppercase font-bold tracking-wider',
                 categoryColorClass
               )}
             >
               {selectedNode.category || 'Component Detail'}
             </span>
             {selectedNode.badge && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-surface-container border border-outline-variant/30 text-outline">
+              <span className="text-[11px] px-2.5 py-0.5 rounded-full bg-surface-container border border-outline-variant/30 text-outline">
                 {selectedNode.badge}
               </span>
             )}
           </div>
-          <h3 className="text-lg font-headline font-bold text-white tracking-tight">
+          <h3 className="text-xl font-headline font-bold text-white tracking-tight">
             {selectedNode.title}
           </h3>
           {selectedNode.subtitle && (
@@ -98,7 +102,7 @@ export function NodeDetailPanel({
         {onClose && (
           <button
             onClick={onClose}
-            className="p-1 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 text-outline hover:text-white transition-colors"
+            className="p-1.5 rounded-xl bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 text-outline hover:text-white transition-colors"
             title="Deselect node"
             aria-label="Close detail panel"
           >
@@ -107,62 +111,71 @@ export function NodeDetailPanel({
         )}
       </div>
 
-      {/* Route Badge */}
-      {selectedNode.route && (
-        <div className="p-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-between text-xs">
-          <span className="text-outline text-[11px] uppercase font-semibold">API Route:</span>
-          <code className="text-primary font-bold text-xs">{selectedNode.route}</code>
+      {/* 3-Column Content Grid: Fits full width with ZERO scroll wheel */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start text-xs">
+        {/* Col 1: Overview & Route & Meta */}
+        <div className="space-y-3">
+          {selectedNode.route && (
+            <div className="p-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex items-center justify-between text-xs">
+              <span className="text-outline text-[11px] uppercase font-semibold">API Route:</span>
+              <code className="text-primary font-bold text-xs">{selectedNode.route}</code>
+            </div>
+          )}
+
+          {selectedNode.description && (
+            <p className="text-xs text-on-surface leading-relaxed">
+              {selectedNode.description}
+            </p>
+          )}
+
+          {selectedNode.meta && Object.keys(selectedNode.meta).length > 0 && (
+            <div className="grid grid-cols-2 gap-2 text-[11px] pt-1">
+              {Object.entries(selectedNode.meta).map(([k, v]) => (
+                <div key={k} className="p-2 rounded-lg bg-surface-container/60 border border-outline-variant/20">
+                  <span className="text-outline uppercase text-[10px] block font-semibold">{k}</span>
+                  <span className="text-white font-bold">{String(v)}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Description */}
-      {selectedNode.description && (
-        <p className="text-xs text-on-surface leading-relaxed border-t border-outline-variant/20 pt-3">
-          {selectedNode.description}
-        </p>
-      )}
-
-      {/* Bullets List */}
-      {selectedNode.bullets && selectedNode.bullets.length > 0 && (
-        <div className="space-y-2 border-t border-outline-variant/20 pt-3">
+        {/* Col 2: Implementation Facts */}
+        <div className="space-y-2">
           <span className="text-[11px] uppercase text-outline font-semibold tracking-wider block">
             Implementation Facts
           </span>
-          <ul className="space-y-1.5 text-xs text-on-surface-variant">
-            {selectedNode.bullets.map((b, i) => (
-              <li key={i} className="flex items-start gap-2 leading-relaxed">
-                <span className="size-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                <span>{b}</span>
-              </li>
-            ))}
-          </ul>
+          {selectedNode.bullets && selectedNode.bullets.length > 0 ? (
+            <ul className="space-y-1.5 text-xs text-on-surface-variant">
+              {selectedNode.bullets.map((b, i) => (
+                <li key={i} className="flex items-start gap-2 leading-relaxed">
+                  <span className="size-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
+                  <span>{b}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-outline italic">No additional bullet items.</p>
+          )}
         </div>
-      )}
 
-      {/* Code Snippet */}
-      {selectedNode.code && (
-        <div className="space-y-1.5 border-t border-outline-variant/20 pt-3">
+        {/* Col 3: Logic & Code Snippet */}
+        <div className="space-y-2">
           <div className="flex items-center gap-1.5 text-[11px] uppercase text-outline font-semibold">
             <Code2 className="w-3.5 h-3.5 text-primary" />
             <span>Logic & Signatures</span>
           </div>
-          <pre className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-[11px] text-primary-fixed-dim overflow-x-auto leading-relaxed">
-            <code>{selectedNode.code}</code>
-          </pre>
-        </div>
-      )}
-
-      {/* Meta grid */}
-      {selectedNode.meta && Object.keys(selectedNode.meta).length > 0 && (
-        <div className="grid grid-cols-2 gap-2 border-t border-outline-variant/20 pt-3 text-[11px]">
-          {Object.entries(selectedNode.meta).map(([k, v]) => (
-            <div key={k} className="p-2 rounded-lg bg-surface-container/60 border border-outline-variant/20">
-              <span className="text-outline uppercase text-[10px] block font-semibold">{k}</span>
-              <span className="text-white font-bold">{String(v)}</span>
+          {selectedNode.code ? (
+            <pre className="p-3 rounded-xl bg-surface-container-lowest border border-outline-variant/30 text-[11px] text-primary-fixed-dim whitespace-pre-wrap leading-relaxed">
+              <code>{selectedNode.code}</code>
+            </pre>
+          ) : (
+            <div className="p-3 rounded-xl bg-surface-container-lowest/50 border border-outline-variant/20 text-xs text-outline italic">
+              Standard REST endpoint conforming to shared schema.
             </div>
-          ))}
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
