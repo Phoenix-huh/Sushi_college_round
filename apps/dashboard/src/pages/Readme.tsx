@@ -8,21 +8,18 @@ import {
   ArrowRight,
   BookOpen,
   Layers,
-  ShieldCheck,
   GitMerge,
-  Sparkles,
-  Cpu,
-  Puzzle,
-  Download,
+  AlertTriangle,
 } from 'lucide-react';
 import { DEMO_URL } from '../lib/api';
 import {
   LIFECYCLE_STAGES,
   REAL_API_ENDPOINTS,
   CODEBASE_FACTS,
-  STATUS_METADATA,
-  type PatchStatus,
+  KNOWN_LIMITATIONS,
 } from '../lib/lifecycle';
+import { Footer } from '../components/Footer';
+import { StageCard } from '../components/StageCard';
 
 export function Readme() {
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
@@ -322,35 +319,13 @@ export function Readme() {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
             {LIFECYCLE_STAGES.slice(0, 4).map((stage) => (
-              <div key={stage.id} className="p-4 rounded-xl bg-surface-container/70 border border-outline-variant/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-primary">0{stage.step}. {stage.name}</span>
-                </div>
-                <p className="text-on-surface-variant text-[11px] leading-relaxed">{stage.summary}</p>
-                <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-[10px]">
-                  <span className="text-outline">Status:</span>
-                  <span className="font-bold text-white px-1.5 py-0.5 rounded bg-surface-container-lowest">
-                    {stage.resultingStatus}
-                  </span>
-                </div>
-              </div>
+              <StageCard key={stage.id} stage={stage} showRoute />
             ))}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
             {LIFECYCLE_STAGES.slice(4).map((stage) => (
-              <div key={stage.id} className="p-4 rounded-xl bg-surface-container/70 border border-outline-variant/30 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-primary">0{stage.step}. {stage.name}</span>
-                </div>
-                <p className="text-on-surface-variant text-[11px] leading-relaxed">{stage.summary}</p>
-                <div className="pt-2 border-t border-outline-variant/20 flex items-center justify-between text-[10px]">
-                  <span className="text-outline">Status:</span>
-                  <span className="font-bold text-white px-1.5 py-0.5 rounded bg-surface-container-lowest">
-                    {stage.resultingStatus}
-                  </span>
-                </div>
-              </div>
+              <StageCard key={stage.id} stage={stage} showRoute />
             ))}
           </div>
         </div>
@@ -398,33 +373,32 @@ export function Readme() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-outline-variant/30 cyber-glass py-5 sm:py-6 mt-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-outline">
-          <div className="flex items-center gap-3">
-            <span className="size-2 rounded-full bg-primary-container" />
-            <span>© 2026 PATCHWORK. ALL RIGHTS RESERVED.</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/readme"
-              className="text-white hover:text-primary transition-colors flex items-center gap-1.5"
+      {/* Known Limitations */}
+      <section className="space-y-4">
+        <h2 className="font-headline font-bold text-2xl text-white flex items-center gap-2.5">
+          <AlertTriangle className="w-6 h-6 text-amber-400" />
+          <span>Known Limitations & Architectural Bounds</span>
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {KNOWN_LIMITATIONS.map((lim, i) => (
+            <div
+              key={i}
+              className="p-5 rounded-2xl cyber-glass border border-amber-500/20 bg-amber-500/5 space-y-2"
             >
-              <span>README</span>
-            </Link>
-            <span className="text-outline-variant/60">•</span>
-            <a
-              href="https://github.com/Phoenix-huh/Sushi_college_round"
-              target="_blank"
-              rel="noreferrer"
-              className="text-white hover:text-primary transition-colors flex items-center gap-1.5"
-            >
-              <span>GITHUB</span>
-              <ExternalLink className="w-3.5 h-3.5 text-outline" />
-            </a>
-          </div>
+              <div className="flex items-center gap-2 font-headline font-bold text-base text-amber-300">
+                <span className="size-2 rounded-full bg-amber-400" />
+                <h3>{lim.title}</h3>
+              </div>
+              <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
+                {lim.description}
+              </p>
+            </div>
+          ))}
         </div>
-      </footer>
+      </section>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { Footer } from '../components/Footer';
 
 export function Landing() {
   return (
@@ -190,32 +191,7 @@ export function Landing() {
       </section>
 
       {/* Technical Status Footer */}
-      <footer className="w-full border-t border-outline-variant/30 cyber-glass py-5 sm:py-6 mt-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-outline">
-          <div className="flex items-center gap-3">
-            <span className="size-2 rounded-full bg-primary-container" />
-            <span>© 2026 PATCHWORK. ALL RIGHTS RESERVED.</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/readme"
-              className="px-4 py-1.5 rounded-full bg-surface-container/80 hover:bg-surface-container border border-outline-variant/40 hover:border-primary-container/60 text-on-surface hover:text-white transition-all flex items-center gap-1.5 font-mono text-xs font-semibold shadow-sm"
-            >
-              <span className="material-symbols-outlined text-sm text-primary">description</span>
-              <span>README</span>
-            </Link>
-            <a
-              href="https://github.com/Phoenix-huh/Sushi_college_round"
-              target="_blank"
-              rel="noreferrer"
-              className="px-4 py-1.5 rounded-full bg-surface-container/80 hover:bg-surface-container border border-outline-variant/40 hover:border-primary-container/60 text-on-surface hover:text-white transition-all flex items-center gap-1.5 font-mono text-xs font-semibold shadow-sm"
-            >
-              <span className="material-symbols-outlined text-sm text-primary">code</span>
-              <span>GitHub</span>
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

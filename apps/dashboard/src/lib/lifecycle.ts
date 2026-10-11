@@ -288,3 +288,31 @@ export const CODEBASE_FACTS = {
   anchorTargetingSimilarityThreshold: 0.80,
   canaryErrorThreshold: 3,
 };
+
+export function getRouteString(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string): string {
+  const ep = REAL_API_ENDPOINTS.find((e) => e.method === method && e.path === path);
+  return ep ? `${ep.method} ${ep.path}` : `${method} ${path}`;
+}
+
+export const KNOWN_LIMITATIONS = [
+  {
+    title: 'Fuzzy Healing Mis-targeting',
+    description:
+      'The token Jaccard similarity threshold (>= 0.25) with synonym normalization (e.g. checkout=order=buy) can heal onto a wrong element if a page layout is substantially restructured with similarly-styled controls.',
+  },
+  {
+    title: 'Script Patch Security & Reversibility',
+    description:
+      'Patches of type "script" execute arbitrary JavaScript via `new Function` in the page context. They cannot be automatically reverted by DOM undo records, and in the current pipeline are gated only by reviewer approval (disabled by default in extension content scripts).',
+  },
+  {
+    title: 'Reactive Post-Deploy Verification',
+    description:
+      'Playwright verification runs after deploy or on-demand rather than pre-gating the deployment. If a failing version is released live, the server reacts by triggering an automatic rollback rather than halting the deploy upfront.',
+  },
+  {
+    title: 'In-Memory Store Volatility',
+    description:
+      'When Supabase credentials are not configured or unreachable, the server falls back to an in-memory store (`storeMode: "memory"`), which loses all patches, versions, and audit history whenever the server restarts.',
+  },
+];

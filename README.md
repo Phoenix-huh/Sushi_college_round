@@ -193,12 +193,13 @@ npm run typecheck
 ## Known Limitations
 
 To maintain architectural transparency:
-1. **No Edge/CDN Invalidation**: Patchwork does not utilize Cloudflare Workers, Fastly VCL, or edge CDN lambdas. Patches are served by the Fastify server and pulled by the page runtime via client polling (`GET /deployments/live` with `Cache-Control: no-store`).
-2. **No Cryptographic Hash Chaining**: The audit log does not use cryptographic block hashing, Merkle trees, or HMAC signing. Events are standard database rows storing UUIDs, timestamps, actor IDs, and JSON payloads.
-3. **Deploy Pre-Gating**: Deployments are not pre-gated by Playwright verification. Deployments go live immediately (`verification_status: "pending"`). Verification is invoked asynchronously or on-demand; if verification fails on a live version, the server performs a reactive automatic rollback.
-4. **Approval Enforcement Scope**: Strict reviewer approval (`patch.status === "approved"`) is enforced by `POST /patches/:id/merge`. However, `POST /deploy` and `POST /patches/:id/deploy` accept unapproved patches directly for rapid testing.
-5. **Rollback Resolution**: There is no arbitrary "revert to version N" command. Rollbacks either restore the most recent prior deployment (`POST /rollback`) or activate an explicit historical deployment by ID (`POST /deployments/:id/activate`).
-6. **Script Patch Irreversibility**: Changes of type `script` execute JavaScript and cannot be automatically undone by DOM reversion records. For security, `script` execution is disabled by default in content scripts.
+1. **Fuzzy Healing Mis-targeting**: The token Jaccard similarity threshold ($\ge 0.25$) with synonym normalization (e.g. checkout=order=buy) can heal onto a wrong element if a page layout is substantially restructured with similarly-styled controls.
+2. **Script Patch Security & Reversibility**: Changes of type `script` execute arbitrary JavaScript via `new Function` in the page context. They cannot be automatically reverted by DOM undo records, and in the current pipeline are gated only by reviewer approval (disabled by default in extension content scripts).
+3. **Reactive Post-Deploy Verification**: Verification runs after deploy and auto-rolls back rather than blocking deploy. Deployments go live immediately (`verification_status: "pending"`); if a failing version is released, the Playwright verifier reacts by triggering an automatic rollback rather than halting the deploy upfront.
+4. **In-Memory Store Volatility**: When Supabase credentials are not configured or unreachable, the server falls back to an in-memory store (`storeMode: "memory"`), which loses all patches, versions, and audit history whenever the server restarts.
+5. **No Edge/CDN Invalidation**: Patchwork does not utilize Cloudflare Workers, Fastly VCL, or edge CDN lambdas. Patches are served by the Fastify server and pulled by the page runtime via client polling (`GET /deployments/live` with `Cache-Control: no-store`).
+6. **No Cryptographic Hash Chaining**: The audit log does not use cryptographic block hashing, Merkle trees, or HMAC signing. Events are standard database rows storing UUIDs, timestamps, actor IDs, and JSON payloads.
+7. **Rollback Resolution**: There is no arbitrary "revert to version N" command. Rollbacks either restore the most recent prior deployment (`POST /rollback`) or activate an explicit historical deployment by ID (`POST /deployments/:id/activate`).
 
 ---
 
@@ -206,4 +207,4 @@ To maintain architectural transparency:
 
 This project is licensed under the MIT License — see the [LICENSE](./LICENSE) file for details.
 
-Copyright (c) 2026.
+Copyright (c) 2026 PATCHWORK Contributors.

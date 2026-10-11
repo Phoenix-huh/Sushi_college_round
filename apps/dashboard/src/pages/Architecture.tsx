@@ -1,35 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Layers,
-  Cpu,
   GitMerge,
   ShieldCheck,
   CheckCircle2,
   ArrowRight,
   ExternalLink,
   Workflow,
-  Eye,
-  RefreshCw,
-  Terminal,
   Sparkles,
-  Zap,
-  Code2,
-  Database,
-  Layout,
   AlertTriangle,
   RotateCcw,
-  Check,
 } from 'lucide-react';
-import { DEMO_URL } from '../lib/api';
+import type { AuditEvent } from '@patchwork/shared';
+import { DEMO_URL, api, usePolling } from '../lib/api';
 import {
   LIFECYCLE_STAGES,
   HEALING_TIERS,
-  STATUS_METADATA,
   CODEBASE_FACTS,
-  type PatchStatus,
+  getRouteString,
   type HealingTier,
 } from '../lib/lifecycle';
+import { Footer } from '../components/Footer';
+import { StageCard } from '../components/StageCard';
 
 type TabKey = 'all' | 'topology' | 'auto-heal' | 'merge' | 'audit';
 
@@ -47,7 +40,7 @@ const DIAGRAM_NAV_TABS: DiagramNavTab[] = [
   { id: 'audit', label: '4. Audit & Rollback', icon: ShieldCheck },
 ];
 
-const AUDIT_SAMPLE_EVENTS = [
+const SAMPLE_FALLBACK_EVENTS: AuditEvent[] = [
   {
     id: '7b8f2c11-92e1-4561-8ca0-128f9d01e47a',
     event_type: 'patch_created',
@@ -80,22 +73,25 @@ const AUDIT_SAMPLE_EVENTS = [
     created_at: '2026-10-10T14:38:00.000Z',
     details: { version_number: 2, patch_count: 2 },
   },
-  {
-    id: 'd018274f-9912-4018-8f12-7819203918a2',
-    event_type: 'deployment_created',
-    actor_id: '22222222-2222-2222-2222-222222222222',
-    entity_id: 'd9911223-4455-6677-8899-aabbccddeeff',
-    created_at: '2026-10-10T14:38:01.000Z',
-    details: { version_number: 2, patch_ids: ['4a1e9b20-6d3f-42a1-b844-09c3e1b7f001'] },
-  },
 ];
 
 export function Architecture() {
   const [activeTab, setActiveTab] = useState<TabKey>('all');
   const [selectedHealTier, setSelectedHealTier] = useState<number>(1);
 
+  // Real audit events fetching with loading, empty, and fallback states
+  const { data: auditEvents, loading: auditLoading, error: auditError } = usePolling<AuditEvent[]>(
+    useCallback(() => api<AuditEvent[]>('/audit'), []),
+    4000
+  );
+
   const currentTierData: HealingTier =
     HEALING_TIERS.find((t) => t.tier === selectedHealTier) ?? HEALING_TIERS[0];
+
+  const displayedAuditEvents =
+    !auditError && auditEvents && auditEvents.length > 0
+      ? auditEvents.slice(0, 4)
+      : SAMPLE_FALLBACK_EVENTS;
 
   return (
     <div className="w-full min-h-[calc(100vh-5rem)] flex flex-col justify-between font-body text-on-surface">
@@ -149,22 +145,28 @@ export function Architecture() {
             <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/30">
               <div className="text-outline text-[11px] mb-1">ANCHOR TYPES</div>
               <div className="text-lg font-bold text-primary">{CODEBASE_FACTS.anchorCount} Anchors</div>
-              <div className="text-[10px] text-on-surface-variant truncate">CSS, XPath, Text, Attrs, Parent, Sibling</div>
+              <div className="text-[10px] text-on-surface-variant">
+                {CODEBASE_FACTS.anchors.join(', ')}
+              </div>
             </div>
             <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/30">
               <div className="text-outline text-[11px] mb-1">CHANGE TYPES</div>
               <div className="text-lg font-bold text-primary">{CODEBASE_FACTS.changeTypeCount} Types</div>
-              <div className="text-[10px] text-on-surface-variant truncate">text, style, visibility, script, attr, remove...</div>
+              <div className="text-[10px] text-on-surface-variant">
+                {CODEBASE_FACTS.changeTypes.join(', ')}
+              </div>
             </div>
             <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/30">
               <div className="text-outline text-[11px] mb-1">VERIFICATION ENGINE</div>
-              <div className="text-lg font-bold text-primary">Playwright</div>
+              <div className="text-lg font-bold text-primary">{CODEBASE_FACTS.verificationEngine}</div>
               <div className="text-[10px] text-on-surface-variant">Chromium checkout flow + Pixelmatch</div>
             </div>
             <div className="p-3 rounded-xl bg-surface-container-lowest/80 border border-outline-variant/30">
               <div className="text-outline text-[11px] mb-1">RUNTIME POLLING</div>
               <div className="text-lg font-bold text-primary">{CODEBASE_FACTS.runtimePollingIntervalMs} ms</div>
-              <div className="text-[10px] text-on-surface-variant">GET /deployments/live (no-store)</div>
+              <div className="text-[10px] text-on-surface-variant">
+                {getRouteString('GET', '/deployments/live')} (no-store)
+              </div>
             </div>
           </div>
         </div>
@@ -220,7 +222,7 @@ export function Architecture() {
               </p>
             </div>
 
-            {/* Architecture Box with SVG Connectivity */}
+            {/* Architecture Box */}
             <div className="p-6 md:p-8 rounded-3xl cyber-glass border border-outline-variant/40 space-y-8 shadow-xl">
               {/* Component Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -238,7 +240,7 @@ export function Architecture() {
                     and posts draft patches directly to the server.
                   </p>
                   <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 font-mono text-[11px] text-primary">
-                    POST /patches (draft)
+                    <code>{getRouteString('POST', '/patches')}</code> (draft)
                   </div>
                 </div>
 
@@ -270,11 +272,11 @@ export function Architecture() {
                   </div>
                   <h3 className="font-headline font-bold text-white text-base">Gemini 3.8 Flash Route</h3>
                   <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
-                    POST /ai/patch turns natural language instructions into structured patch JSON. Falls back to
+                    <code>{getRouteString('POST', '/ai/patch')}</code> turns natural language instructions into structured patch JSON. Falls back to
                     heuristic rules if GEMINI_API_KEY is omitted.
                   </p>
                   <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 font-mono text-[11px] text-primary">
-                    model: gemini-3.8-flash
+                    model: {CODEBASE_FACTS.geminiModel}
                   </div>
                 </div>
 
@@ -294,19 +296,19 @@ export function Architecture() {
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-[11px] pt-1">
                     <div className="p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-center">
                       <span className="text-outline block text-[10px]">MERGE</span>
-                      <span className="text-white font-bold">POST /merge</span>
+                      <span className="text-white font-bold">{getRouteString('POST', '/patches/:id/merge')}</span>
                     </div>
-                    <div className="grid-cell p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-center">
+                    <div className="p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-center">
                       <span className="text-outline block text-[10px]">LIVE STATE</span>
-                      <span className="text-white font-bold">GET /live</span>
+                      <span className="text-white font-bold">{getRouteString('GET', '/deployments/live')}</span>
                     </div>
                     <div className="p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-center">
                       <span className="text-outline block text-[10px]">ROLLBACK</span>
-                      <span className="text-white font-bold">POST /rollback</span>
+                      <span className="text-white font-bold">{getRouteString('POST', '/rollback')}</span>
                     </div>
                     <div className="p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-center">
                       <span className="text-outline block text-[10px]">AUDIT</span>
-                      <span className="text-white font-bold">GET /audit</span>
+                      <span className="text-white font-bold">{getRouteString('GET', '/audit')}</span>
                     </div>
                   </div>
                 </div>
@@ -322,7 +324,7 @@ export function Architecture() {
                   <h3 className="font-headline font-bold text-white text-base">Supabase or In-Memory</h3>
                   <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
                     Persists patches, versions, deployments, audit events, conflicts, and sites to Supabase PostgreSQL;
-                    falls back gracefully to memory if unreachable.
+                    falls back to in-memory store when Supabase credentials are not set or unreachable.
                   </p>
                   <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 font-mono text-[11px] text-outline">
                     storeMode: supabase | memory
@@ -335,7 +337,7 @@ export function Architecture() {
                     <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-primary-container/20 text-primary uppercase font-bold">
                       Sandbox Verifier
                     </span>
-                    <span className="text-xs font-mono text-outline">Playwright + Pixelmatch</span>
+                    <span className="text-xs font-mono text-outline">{CODEBASE_FACTS.verificationEngine}</span>
                   </div>
                   <h3 className="font-headline font-bold text-white text-base">Automated Regression Check</h3>
                   <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
@@ -343,7 +345,7 @@ export function Architecture() {
                     auto-triggers rollbackLive if verification fails on a live version.
                   </p>
                   <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 font-mono text-[11px] text-primary">
-                    POST /verify (auto-rollback on fail)
+                    <code>{getRouteString('POST', '/verify')}</code> (auto-rollback on fail)
                   </div>
                 </div>
 
@@ -361,7 +363,7 @@ export function Architecture() {
                     extension, dashboard, and demo site.
                   </p>
                   <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 font-mono text-[11px] text-outline">
-                    Zero drift across packages
+                    Shared schemas, matcher, and targeting logic
                   </div>
                 </div>
 
@@ -375,16 +377,16 @@ export function Architecture() {
                   </div>
                   <h3 className="font-headline font-bold text-white text-base">In-Page Client Loader</h3>
                   <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
-                    Vanilla script tag embedded on the target site (port 4100). Polls GET /deployments/live every 2s,
+                    Vanilla script tag embedded on the target site (port 4100). Polls <code>{getRouteString('GET', '/deployments/live')}</code> every {CODEBASE_FACTS.runtimePollingIntervalMs / 1000}s,
                     applies changes via DOM APIs, and reloads on signature change.
                   </p>
                   <div className="bg-surface-container-lowest p-2 rounded-lg border border-outline-variant/20 font-mono text-[11px] text-primary">
-                    patchwork-runtime.js (POLL_MS: 2000)
+                    <code>{getRouteString('GET', '/deployments/live')}</code>
                   </div>
                 </div>
               </div>
 
-              {/* Lifecycle Flow Pipeline Cards */}
+              {/* Lifecycle Flow Pipeline Cards via StageCard Component */}
               <div className="pt-6 border-t border-outline-variant/30 space-y-4">
                 <div className="text-xs font-mono font-bold text-outline uppercase tracking-wider">
                   The Real 7-Step Lifecycle (Defined in apps/dashboard/src/lib/lifecycle.ts)
@@ -392,33 +394,13 @@ export function Architecture() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
                   {LIFECYCLE_STAGES.slice(0, 4).map((stage) => (
-                    <div key={stage.id} className="p-4 rounded-xl bg-surface-container/70 border border-outline-variant/30 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-primary">Step 0{stage.step}</span>
-                        <span className="text-[10px] text-outline px-1.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/20">
-                          {stage.resultingStatus}
-                        </span>
-                      </div>
-                      <h4 className="font-headline font-bold text-white text-sm">{stage.name}</h4>
-                      <p className="text-[11px] text-on-surface-variant leading-relaxed">{stage.summary}</p>
-                      <div className="pt-2 text-[10px] text-outline truncate">{stage.route}</div>
-                    </div>
+                    <StageCard key={stage.id} stage={stage} showRoute />
                   ))}
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
                   {LIFECYCLE_STAGES.slice(4).map((stage) => (
-                    <div key={stage.id} className="p-4 rounded-xl bg-surface-container/70 border border-outline-variant/30 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-primary">Step 0{stage.step}</span>
-                        <span className="text-[10px] text-outline px-1.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/20">
-                          {stage.resultingStatus}
-                        </span>
-                      </div>
-                      <h4 className="font-headline font-bold text-white text-sm">{stage.name}</h4>
-                      <p className="text-[11px] text-on-surface-variant leading-relaxed">{stage.summary}</p>
-                      <div className="pt-2 text-[10px] text-outline truncate">{stage.route}</div>
-                    </div>
+                    <StageCard key={stage.id} stage={stage} showRoute />
                   ))}
                 </div>
               </div>
@@ -520,7 +502,7 @@ export function Architecture() {
                         (checkout = order = buy = pay; cart = basket = bag).
                       </p>
                       <p className="text-[11px] text-white">
-                        Requires <strong className="text-primary">score &ge; 0.25</strong> and skips container elements with &gt; 3 children.
+                        Requires <strong className="text-primary">score &ge; {CODEBASE_FACTS.jaccardHealingThreshold}</strong> and skips container elements with &gt; 3 children.
                       </p>
                     </div>
                   ) : (
@@ -535,7 +517,7 @@ export function Architecture() {
                   <div className="text-outline uppercase text-[10px] font-bold">Targeting Constants in Code</div>
                   <div className="flex items-center justify-between">
                     <span className="text-on-surface-variant">Page Poll Interval:</span>
-                    <span className="text-white font-semibold">{CODEBASE_FACTS.runtimePollingIntervalMs} ms</span>
+                    <span className="text-white font-semibold">{CODEBASE_FACTS.runtimePollingIntervalMs} ms ({getRouteString('GET', '/deployments/live')})</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-on-surface-variant">MutationObserver Debounce:</span>
@@ -576,59 +558,64 @@ export function Architecture() {
             </div>
 
             <div className="p-6 md:p-8 rounded-3xl cyber-glass border border-outline-variant/40 shadow-xl space-y-8">
-              {/* Conflict Scenario Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Branch A */}
-                <div className="p-5 rounded-2xl bg-surface-container border border-primary-container/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-mono text-[10px] font-bold uppercase">
-                      Dev Alice
-                    </span>
-                    <span className="text-[10px] font-mono text-outline">Branch 1</span>
-                  </div>
-                  <h4 className="font-headline font-bold text-white text-sm">Banner Style Edit</h4>
-                  <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant/30 font-mono text-xs text-on-surface-variant space-y-1">
-                    <div className="text-outline text-[10px]">Target: .hero-banner</div>
-                    <div className="text-emerald-400">+ style: background-color: #ff3b81</div>
-                    <div className="text-emerald-400">+ style: border-radius: 8px</div>
-                  </div>
+              {/* Conflict Scenario Cards Matching Seed Data */}
+              <div className="space-y-2">
+                <div className="text-xs font-mono font-bold text-outline uppercase tracking-wider">
+                  Example scenario: #checkout-btn edits
                 </div>
-
-                {/* Base DOM */}
-                <div className="p-5 rounded-2xl bg-surface-container-high/80 border border-outline-variant/40 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="px-2 py-0.5 rounded bg-surface-container-highest text-white font-mono text-[10px] font-bold uppercase">
-                        BASE DOM
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* Branch A: Alice Style Edit */}
+                  <div className="p-5 rounded-2xl bg-surface-container border border-primary-container/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-mono text-[10px] font-bold uppercase">
+                        Alice (Patch 4)
                       </span>
-                      <span className="text-[10px] font-mono text-outline">Live v1.0</span>
+                      <span className="text-[10px] font-mono text-outline">Branch 1</span>
                     </div>
-                    <h4 className="font-headline font-bold text-white text-sm">Target Element</h4>
-                    <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant/30 font-mono text-xs text-outline space-y-1 mt-3">
-                      <div>Selector: .hero-banner</div>
-                      <div>background-color: #111111</div>
-                      <div>text: "TechMart Electronics"</div>
+                    <h4 className="font-headline font-bold text-white text-sm">Checkout Button - Coral Accent</h4>
+                    <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant/30 font-mono text-xs text-on-surface-variant space-y-1">
+                      <div className="text-outline text-[10px]">Target: #checkout-btn</div>
+                      <div className="text-emerald-400">+ style: background-color: #f43f5e</div>
+                      <div className="text-emerald-400">+ style: color: #ffffff</div>
                     </div>
                   </div>
-                  <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-center text-xs font-mono text-primary gap-1.5">
-                    <GitMerge className="w-4 h-4" />
-                    <span>targetsSameElement(a, b)</span>
-                  </div>
-                </div>
 
-                {/* Branch B */}
-                <div className="p-5 rounded-2xl bg-surface-container border border-primary-container/40 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-mono text-[10px] font-bold uppercase">
-                      Dev Bob
-                    </span>
-                    <span className="text-[10px] font-mono text-outline">Branch 2</span>
+                  {/* Base DOM */}
+                  <div className="p-5 rounded-2xl bg-surface-container-high/80 border border-outline-variant/40 flex flex-col justify-between">
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="px-2 py-0.5 rounded bg-surface-container-highest text-white font-mono text-[10px] font-bold uppercase">
+                          BASE DOM
+                        </span>
+                        <span className="text-[10px] font-mono text-outline">Live v1.0</span>
+                      </div>
+                      <h4 className="font-headline font-bold text-white text-sm">Target Element</h4>
+                      <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant/30 font-mono text-xs text-outline space-y-1 mt-3">
+                        <div>Selector: #checkout-btn</div>
+                        <div>style: default theme</div>
+                        <div>text: "Checkout"</div>
+                      </div>
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-outline-variant/20 flex items-center justify-center text-xs font-mono text-primary gap-1.5">
+                      <GitMerge className="w-4 h-4" />
+                      <span>targetsSameElement(a, b)</span>
+                    </div>
                   </div>
-                  <h4 className="font-headline font-bold text-white text-sm">Banner Text Edit</h4>
-                  <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant/30 font-mono text-xs text-on-surface-variant space-y-1">
-                    <div className="text-outline text-[10px]">Target: .hero-banner</div>
-                    <div className="text-emerald-400">+ text: "Weekend Flash Sale: 20% Off"</div>
-                    <div className="text-outline">~ style: untouched</div>
+
+                  {/* Branch B: Bob Text Edit */}
+                  <div className="p-5 rounded-2xl bg-surface-container border border-primary-container/40 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-mono text-[10px] font-bold uppercase">
+                        Bob (Patch 1)
+                      </span>
+                      <span className="text-[10px] font-mono text-outline">Branch 2</span>
+                    </div>
+                    <h4 className="font-headline font-bold text-white text-sm">Checkout Button - Text Update</h4>
+                    <div className="bg-surface-container-lowest p-2.5 rounded-lg border border-outline-variant/30 font-mono text-xs text-on-surface-variant space-y-1">
+                      <div className="text-outline text-[10px]">Target: #checkout-btn</div>
+                      <div className="text-emerald-400">+ text: "Pay & Complete Order"</div>
+                      <div className="text-outline">~ style: untouched</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -640,8 +627,8 @@ export function Architecture() {
                   <div>
                     <h5 className="font-headline font-bold text-white text-xs mb-1">Orthogonal Edits: Clean Auto-Merge</h5>
                     <p className="text-xs text-on-surface-variant font-mono leading-relaxed">
-                      Alice edited CSS declarations (background-color, border-radius) while Bob edited text content.
-                      Because the operations target distinct properties on the same element, the CAS merge combines them into the new version snapshot.
+                      Alice edited CSS declarations on <code>#checkout-btn</code> while Bob edited its text content.
+                      Because the operations target distinct properties on <code>#checkout-btn</code>, the CAS merge synthesizes both into the new version snapshot without conflicts.
                     </p>
                   </div>
                 </div>
@@ -649,11 +636,10 @@ export function Architecture() {
                 <div className="flex items-start gap-3 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30">
                   <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                   <div>
-                    <h5 className="font-headline font-bold text-white text-xs mb-1">Same Property or Semantic Overlap: Conflict Flag</h5>
+                    <h5 className="font-headline font-bold text-white text-xs mb-1">Same Property Collision: Conflict Flag</h5>
                     <p className="text-xs text-on-surface-variant font-mono leading-relaxed">
-                      If two patches modify the same property (e.g. both change text or background-color to different values),
-                      or have semantic overlaps (e.g. visibility:hidden vs text), the patch moves to <strong>conflicted</strong> and
-                      requires resolution via POST /conflicts/:id/resolve.
+                      If Bob instead also edited <code>background-color</code> on <code>#checkout-btn</code> (e.g. Emerald <code>#10b981</code> vs Alice's Coral <code>#f43f5e</code>),
+                      both patches mutate the exact same property. The patch moves to <strong>conflicted</strong> and requires resolution via <code>{getRouteString('POST', '/conflicts/:id/resolve')}</code>.
                     </p>
                   </div>
                 </div>
@@ -678,37 +664,61 @@ export function Architecture() {
                 </h2>
               </div>
               <p className="text-xs font-mono text-outline max-w-md">
-                Real audit event records from apps/server/src/store.ts and exact rollback behavior.
+                Live audit event records from {getRouteString('GET', '/audit')} and exact rollback behavior.
               </p>
             </div>
 
             <div className="p-6 md:p-8 rounded-3xl cyber-glass border border-outline-variant/40 shadow-xl space-y-6">
-              {/* Real Audit Event Field Representation */}
+              {/* Audit Records Section */}
               <div className="space-y-2">
-                <div className="text-xs font-mono font-bold text-outline uppercase tracking-wider">
-                  Real Audit Event Records in Database (GET /audit):
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-mono font-bold text-outline uppercase tracking-wider">
+                    Audit Event Records in Database ({getRouteString('GET', '/audit')}):
+                  </div>
+                  {auditLoading ? (
+                    <span className="text-[11px] font-mono text-outline">Loading live events...</span>
+                  ) : auditError ? (
+                    <span className="text-[11px] font-mono text-amber-300 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30">
+                      Sample data (API offline)
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30">
+                      Live data connected
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
-                  {AUDIT_SAMPLE_EVENTS.slice(0, 4).map((evt) => (
-                    <div key={evt.id} className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/30 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] px-2 py-0.5 rounded bg-primary-container/20 text-primary font-bold">
-                          {evt.event_type}
-                        </span>
-                        <span className="text-[10px] text-outline">{evt.created_at.slice(11, 19)} UTC</span>
+
+                {auditLoading ? (
+                  <div className="p-8 rounded-2xl bg-surface-container border border-outline-variant/30 text-center font-mono text-xs text-outline">
+                    Loading live audit events from {getRouteString('GET', '/audit')}...
+                  </div>
+                ) : !auditError && auditEvents && auditEvents.length === 0 ? (
+                  <div className="p-8 rounded-2xl bg-surface-container border border-outline-variant/30 text-center font-mono text-xs text-outline">
+                    No audit events recorded yet.
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-xs">
+                    {displayedAuditEvents.map((evt) => (
+                      <div key={evt.id} className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/30 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-primary-container/20 text-primary font-bold">
+                            {evt.event_type}
+                          </span>
+                          <span className="text-[10px] text-outline">{evt.created_at.slice(11, 19)} UTC</span>
+                        </div>
+                        <div className="text-white text-[11px] truncate">
+                          ID: <span className="text-outline">{evt.id}</span>
+                        </div>
+                        <div className="text-white text-[11px] truncate">
+                          Actor: <span className="text-outline">{evt.actor_id}</span>
+                        </div>
+                        <div className="p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-[10px] text-on-surface-variant truncate">
+                          {JSON.stringify(evt.details)}
+                        </div>
                       </div>
-                      <div className="text-white text-[11px] truncate">
-                        ID: <span className="text-outline">{evt.id}</span>
-                      </div>
-                      <div className="text-white text-[11px] truncate">
-                        Actor: <span className="text-outline">{evt.actor_id}</span>
-                      </div>
-                      <div className="p-2 rounded bg-surface-container-lowest border border-outline-variant/20 text-[10px] text-on-surface-variant truncate">
-                        {JSON.stringify(evt.details)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Exact Rollback Mechanics Explanation */}
@@ -722,7 +732,7 @@ export function Architecture() {
                   <div className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/20 space-y-2">
                     <span className="text-primary font-bold">1. Undeploy a Single Patch:</span>
                     <p className="text-on-surface-variant leading-relaxed">
-                      POST /patches/:id/undeploy filters the target patch out of the live set and invokes deployPatchSet with remaining patches.
+                      <code>{getRouteString('POST', '/patches/:id/undeploy')}</code> filters the target patch out of the live set and invokes <code>deployPatchSet</code> with remaining patches.
                       This generates a new incremented Version record and updates the live deployment.
                     </p>
                   </div>
@@ -730,14 +740,16 @@ export function Architecture() {
                   <div className="p-3.5 rounded-xl bg-surface-container border border-outline-variant/20 space-y-2">
                     <span className="text-primary font-bold">2. Roll Back Deployment:</span>
                     <p className="text-on-surface-variant leading-relaxed">
-                      POST /rollback marks the current deployment rolled_back_at and sets the most recent earlier non-rolled-back deployment live again.
-                      The page runtime detects the new signature on its next poll (2000 ms) and reloads to clear un-deployed changes.
+                      <code>{getRouteString('POST', '/rollback')}</code> marks the current deployment rolled_back_at and sets the most recent earlier non-rolled-back deployment live again.
+                      The page runtime detects the new signature on its next poll ({CODEBASE_FACTS.runtimePollingIntervalMs} ms) and reloads to clear un-deployed changes.
                     </p>
                   </div>
                 </div>
 
                 <div className="pt-2 flex flex-wrap items-center justify-between gap-4 border-t border-outline-variant/20 text-xs font-mono">
-                  <span className="text-outline">Reactivate prior deployment: POST /deployments/:id/activate</span>
+                  <span className="text-outline">
+                    Reactivate prior deployment: <code>{getRouteString('POST', '/deployments/:id/activate')}</code>
+                  </span>
                   <div className="flex items-center gap-3">
                     <Link
                       to="/audit"
@@ -761,33 +773,8 @@ export function Architecture() {
         )}
       </div>
 
-      {/* Technical Status Footer matching Landing & Readme */}
-      <footer className="w-full border-t border-outline-variant/30 cyber-glass py-5 sm:py-6 mt-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-outline">
-          <div className="flex items-center gap-3">
-            <span className="size-2 rounded-full bg-primary-container" />
-            <span>© 2026 PATCHWORK. ALL RIGHTS RESERVED.</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              to="/readme"
-              className="text-white hover:text-primary transition-colors flex items-center gap-1.5"
-            >
-              <span>README</span>
-            </Link>
-            <span className="text-outline-variant/60">•</span>
-            <a
-              href="https://github.com/Phoenix-huh/Sushi_college_round"
-              target="_blank"
-              rel="noreferrer"
-              className="text-white hover:text-primary transition-colors flex items-center gap-1.5"
-            >
-              <span>GITHUB</span>
-              <ExternalLink className="w-3.5 h-3.5 text-outline" />
-            </a>
-          </div>
-        </div>
-      </footer>
+      {/* Technical Status Footer */}
+      <Footer />
     </div>
   );
 }

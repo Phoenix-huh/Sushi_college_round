@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
-import { Download, ExternalLink, ArrowRight, Sparkles, Layers, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Download, ExternalLink, Layers, CheckCircle2, Sparkles, ShieldCheck } from 'lucide-react';
 import { DEMO_URL } from '../lib/api';
+import { Footer } from '../components/Footer';
 
 export function Extension() {
   return (
@@ -137,16 +137,7 @@ export function Extension() {
         </div>
 
         {/* Footer */}
-        <footer className="w-full border-t border-outline-variant/20 py-6 px-6 text-center text-xs font-mono text-outline relative z-10">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <span>PATCHWORK &copy; 2026 &middot; Luminescent Hotfix Engine</span>
-            <div className="flex items-center gap-4">
-              <Link to="/" className="hover:text-white transition-colors">Overview</Link>
-              <Link to="/extension" className="text-primary font-bold">Extension</Link>
-              <Link to="/patches" className="hover:text-white transition-colors">Dashboard</Link>
-            </div>
-          </div>
-        </footer>
+        <Footer />
     </div>
   );
 }
