@@ -7,6 +7,8 @@ import { Deployments } from './pages/Deployments';
 import { Verification } from './pages/Verification';
 import { Conflicts } from './pages/Conflicts';
 import { Audit } from './pages/Audit';
+import { Readme } from './pages/Readme';
+import { Architecture } from './pages/Architecture';
 import { BinaryCursorTrail } from './components/BinaryCursorTrail';
 
 function App() {
@@ -17,6 +19,8 @@ function App() {
         <Route element={<SidebarLayout />}>
           <Route path="/" element={<Landing />} />
           <Route path="/extension" element={<Extension />} />
+          <Route path="/architecture" element={<Architecture />} />
+          <Route path="/readme" element={<Readme />} />
           <Route path="/patches" element={<Patches />} />
           <Route path="/deployments" element={<Deployments />} />
           <Route path="/verification" element={<Verification />} />

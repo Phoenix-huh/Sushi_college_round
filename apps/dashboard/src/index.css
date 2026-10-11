@@ -29,7 +29,11 @@
 }
 
 .cyber-glow-primary {
-  box-shadow: 0 0 25px rgba(255, 59, 129, 0.55), 0 0 50px rgba(255, 59, 129, 0.25);
+  box-shadow: 0 0 16px rgba(255, 59, 129, 0.45), 0 0 32px rgba(255, 59, 129, 0.18);
+}
+
+.cyber-glow-tab {
+  box-shadow: 0 0 10px rgba(255, 59, 129, 0.38), 0 0 20px rgba(255, 59, 129, 0.15);
 }
 
 .cyber-glow-text {
@@ -54,4 +58,99 @@
 html, body, a, button, input, select, textarea, [role="button"], label, tr, td, th {
   cursor: url('/retro-cursor.svg') 0 0, url('/retro-cursor.png') 0 0, auto !important;
 }
+
+/* ─── Light Mode Styles ─── */
+html.light {
+  background-color: #f6f5f9;
+  color: #1a1724;
+  color-scheme: light;
+}
+
+html.light body,
+html.light #root {
+  background-color: #f6f5f9;
+  color: #1a1724;
+}
+
+html.light .bg-surface-container-lowest {
+  background-color: #f6f5f9 !important;
+}
+
+html.light .bg-surface-container-low {
+  background-color: #ede9f4 !important;
+}
+
+html.light .bg-surface-container {
+  background-color: #ffffff !important;
+}
+
+html.light .bg-surface-container-high {
+  background-color: #eae5f2 !important;
+}
+
+html.light .bg-surface-container-highest {
+  background-color: #ded8e8 !important;
+}
+
+html.light .bg-surface {
+  background-color: #ffffff !important;
+}
+
+html.light .text-white {
+  color: #14111d !important;
+}
+
+html.light .text-on-surface {
+  color: #1f1b28 !important;
+}
+
+html.light .text-on-surface-variant {
+  color: #554d63 !important;
+}
+
+html.light .text-outline {
+  color: #7b7189 !important;
+}
+
+html.light .text-outline-variant {
+  color: #a499b2 !important;
+}
+
+html.light .border-outline-variant\/20,
+html.light .border-outline-variant\/30,
+html.light .border-outline-variant\/40,
+html.light .border-outline-variant\/50 {
+  border-color: rgba(185, 170, 200, 0.45) !important;
+}
+
+html.light .cyber-glass {
+  background: rgba(255, 255, 255, 0.88) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 4px 20px rgba(130, 110, 150, 0.08);
+}
+
+html.light .bg-primary-container,
+html.light .bg-primary-container *,
+html.light .bg-secondary-container,
+html.light .bg-secondary-container * {
+  color: #ffffff !important;
+}
+
+html.light .text-primary-container {
+  color: #ff3b81 !important;
+}
+
+html.light .cyber-glow-primary {
+  box-shadow: 0 0 15px rgba(255, 59, 129, 0.35), 0 0 30px rgba(255, 59, 129, 0.15) !important;
+}
+
+html.light .cyber-glow-tab {
+  box-shadow: 0 0 8px rgba(255, 59, 129, 0.25), 0 0 16px rgba(255, 59, 129, 0.1) !important;
+}
+
+html.light .cyber-glow-text {
+  text-shadow: 0 0 8px #ff3b81, 0 0 20px rgba(255, 59, 129, 0.5) !important;
+}
+
 
