@@ -297,15 +297,15 @@ export function Patches() {
             + Add patch manually
           </button>
         </div>
-        <table className="w-full text-xs font-mono text-left">
+        <table className="w-full text-xs font-mono text-left min-w-[920px]">
           <thead className="bg-surface-container-highest/50 border-b border-outline-variant/30 text-outline uppercase text-[11px]">
             <tr>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Title / Element</th>
-              <th className="px-4 py-3 font-medium">Change</th>
-              <th className="px-4 py-3 font-medium">Value</th>
-              <th className="px-4 py-3 font-medium">Author</th>
-              <th className="px-4 py-3 font-medium text-right">Actions</th>
+              <th className="px-4 py-3 font-medium w-24">Status</th>
+              <th className="px-4 py-3 font-medium w-60 max-w-[240px]">Title / Element</th>
+              <th className="px-4 py-3 font-medium w-20">Change</th>
+              <th className="px-4 py-3 font-medium max-w-[280px]">Value</th>
+              <th className="px-4 py-3 font-medium w-28 whitespace-nowrap">Author</th>
+              <th className="px-4 py-3 pr-6 font-medium text-right min-w-[220px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/20">
@@ -320,12 +320,12 @@ export function Patches() {
                 <Fragment key={patch.id}>
                   <tr className="hover:bg-surface-container/40 align-middle transition-colors">
                     {/* Status Badge */}
-                    <td className="px-4 py-3 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap w-24">
                       <StatusPill status={effectiveStatus} />
                     </td>
 
                     {/* Title & Selector */}
-                    <td className="px-4 py-3 max-w-xs">
+                    <td className="px-4 py-3 w-60 max-w-[240px]">
                       {patch.title ? (
                         <div className="font-semibold text-white text-xs truncate" title={patch.title}>
                           {patch.title}
@@ -342,24 +342,31 @@ export function Patches() {
                     </td>
 
                     {/* Change Type */}
-                    <td className="px-4 py-3 font-mono text-xs text-outline-variant whitespace-nowrap">
+                    <td className="px-4 py-3 font-mono text-xs text-outline-variant whitespace-nowrap w-20">
                       <span className="bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant/30 text-on-surface">
                         {patch.change.type}
                       </span>
                     </td>
 
                     {/* Value */}
-                    <td className="px-4 py-3 max-w-xs break-words text-xs text-on-surface">{patch.change.value}</td>
+                    <td className="px-4 py-3 max-w-[280px]">
+                      <div
+                        className="font-mono text-xs text-on-surface max-w-[280px] break-all line-clamp-2 bg-surface-container/40 px-2 py-1 rounded border border-outline-variant/20 hover:line-clamp-none transition-all cursor-pointer"
+                        title={patch.change.value}
+                      >
+                        {patch.change.value}
+                      </div>
+                    </td>
 
                     {/* Author */}
-                    <td className="px-4 py-3 whitespace-nowrap text-xs font-mono text-on-surface-variant">
+                    <td className="px-4 py-3 whitespace-nowrap w-28 text-xs font-mono text-on-surface-variant">
                       {getUserName(patch.author_id)}
                       {isAuthor && <span className="ml-1 text-[10px] text-primary font-bold">(You)</span>}
                     </td>
 
                     {/* Actions — right aligned with icons flush right */}
-                    <td className="px-4 py-3 text-right whitespace-nowrap">
-                      <div className="inline-flex items-center justify-end gap-2">
+                    <td className="px-4 py-3 pr-6 text-right whitespace-nowrap min-w-[220px]">
+                      <div className="inline-flex items-center justify-end gap-2 min-w-max">
                         {/* Status workflow actions */}
                         <a
                           href={`${DEMO_URL}/?preview_patch=${patch.id}`}
@@ -457,33 +464,25 @@ export function Patches() {
                           </a>
                         )}
 
-                        {heal && (
-                          <button
-                            onClick={() => setExpanded(expanded === patch.id ? null : patch.id)}
-                            className="text-blue-600 hover:text-blue-800 text-xs font-semibold underline"
-                          >
-                            Why healed?
-                          </button>
-                        )}
 
                         {/* Right-aligned Icon Buttons: Edit & Delete */}
-                        <div className="inline-flex items-center gap-1 pl-2 border-l border-slate-200">
+                        <div className="inline-flex items-center gap-1 pl-2 border-l border-outline-variant/30">
                           <button
                             onClick={() => openEdit(patch)}
                             aria-label="Edit"
                             title="Edit"
-                            className="p-1 rounded text-slate-500 hover:text-indigo-600 hover:bg-slate-100 transition-colors"
+                            className="p-1 rounded text-outline hover:text-primary hover:bg-surface-container transition-colors"
                           >
-                            <Pencil className="w-4 h-4" />
+                            <Pencil className="w-3.5 h-3.5" />
                           </button>
                           <button
                             disabled={busy}
                             onClick={() => remove(patch)}
                             aria-label="Delete"
                             title="Delete"
-                            className="p-1 rounded text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors disabled:opacity-50"
+                            className="p-1 rounded text-outline hover:text-rose-400 hover:bg-rose-950/40 transition-colors disabled:opacity-50"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
                       </div>

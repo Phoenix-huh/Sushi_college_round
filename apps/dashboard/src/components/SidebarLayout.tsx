@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
-import { ArrowRight, ExternalLink } from 'lucide-react';
+import { ArrowRight, ExternalLink, Sun, Moon } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { DEMO_URL, useActingUser } from '../lib/api';
 
@@ -8,6 +8,26 @@ export function SidebarLayout() {
   const { user, setUser, users } = useActingUser();
   const [role, setRole] = useState<'developer' | 'reviewer'>('developer');
   const location = useLocation();
+
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('patchwork_theme') as 'dark' | 'light') || 'dark';
+  });
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === 'light') {
+      root.classList.add('light');
+      root.classList.remove('dark');
+    } else {
+      root.classList.add('dark');
+      root.classList.remove('light');
+    }
+    localStorage.setItem('patchwork_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // App tabs where the full 7-tab bar + Demo site button are displayed
   const isAppTab = ['/patches', '/deployments', '/verification', '/conflicts', '/audit'].some(
@@ -43,6 +63,7 @@ export function SidebarLayout() {
                 <nav className="flex items-center gap-1 bg-surface-container/90 p-1 rounded-full border border-outline-variant/40 text-[13px] font-mono shrink-0 shadow-inner">
                   <TopNavItem to="/">Overview</TopNavItem>
                   <TopNavItem to="/extension">Extension</TopNavItem>
+                  <TopNavItem to="/readme">README</TopNavItem>
                   <TopNavItem to="/patches">Patches</TopNavItem>
                   <TopNavItem to="/deployments">Deployments</TopNavItem>
                   <TopNavItem to="/verification">Verification</TopNavItem>
@@ -60,40 +81,51 @@ export function SidebarLayout() {
                   <span>Demo site</span>
                   <ExternalLink className="w-3.5 h-3.5 text-primary" />
                 </a>
+
+                {/* Light Mode Toggle beside demo site button */}
+                <button
+                  onClick={toggleTheme}
+                  className="p-1.5 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-on-surface hover:text-primary transition-all hover:border-primary-container/60 shadow-sm shrink-0 flex items-center justify-center"
+                  title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-4 h-4 text-amber-300 transition-transform hover:rotate-45" />
+                  ) : (
+                    <Moon className="w-4 h-4 text-primary transition-transform hover:-rotate-12" />
+                  )}
+                </button>
               </div>
             )}
           </div>
 
-          {/* Right: Overview & Extension capsule + Launch App button (Public Landing / Extension state) */}
+          {/* Right: Overview & Extension capsule + Launch App button (Public Landing / Extension / Readme state) */}
           {!isAppTab && (
-            <div className="flex items-center gap-4 shrink-0">
-              <nav className="flex items-center gap-1.5 bg-[#17141f]/90 p-1 rounded-full border border-[#3b3248]/50 text-xs font-mono shadow-inner">
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              <nav className="flex items-center gap-1 bg-surface-container/90 p-1 rounded-full border border-outline-variant/40 text-[13px] font-mono shadow-inner">
                 <TopNavItem to="/">Overview</TopNavItem>
-                <NavLink
-                  to="/patches"
-                  className="px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-[#c5b8c8] hover:text-white transition-colors"
-                >
-                  Architecture
-                </NavLink>
-                <NavLink
-                  to="/verification"
-                  className="px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-[#c5b8c8] hover:text-white transition-colors"
-                >
-                  Playwright Diff
-                </NavLink>
-                <a
-                  href={DEMO_URL}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3.5 py-1.5 rounded-full text-xs font-mono font-medium text-[#c5b8c8] hover:text-white transition-colors"
-                >
-                  Live Demo
-                </a>
+                <TopNavItem to="/extension">Extension</TopNavItem>
+                {location.pathname === '/architecture' && <TopNavItem to="/architecture">Architecture</TopNavItem>}
+                {location.pathname === '/readme' && <TopNavItem to="/readme">README</TopNavItem>}
               </nav>
+
+              {/* Light Mode Toggle in header */}
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-on-surface hover:text-primary transition-all hover:border-primary-container/60 shadow-sm shrink-0 flex items-center justify-center"
+                title={theme === 'dark' ? 'Switch to Light mode' : 'Switch to Dark mode'}
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-amber-300 transition-transform hover:rotate-45" />
+                ) : (
+                  <Moon className="w-4 h-4 text-primary transition-transform hover:-rotate-12" />
+                )}
+              </button>
 
               <Link
                 to="/patches"
-                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-[#ff2a6d] hover:bg-[#ff165d] text-white font-bold text-xs sm:text-sm tracking-wide transition-all shadow-[0_0_20px_rgba(255,42,109,0.55)] hover:scale-[1.02] active:scale-[0.98] shrink-0 whitespace-nowrap"
+                className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-primary-container hover:bg-[#ff1e70] text-white font-headline font-bold text-xs sm:text-sm tracking-wide transition-all shadow-md cyber-glow-primary hover:scale-[1.02] active:scale-[0.98] shrink-0 whitespace-nowrap"
               >
                 <span>Launch App</span>
                 <ArrowRight className="w-4 h-4" />
@@ -186,7 +218,7 @@ function TopNavItem({ to, children }: { to: string; children: React.ReactNode })
         cn(
           "px-3.5 py-1.5 rounded-full transition-all text-[13px] font-mono font-semibold tracking-normal whitespace-nowrap flex items-center gap-1",
           isActive
-            ? "bg-primary-container text-white shadow-sm font-bold cyber-glow-primary"
+            ? "bg-primary-container text-white shadow-sm font-bold cyber-glow-tab"
             : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60 transition-colors"
         )
       }
