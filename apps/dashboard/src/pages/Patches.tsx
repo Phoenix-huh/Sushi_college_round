@@ -122,6 +122,80 @@ export function Patches() {
     }
   };
 
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === patches.length && patches.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(patches.map((p) => p.id)));
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const batchSubmit = async () => {
+    const list = patches.filter((p) => selectedIds.has(p.id) && p.status === 'draft');
+    if (list.length === 0) return;
+    setBusyId('batch');
+    try {
+      for (const p of list) {
+        await api(`/patches/${p.id}/submit`, { method: 'POST' });
+      }
+      show(`Submitted ${list.length} patch(es) for review.`);
+      await refreshAll();
+    } catch (e: any) {
+      show(e.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const batchDeploy = async () => {
+    const list = patches.filter((p) => selectedIds.has(p.id));
+    if (list.length === 0) return;
+    setBusyId('batch');
+    try {
+      await api('/deploy', {
+        method: 'POST',
+        body: JSON.stringify({ patch_ids: list.map((p) => p.id) }),
+      });
+      show(`🚀 Deployed ${list.length} patch(es) together as a new live version! Reload demo site.`);
+      setSelectedIds(new Set());
+      await refreshAll();
+    } catch (e: any) {
+      show(e.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const batchDelete = async () => {
+    const list = patches.filter((p) => selectedIds.has(p.id));
+    if (list.length === 0) return;
+    if (!window.confirm(`Delete ${list.length} selected patch(es)?`)) return;
+    setBusyId('batch');
+    try {
+      for (const p of list) {
+        await api(`/patches/${p.id}`, { method: 'DELETE' });
+      }
+      show(`Deleted ${list.length} patch(es).`);
+      setSelectedIds(new Set());
+      await refreshAll();
+    } catch (e: any) {
+      show(e.message, 'error');
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const deploy = (p: Patch) =>
     run(p.id, '🚀 Deployed! Reload the demo site to see your change.', () =>
       api(`/patches/${p.id}/deploy`, { method: 'POST' }));
@@ -317,22 +391,72 @@ export function Patches() {
 
       {/* Patches Table */}
       <div className="cyber-glass rounded-xl border border-outline-variant/30 shadow-lg overflow-x-auto">
-        <div className="px-5 py-4 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container/60">
-          <div className="flex items-center gap-2">
+        <div className="px-5 py-3 border-b border-outline-variant/30 flex flex-wrap items-center justify-between gap-3 bg-surface-container/60">
+          <div className="flex items-center gap-3">
             <h2 className="text-sm font-headline font-bold text-white uppercase tracking-wider">Patch Repository</h2>
             <span className="text-sm font-mono text-outline">({patches.length})</span>
+            {selectedIds.size > 0 && (
+              <span className="bg-primary-container/20 text-primary border border-primary-container/40 px-2 py-0.5 rounded text-xs font-mono font-bold">
+                {selectedIds.size} selected
+              </span>
+            )}
           </div>
-          {/* Secondary entry point for manual patch creation */}
-          <button
-            onClick={openCreate}
-            className="text-sm font-mono font-bold text-primary hover:text-white underline transition-colors cursor-pointer"
-          >
-            + Add patch manually
-          </button>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 ? (
+              <>
+                <button
+                  disabled={busyId === 'batch'}
+                  onClick={batchDeploy}
+                  className="bg-primary-container hover:bg-[#ff1e70] text-white px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                  title="Deploy all selected patches together in a single live version"
+                >
+                  🚀 Deploy Selected ({selectedIds.size})
+                </button>
+                <button
+                  disabled={busyId === 'batch'}
+                  onClick={batchSubmit}
+                  className="bg-surface-container hover:bg-surface-container-high text-on-surface border border-outline-variant/40 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer disabled:opacity-50"
+                  title="Submit drafts for review"
+                >
+                  Submit Drafts
+                </button>
+                <button
+                  disabled={busyId === 'batch'}
+                  onClick={batchDelete}
+                  className="bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/50 px-2.5 py-1.5 rounded-lg text-xs font-mono font-semibold transition-all cursor-pointer disabled:opacity-50"
+                  title="Delete selected patches"
+                >
+                  Delete ({selectedIds.size})
+                </button>
+                <button
+                  onClick={() => setSelectedIds(new Set())}
+                  className="text-xs font-mono text-outline hover:text-white px-2 py-1 transition-colors cursor-pointer"
+                >
+                  Clear
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={openCreate}
+                className="text-sm font-mono font-bold text-primary hover:text-white underline transition-colors cursor-pointer"
+              >
+                + Add patch manually
+              </button>
+            )}
+          </div>
         </div>
         <table className="w-full text-sm font-mono text-left min-w-[920px]">
           <thead className="bg-surface-container-highest/50 border-b border-outline-variant/30 text-outline uppercase text-xs font-semibold">
             <tr>
+              <th className="px-3 py-3.5 w-10 text-center">
+                <input
+                  type="checkbox"
+                  checked={patches.length > 0 && selectedIds.size === patches.length}
+                  onChange={toggleSelectAll}
+                  aria-label="Select all"
+                  className="rounded accent-primary cursor-pointer w-4 h-4"
+                />
+              </th>
               <th className="px-4 py-3.5 font-semibold w-28">Status</th>
               <th className="px-4 py-3.5 font-semibold w-72 max-w-sm">Title / Element</th>
               <th className="px-4 py-3.5 font-semibold w-24">Change</th>
@@ -351,7 +475,18 @@ export function Patches() {
 
               return (
                 <Fragment key={patch.id}>
-                  <tr className="hover:bg-surface-container/40 align-middle transition-colors">
+                  <tr className={`hover:bg-surface-container/40 align-middle transition-colors ${selectedIds.has(patch.id) ? 'bg-primary-container/10' : ''}`}>
+                    {/* Checkbox */}
+                    <td className="px-3 py-3 w-10 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(patch.id)}
+                        onChange={() => toggleSelect(patch.id)}
+                        aria-label={`Select ${patch.title || patch.id}`}
+                        className="rounded accent-primary cursor-pointer w-4 h-4"
+                      />
+                    </td>
+
                     {/* Status Badge */}
                     <td className="px-4 py-3 whitespace-nowrap w-24">
                       <StatusPill status={effectiveStatus} />
@@ -523,7 +658,7 @@ export function Patches() {
                   </tr>
                   {heal && expanded === patch.id && (
                     <tr className="bg-blue-50/60 border-b">
-                      <td colSpan={6} className="px-6 py-3">
+                      <td colSpan={7} className="px-6 py-3">
                         <ScoreBreakdown details={heal.details} />
                       </td>
                     </tr>
@@ -533,7 +668,7 @@ export function Patches() {
             })}
             {!patchesQ.loading && patches.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                   No patches yet. Click "Add patch manually" or generate one with AI above.
                 </td>
               </tr>
@@ -635,10 +770,14 @@ export function Patches() {
                   onChange={(e) => setForm({ ...form, type: e.target.value })}
                   className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 ring-indigo-300 outline-none"
                 >
-                  <option value="text">text</option>
-                  <option value="style">style</option>
+                  <option value="text">text (change text content)</option>
+                  <option value="style">style (CSS properties)</option>
                   <option value="visibility">visibility (hidden / visible)</option>
-                  <option value="script">script</option>
+                  <option value="attribute">attribute (JSON: &#123;"name": "...", "value": "..."&#125;)</option>
+                  <option value="move">move (JSON: &#123;"to": "before|after|first|last", "ref": ...&#125;)</option>
+                  <option value="remove">remove (remove element)</option>
+                  <option value="behavior">behavior (click action)</option>
+                  <option value="script">script (JavaScript)</option>
                 </select>
               </label>
               <label className="block">
@@ -652,6 +791,14 @@ export function Patches() {
                       ? 'background-color: #ef4444; color: white;'
                       : form.type === 'visibility'
                       ? 'hidden'
+                      : form.type === 'attribute'
+                      ? '{"name": "aria-label", "value": "New label"}'
+                      : form.type === 'move'
+                      ? '{"to": "after", "ref": {"cssSelector": "#checkout-btn"}}'
+                      : form.type === 'behavior'
+                      ? '{"action": "navigate", "url": "https://example.com"}'
+                      : form.type === 'remove'
+                      ? 'true'
                       : form.type === 'script'
                       ? 'target.textContent = "Hi";'
                       : 'New text'
