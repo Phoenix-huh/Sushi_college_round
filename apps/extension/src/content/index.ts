@@ -10,6 +10,10 @@ import { attemptHeal } from './healer';
 import { startPicker } from './picker';
 import { openEditor } from './editor';
 
+try {
+  document.documentElement?.setAttribute('data-patchwork-extension', 'true');
+} catch {}
+
 const applier = createApplier({
   doc: document,
   pageOrigin: location.origin,

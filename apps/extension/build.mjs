@@ -25,6 +25,7 @@ const outdir = path.resolve(outArg ? outArg.slice('--outdir='.length) : path.joi
 const entries = {
   background: path.join(root, 'src/background/index.ts'),
   content: path.join(root, 'src/content/index.ts'),
+  marker: path.join(root, 'src/content/marker.ts'),
   sidepanel: path.join(root, 'src/sidepanel/index.ts'),
 };
 
