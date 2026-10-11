@@ -108,7 +108,7 @@ export function Landing() {
       </div>
 
       {/* Hero Main */}
-      <section className="flex-1 flex flex-col justify-center items-center px-6 py-12 md:py-20 max-w-7xl mx-auto w-full text-center relative z-10">
+      <section className="flex-1 flex flex-col justify-center items-center px-4 sm:px-8 xl:px-12 py-12 md:py-20 max-w-[1600px] mx-auto w-full text-center relative z-10">
         {/* Top Badge / Kicker */}
         <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-container/90 border border-primary-container/30 mb-8 shadow-sm backdrop-blur-md">
           <span className="size-2 rounded-full bg-primary-container animate-pulse" />

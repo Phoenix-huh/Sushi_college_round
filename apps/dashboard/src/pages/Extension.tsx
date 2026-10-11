@@ -6,7 +6,7 @@ export function Extension() {
   return (
     <div className="flex flex-col justify-between w-full min-h-[calc(100vh-5rem)]">
       {/* Extension Content */}
-      <div className="flex-1 max-w-6xl mx-auto px-6 py-12 md:py-16 w-full">
+      <div className="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-8 xl:px-12 py-12 md:py-16">
           {/* Hero Header */}
           <div className="text-center max-w-3xl mx-auto mb-14">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-surface-container/90 border border-primary-container/40 mb-6 shadow-sm backdrop-blur-md">

@@ -301,9 +301,9 @@ export function Patches() {
           <thead className="bg-surface-container-highest/50 border-b border-outline-variant/30 text-outline uppercase text-[11px]">
             <tr>
               <th className="px-4 py-3 font-medium w-24">Status</th>
-              <th className="px-4 py-3 font-medium w-60 max-w-[240px]">Title / Element</th>
+              <th className="px-4 py-3 font-medium w-72 max-w-sm">Title / Element</th>
               <th className="px-4 py-3 font-medium w-20">Change</th>
-              <th className="px-4 py-3 font-medium max-w-[280px]">Value</th>
+              <th className="px-4 py-3 font-medium max-w-md">Value</th>
               <th className="px-4 py-3 font-medium w-28 whitespace-nowrap">Author</th>
               <th className="px-4 py-3 pr-6 font-medium text-right min-w-[220px]">Actions</th>
             </tr>
@@ -325,7 +325,7 @@ export function Patches() {
                     </td>
 
                     {/* Title & Selector */}
-                    <td className="px-4 py-3 w-60 max-w-[240px]">
+                    <td className="px-4 py-3 w-72 max-w-sm">
                       {patch.title ? (
                         <div className="font-semibold text-white text-xs truncate" title={patch.title}>
                           {patch.title}
@@ -349,9 +349,9 @@ export function Patches() {
                     </td>
 
                     {/* Value */}
-                    <td className="px-4 py-3 max-w-[280px]">
+                    <td className="px-4 py-3 max-w-md">
                       <div
-                        className="font-mono text-xs text-on-surface max-w-[280px] break-all line-clamp-2 bg-surface-container/40 px-2 py-1 rounded border border-outline-variant/20 hover:line-clamp-none transition-all cursor-pointer"
+                        className="font-mono text-xs text-on-surface max-w-md break-all line-clamp-2 bg-surface-container/40 px-2 py-1 rounded border border-outline-variant/20 hover:line-clamp-none transition-all cursor-pointer"
                         title={patch.change.value}
                       >
                         {patch.change.value}

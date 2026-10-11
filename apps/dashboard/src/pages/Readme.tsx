@@ -31,7 +31,7 @@ export function Readme() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-10 pb-16 font-body">
+    <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-8 xl:px-12 py-10 md:py-14 space-y-10 pb-16 font-body">
       {/* Header Banner */}
       <div className="relative p-8 rounded-3xl cyber-glass border border-outline-variant/40 overflow-hidden shadow-2xl">
         <div className="absolute top-0 right-0 w-80 h-80 bg-primary-container/10 blur-[100px] pointer-events-none rounded-full" />

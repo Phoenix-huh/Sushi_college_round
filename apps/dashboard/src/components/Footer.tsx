@@ -20,7 +20,7 @@ export function Footer({ className }: { className?: string }) {
         className
       )}
     >
-      <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-outline">
+      <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-8 xl:px-12 flex flex-col md:flex-row items-center justify-between gap-4 font-mono text-xs text-outline">
         <div className="flex items-center gap-3">
           <span className="size-2 rounded-full bg-primary-container" />
           <span>

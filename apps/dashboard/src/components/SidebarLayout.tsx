@@ -43,7 +43,7 @@ export function SidebarLayout() {
 
       {/* Unified Top Navigation Bar - Fits all tabs without any slider */}
       <header className="w-full border-b border-outline-variant/30 cyber-glass sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-18 py-3 flex items-center justify-between gap-4">
+        <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-8 xl:px-12 h-18 py-3 flex items-center justify-between gap-4">
           {/* Left: Brand Logo (plus App Tabs & Demo site button when on app pages) */}
           <div className="flex items-center gap-3 lg:gap-4 shrink-0">
             <Link
@@ -137,7 +137,7 @@ export function SidebarLayout() {
 
       {/* Main Content Area */}
       <main className="flex-1 relative z-10 w-full">
-        <div className={cn("mx-auto w-full", isAppTab ? "p-8 pb-32 max-w-7xl" : "")}>
+        <div className={cn("mx-auto w-full", isAppTab ? "p-6 sm:p-8 xl:px-12 pb-32 max-w-[1600px]" : "")}>
           <Outlet context={{ role, setRole }} />
         </div>
       </main>
