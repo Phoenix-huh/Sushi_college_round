@@ -6,8 +6,16 @@
  */
 import type { Settings } from './messages';
 
+/**
+ * Set by build.mjs from the PATCHWORK_SERVER_URL environment variable, so an extension built for a demo
+ * already points at the hosted server. When it is not defined (tests, a plain build) the local server is used.
+ */
+declare const __PATCHWORK_SERVER_URL__: string | undefined;
+const BUILT_IN_SERVER_URL =
+  typeof __PATCHWORK_SERVER_URL__ === 'string' && __PATCHWORK_SERVER_URL__ !== '' ? __PATCHWORK_SERVER_URL__ : 'http://localhost:4000';
+
 export const DEFAULT_SETTINGS: Settings = {
-  serverUrl: 'http://localhost:4000',
+  serverUrl: BUILT_IN_SERVER_URL,
   authorId: '00000000-0000-0000-0000-000000000001',
 };
 

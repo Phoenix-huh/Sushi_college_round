@@ -2,11 +2,20 @@ import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { parseCorsOrigins } from "./cors.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
-export const PORT = Number(process.env.SERVER_PORT) || 4000;
+// Hosting platforms (Render, Railway, Fly, Heroku...) tell the app which port to use through PORT.
+export const PORT = Number(process.env.PORT || process.env.SERVER_PORT) || 4000;
+
+/** The public address of the demo site; seed data and AI drafts use it as their target page. */
+export const DEMO_URL = (process.env.DEMO_URL || "http://localhost:4100").trim().replace(/\/+$/, "");
+export const DEMO_SITE_URL = `${DEMO_URL}/`;
+
+/** Origins (comma separated) allowed to call this API from a web page. Empty means "any origin". */
+export const CORS_ORIGINS = parseCorsOrigins(process.env.CORS_ORIGINS);
 
 const supabaseUrl = process.env.SUPABASE_URL || "";
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";

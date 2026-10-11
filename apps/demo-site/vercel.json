@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "echo \"nothing to install: the build uses only Node built-ins\"",
+  "buildCommand": "node build-static.mjs",
+  "outputDirectory": "dist",
+  "headers": [
+    {
+      "source": "/shared/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
+    }
+  ]
+}

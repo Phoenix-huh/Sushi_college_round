@@ -3,21 +3,34 @@ import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';
 import { runCheckoutFlow } from '../flows/checkout.flow.js';
 import type { Patch } from '@patchwork/shared';
+import { describeBaselineFailure, launchBrowser } from './verify-env.js';
 
 export interface VerificationResult {
   passed: boolean;
   diffPixels: number;
   error?: string;
+  /**
+   * True when verification could not run at all (no browser on this server, or the page cannot be reached).
+   * That is not a failed patch, so callers must not roll anything back because of it.
+   */
+  unavailable?: boolean;
 }
 
 export async function verifyPatches(targetUrl: string, patches: Patch[]): Promise<VerificationResult> {
   let browser;
   try {
-    browser = await chromium.launch({ headless: true });
-    
-    // 1. Run baseline without patches
+    const launched = await launchBrowser(() => chromium.launch({ headless: true }));
+    if (!launched.ok) return { passed: false, diffPixels: -1, unavailable: true, error: launched.message };
+    browser = launched.browser;
+
+    // 1. Run baseline without patches. If THIS fails, the environment is at fault, not the patches.
     const page1 = await browser.newPage();
-    const baseScreenshot = await runCheckoutFlow(page1, targetUrl);
+    let baseScreenshot: Buffer;
+    try {
+      baseScreenshot = await runCheckoutFlow(page1, targetUrl);
+    } catch (e) {
+      return { passed: false, diffPixels: -1, unavailable: true, error: describeBaselineFailure(targetUrl, e) };
+    }
     await page1.close();
 
     // 2. Run with patches injected

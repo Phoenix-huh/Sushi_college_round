@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { DEMO_SITE_URL } from "./db.js";
 import dotenv from "dotenv";
 import crypto from "crypto";
 import type { Patch, Version, Deployment, AuditEvent, Site, PatchOp, Conflict } from "@patchwork/shared";
@@ -34,7 +35,7 @@ export const DEMO_SITES: Site[] = [
   {
     id: DEFAULT_SITE_ID,
     name: "Demo Store",
-    url: "http://localhost:4100/",
+    url: DEMO_SITE_URL,
     live_version_id: VERSION_1_ID,
     created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
   },
@@ -62,7 +63,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_1_ID,
     site_id: DEFAULT_SITE_ID,
     title: "Checkout Button Text Update",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 0,
     anchors: checkoutAnchor,
     change: { type: "text", value: "Pay & Complete Order" },
@@ -75,7 +76,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_2_ID,
     site_id: DEFAULT_SITE_ID,
     title: "Checkout Button Elevation Glow",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 0,
     anchors: {
       ...checkoutAnchor,
@@ -91,7 +92,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_3_ID,
     site_id: DEFAULT_SITE_ID,
     title: "1-Click Buy Healed Anchor",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 0,
     anchors: {
       ...checkoutAnchor,
@@ -107,7 +108,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_4_ID,
     site_id: DEFAULT_SITE_ID,
     title: "Checkout Button - Coral Accent (Alice)",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 1,
     anchors: checkoutAnchor,
     change: { type: "style", value: "background-color: #f43f5e; color: #ffffff;" },
@@ -120,7 +121,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_5_ID,
     site_id: DEFAULT_SITE_ID,
     title: "Hide Button Verification Test",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 0,
     anchors: checkoutAnchor,
     change: { type: "visibility", value: "hidden" },
@@ -133,7 +134,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_6_ID,
     site_id: DEFAULT_SITE_ID,
     title: "Checkout Button - Emerald Accent (Bob)",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 1,
     anchors: checkoutAnchor,
     change: { type: "style", value: "background-color: #10b981; color: #ffffff;" },
@@ -146,7 +147,7 @@ export const DEMO_PATCHES: Patch[] = [
     id: PATCH_7_ID,
     site_id: DEFAULT_SITE_ID,
     title: "Checkout Button - Heavy Weight (Carol)",
-    target_url: "http://localhost:4100/",
+    target_url: DEMO_SITE_URL,
     base_version: 1,
     anchors: checkoutAnchor,
     change: { type: "style", value: "font-weight: 800;" },
@@ -266,7 +267,7 @@ export const DEMO_AUDIT_EVENTS: AuditEvent[] = [
     actor_id: DEV_ID,
     event_type: "site_created",
     entity_id: DEFAULT_SITE_ID,
-    details: { name: "Demo Store", url: "http://localhost:4100/" },
+    details: { name: "Demo Store", url: DEMO_SITE_URL },
     created_at: new Date(Date.now() - 3600000 * 24).toISOString(),
   },
   {

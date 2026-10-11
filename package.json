@@ -12,6 +12,7 @@
     "seed": "tsx apps/server/src/seed.ts",
     "e2e": "tsx scripts/e2e-dashboard-to-site.ts",
     "e2e:ext": "tsx scripts/e2e-extension.ts",
+    "check:deploy": "tsx scripts/check-deployment.ts",
     "typecheck": "tsc --build",
     "test": "vitest run",
     "test:watch": "vitest"

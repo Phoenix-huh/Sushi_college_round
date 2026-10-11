@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { CreatePatchSchema, type CreatePatch } from "@patchwork/shared";
 import { DEV_ID } from "../seed.js";
+import { DEMO_SITE_URL } from "../db.js";
 
 const apiKey = process.env.GEMINI_API_KEY;
 const hasApiKey = Boolean(apiKey && apiKey !== "dummy" && apiKey.length > 10);
@@ -33,7 +34,7 @@ export async function explainHealing(scoreBreakdown: any, oldContext: any, newCo
 export async function generatePatchFromInstruction(
   instruction: string,
   context: string,
-  targetUrl: string = "http://localhost:4100/"
+  targetUrl: string = DEMO_SITE_URL
 ): Promise<CreatePatch> {
   // If real Gemini API key is configured, use it
   if (ai) {

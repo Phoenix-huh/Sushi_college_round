@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import * as store from "../store.js";
 import { resolveActor } from "../auth.js";
+import { DEMO_SITE_URL } from "../db.js";
 import { verifyPatches } from "../services/verifier.js";
 import { rollbackLive, SYSTEM_ID } from "../services/deploy.js";
 
@@ -14,8 +15,15 @@ export async function verifyRoutes(app: FastifyInstance) {
     if (!version) return reply.code(404).send({ error: "Version not found" });
 
     const patches = await store.getPatchesByIds(version.patch_ids);
-    const targetUrl = patches[0]?.target_url || "http://localhost:4100/";
+    const targetUrl = patches[0]?.target_url || DEMO_SITE_URL;
     const result = await verifyPatches(targetUrl, patches);
+
+    // Could not run here (no browser, or the page is unreachable). That says nothing about the patches:
+    // record nothing and, above all, do not roll back.
+    if (result.unavailable) {
+      return reply.code(503).send({ error: result.error, unavailable: true, version_id });
+    }
+
     const status = result.passed ? "passed" : "failed";
 
     await store.updateVersion(version.id, { verification_status: status });

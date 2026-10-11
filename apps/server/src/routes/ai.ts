@@ -5,11 +5,12 @@ import type { Patch } from "@patchwork/shared";
 import { generatePatchFromInstruction } from "../services/ai.js";
 import * as store from "../store.js";
 import { resolveActor } from "../auth.js";
+import { DEMO_SITE_URL } from "../db.js";
 
 const AIPatchRequestSchema = z.object({
   instruction: z.string().min(2).max(500),
   element_context: z.string().optional().default(""),
-  target_url: z.string().optional().default("http://localhost:4100/"),
+  target_url: z.string().optional().default(DEMO_SITE_URL),
   author_id: z.string().uuid().optional(),
 });
 

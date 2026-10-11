@@ -66,8 +66,27 @@ const copyStatic = {
   },
 };
 
+/**
+ * The server a freshly installed extension talks to. Anyone can still change it in the side panel.
+ *   PATCHWORK_SERVER_URL=https://your-server node build.mjs
+ */
+function resolveDefaultServerUrl(raw) {
+  if (!raw || !raw.trim()) return '';
+  let url;
+  try {
+    url = new URL(raw.trim());
+  } catch {
+    throw new Error(`PATCHWORK_SERVER_URL "${raw}" is not a valid URL. Example: https://patchwork-api.onrender.com`);
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error(`PATCHWORK_SERVER_URL must be http(s), got ${url.protocol}`);
+  return url.origin;
+}
+const defaultServerUrl = resolveDefaultServerUrl(process.env.PATCHWORK_SERVER_URL);
+if (defaultServerUrl) console.log(`[build] default server URL: ${defaultServerUrl}`);
+
 const options = {
   entryPoints: entries,
+  define: { __PATCHWORK_SERVER_URL__: JSON.stringify(defaultServerUrl) },
   outdir,
   bundle: true,
   format: 'iife',

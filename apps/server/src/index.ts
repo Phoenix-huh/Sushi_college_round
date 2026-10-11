@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cors from "@fastify/cors";
-import { PORT, hasSupabase } from "./db.js";
+import { CORS_ORIGINS, PORT, hasSupabase } from "./db.js";
+import { isOriginAllowed } from "./cors.js";
 import { initStore, storeMode } from "./store.js";
 import { deployRoutes } from "./routes/deploy.js";
 import { verifyRoutes } from "./routes/verify.js";
@@ -9,8 +10,12 @@ import { patchRoutes } from "./routes/patches.js";
 
 const app = Fastify({ logger: true });
 
+if (CORS_ORIGINS.length === 0) {
+  app.log.warn("CORS_ORIGINS is not set: any website can call this API. Fine locally; set it before sharing a public URL.");
+}
+
 await app.register(cors, {
-  origin: true,
+  origin: (origin, cb) => cb(null, isOriginAllowed(origin, CORS_ORIGINS)),
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
 });
