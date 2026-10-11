@@ -23,7 +23,7 @@ graph TD
     end
 
     subgraph Core ["Shared Monorepo Packages"]
-        SHARED["@patchwork/shared<br/>(packages/shared)<br/>Schemas, Targeting, Matcher, Conflicts"]
+        SHARED["Shared Core Library<br/>(packages/shared)<br/>Schemas, Targeting, Matcher, Conflicts"]
     end
 
     subgraph Backend ["Server & Services (:4000)"]
@@ -38,19 +38,19 @@ graph TD
         DB[("Supabase PostgreSQL<br/>or In-Memory Fallback")]
     end
 
-    EXT -->|POST /patches| SERVER
-    EXT -->|@patchwork/shared| SHARED
-    DASH -->|REST API / Audit / Review| SERVER
-    DASH -->|@patchwork/shared| SHARED
-    DEMO -->|Polls GET /deployments/live| SERVER
-    DEMO -->|@patchwork/shared| SHARED
+    EXT -->|Author draft patches| SERVER
+    EXT -->|Import shared core| SHARED
+    DASH -->|Review and deploy| SERVER
+    DASH -->|Import shared core| SHARED
+    DEMO -->|Poll live manifest| SERVER
+    DEMO -->|Import shared core| SHARED
 
     SERVER --> CONFLICTS
     SERVER --> AI
     SERVER --> VERIFIER
     SERVER --> STORE
     STORE --> DB
-    VERIFIER -->|Headless Checkout Flow| DEMO
+    VERIFIER -->|Headless checkout test| DEMO
 ```
 
 ---
