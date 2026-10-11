@@ -276,7 +276,15 @@
     return bestScore >= 0.25 ? { el: best, how: 'healed', score: bestScore } : null;
   }
 
+  function isExtensionActive() {
+    return !!(document.documentElement && document.documentElement.hasAttribute('data-patchwork-extension'));
+  }
+
   function applyPatches(patches) {
+    if (isExtensionActive()) {
+      console.log('[Patchwork] extension detected on page -> runtime standing down');
+      return;
+    }
     // Phase 1: find every target BEFORE changing anything, so an earlier patch that
     // renames an element cannot stop a later patch from finding it by its old text.
     var found = patches.map(function (patch) { return { patch: patch, hit: findTarget(patch) }; });
@@ -320,7 +328,9 @@
   var appliedSignature = null;
 
   function pollLive() {
+    if (isExtensionActive()) return Promise.resolve();
     return getJson('/deployments/live').then(function (live) {
+      if (isExtensionActive()) return;
       if (appliedSignature === null) {
         appliedSignature = live.signature;
         applyPatches(live.patches || []);
@@ -333,9 +343,14 @@
   }
 
   function init() {
+    if (isExtensionActive()) {
+      console.log('[Patchwork] extension detected on page -> runtime standing down');
+      return;
+    }
     if (previewId) {
       Promise.all([getJson('/deployments/live'), getJson('/patches/' + encodeURIComponent(previewId))])
         .then(function (r) {
+          if (isExtensionActive()) return;
           applyPatches((r[0].patches || []).filter(function (p) { return p.id !== r[1].id; }).concat([r[1]]));
           showBanner(r[1]);
         })
@@ -346,7 +361,13 @@
     setInterval(pollLive, POLL_MS);
   }
 
-  window.Patchwork = { applyChange: applyChange, findTarget: findTarget, applyPatches: applyPatches, pollLive: pollLive };
+  window.Patchwork = {
+    applyChange: applyChange,
+    findTarget: findTarget,
+    applyPatches: applyPatches,
+    pollLive: pollLive,
+    isExtensionActive: isExtensionActive,
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();

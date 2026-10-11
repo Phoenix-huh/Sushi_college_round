@@ -29,7 +29,7 @@ describe('extension build', () => {
   }, 60_000);
 
   it('bundles scripts as single files with no ES module syntax (content scripts cannot import)', () => {
-    for (const file of ['content.js', 'background.js', 'sidepanel.js']) {
+    for (const file of ['content.js', 'marker.js', 'background.js', 'sidepanel.js']) {
       const code = fs.readFileSync(path.join(out, file), 'utf8');
       expect(/^\s*(import|export)\s/m.test(code), `${file} must not contain import/export statements`).toBe(false);
     }

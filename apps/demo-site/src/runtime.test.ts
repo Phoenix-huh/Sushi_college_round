@@ -166,4 +166,144 @@ describe('patchwork runtime', () => {
       expect(titleOf()).toEqual(['Wired Earphones', 'Smart Watch', 'USB-C Hub']);
     });
   });
+
+  describe('extension and runtime coordination (Phase 3)', () => {
+    const confirmPatch = {
+      id: 'patch-confirm',
+      anchors: {
+        cssSelector: '#checkout-btn',
+        xpath: '//*[@id="checkout-btn"]',
+        textContent: 'Checkout',
+        attributes: { id: 'checkout-btn', class: 'btn-checkout' },
+        parentContext: 'div.cart-actions',
+        siblingContext: [],
+      },
+      change: {
+        type: 'behavior',
+        value: JSON.stringify({ action: 'confirm', message: 'Proceed with checkout?' }),
+      },
+    };
+
+    const togglePatch = {
+      id: 'patch-toggle',
+      anchors: {
+        cssSelector: '#checkout-btn',
+        xpath: '//*[@id="checkout-btn"]',
+        textContent: 'Checkout',
+        attributes: { id: 'checkout-btn', class: 'btn-checkout' },
+        parentContext: 'div.cart-actions',
+        siblingContext: [],
+      },
+      change: {
+        type: 'behavior',
+        value: JSON.stringify({
+          action: 'toggle',
+          ref: {
+            cssSelector: '#cart-total',
+            xpath: '//*[@id="cart-total"]',
+            textContent: '$199.99',
+            attributes: { id: 'cart-total' },
+            parentContext: 'div.cart-panel',
+            siblingContext: [],
+          },
+        }),
+      },
+    };
+
+    it('runtime stands down when data-patchwork-extension marker is on <html>', () => {
+      document.documentElement.setAttribute('data-patchwork-extension', 'true');
+      const pw = load('v1', { patches: [], signature: 's' });
+      expect(pw.isExtensionActive()).toBe(true);
+
+      const before = $('#checkout-btn').textContent;
+      pw.applyPatches([mkPatch('#checkout-btn', 'text', 'Changed By Runtime')]);
+      expect($('#checkout-btn').textContent).toBe(before);
+    });
+
+    it('confirm behavior registers exactly once when extension and runtime are on the same page', async () => {
+      // Simulate extension marking <html> at document_start
+      document.documentElement.setAttribute('data-patchwork-extension', 'true');
+      const pw = load('v1', { patches: [], signature: 's' });
+
+      // In-page runtime attempts to apply
+      pw.applyPatches([confirmPatch]);
+
+      // Extension applies via targeting engine
+      const { resolveTargets, applyResolved } = await import('@patchwork/shared');
+      const { found } = resolveTargets([confirmPatch as any], document);
+      applyResolved(found);
+
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      $('#checkout-btn').click();
+
+      // Must be called exactly once, never twice!
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+      expect(confirmSpy).toHaveBeenCalledWith('Proceed with checkout?');
+    });
+
+    it('confirm behavior registers exactly once when extension is NOT present (runtime alone)', () => {
+      document.documentElement.removeAttribute('data-patchwork-extension');
+      const pw = load('v1', { patches: [], signature: 's' });
+
+      pw.applyPatches([confirmPatch]);
+
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+      $('#checkout-btn').click();
+
+      expect(confirmSpy).toHaveBeenCalledTimes(1);
+      expect(confirmSpy).toHaveBeenCalledWith('Proceed with checkout?');
+    });
+
+    it('toggle behavior toggles once without cancelling itself when extension and runtime are on the same page', async () => {
+      // Simulate extension marking <html> at document_start
+      document.documentElement.setAttribute('data-patchwork-extension', 'true');
+      const pw = load('v1', { patches: [], signature: 's' });
+
+      // Create a test element matching the toggle ref
+      const targetEl = document.createElement('div');
+      targetEl.id = 'cart-total';
+      targetEl.textContent = '$199.99';
+      document.body.appendChild(targetEl);
+
+      // In-page runtime attempts to apply
+      pw.applyPatches([togglePatch]);
+
+      // Extension applies via targeting engine
+      const { resolveTargets, applyResolved } = await import('@patchwork/shared');
+      const { found } = resolveTargets([togglePatch as any], document);
+      applyResolved(found);
+
+      expect(targetEl.style.display).not.toBe('none');
+
+      // First click: toggles display to 'none'
+      $('#checkout-btn').click();
+      expect(targetEl.style.display).toBe('none');
+
+      // Second click: toggles back to ''
+      $('#checkout-btn').click();
+      expect(targetEl.style.display).toBe('');
+    });
+
+    it('toggle behavior toggles once when extension is NOT present (runtime alone)', () => {
+      document.documentElement.removeAttribute('data-patchwork-extension');
+      const pw = load('v1', { patches: [], signature: 's' });
+
+      const targetEl = document.createElement('div');
+      targetEl.id = 'cart-total';
+      targetEl.textContent = '$199.99';
+      document.body.appendChild(targetEl);
+
+      pw.applyPatches([togglePatch]);
+
+      expect(targetEl.style.display).not.toBe('none');
+
+      // First click: toggles display to 'none'
+      $('#checkout-btn').click();
+      expect(targetEl.style.display).toBe('none');
+
+      // Second click: toggles back to ''
+      $('#checkout-btn').click();
+      expect(targetEl.style.display).toBe('');
+    });
+  });
 });
