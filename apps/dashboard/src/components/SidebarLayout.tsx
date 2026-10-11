@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Link, Outlet, useLocation } from 'react-router-dom';
-import { ArrowRight, ExternalLink, Sun, Moon } from 'lucide-react';
+import { ArrowRight, ExternalLink, Sun, Moon, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { DEMO_URL, useActingUser } from '../lib/api';
 
 export function SidebarLayout() {
   const { user, setUser, users } = useActingUser();
   const [role, setRole] = useState<'developer' | 'reviewer'>('developer');
+  const [isUserSwitcherOpen, setIsUserSwitcherOpen] = useState(false);
   const location = useLocation();
 
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -60,7 +61,7 @@ export function SidebarLayout() {
 
             {isAppTab && (
               <div className="flex items-center gap-2.5 shrink-0">
-                <nav className="flex items-center gap-1 bg-surface-container/90 p-1 rounded-full border border-outline-variant/40 text-[13px] font-mono shrink-0 shadow-inner">
+                <nav className="flex items-center gap-1 bg-surface-container/90 p-1 rounded-full border border-outline-variant/40 text-xs sm:text-sm font-mono shrink-0 shadow-inner">
                   <TopNavItem to="/">Overview</TopNavItem>
                   <TopNavItem to="/extension">Extension</TopNavItem>
                   <TopNavItem to="/readme">README</TopNavItem>
@@ -75,11 +76,11 @@ export function SidebarLayout() {
                   href={DEMO_URL}
                   target="_blank"
                   rel="noreferrer"
-                  className="px-3 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-white font-mono text-xs font-semibold tracking-wide flex items-center gap-1.5 transition-all hover:border-primary-container/60 hover:cyber-glow-primary shadow-sm shrink-0 whitespace-nowrap"
+                  className="px-3.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-white font-mono text-xs sm:text-sm font-semibold tracking-wide flex items-center gap-1.5 transition-all hover:border-primary-container/60 hover:cyber-glow-primary shadow-sm shrink-0 whitespace-nowrap"
                   title="Open live demo site in new tab"
                 >
                   <span>Demo site</span>
-                  <ExternalLink className="w-3.5 h-3.5 text-primary" />
+                  <ExternalLink className="w-4 h-4 text-primary" />
                 </a>
 
                 {/* Light Mode Toggle beside demo site button */}
@@ -142,67 +143,112 @@ export function SidebarLayout() {
         </div>
       </main>
 
-      {/* Fixed Bottom-Left User Switcher Widget (Pinned to bottom-left on launch app pages) */}
+      {/* Collapsible Bottom-Left User Switcher Widget (Pinned to bottom-left on launch app pages) */}
       {isAppTab && (
-        <div className="fixed bottom-5 left-5 z-50 w-72 p-3 bg-surface-container/90 rounded-xl border border-outline-variant/40 cyber-glass shadow-xl backdrop-blur-xl">
-          <div className="text-[10px] font-mono font-semibold text-outline uppercase tracking-wider mb-2 flex items-center justify-between">
-            <span>Acting as</span>
-            <span className="size-2 rounded-full bg-primary-container/80" />
-          </div>
-          <div className="grid grid-cols-2 gap-1.5 bg-surface-container-lowest/90 p-1 rounded-lg border border-outline-variant/30">
-            {users.map((u) => (
-              <button
-                key={u.id}
-                onClick={() => setUser(u)}
-                className={cn(
-                  "py-1.5 px-2 rounded-md text-xs font-mono font-semibold text-center transition-all",
-                  user.id === u.id
-                    ? "bg-primary-container text-white shadow-sm"
-                    : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
-                )}
-                title={u.email}
-              >
-                {u.name}
-              </button>
-            ))}
-          </div>
+        <div className="fixed bottom-5 left-5 z-50">
+          {!isUserSwitcherOpen ? (
+            <button
+              type="button"
+              onClick={() => setIsUserSwitcherOpen(true)}
+              className="flex items-center gap-2.5 px-3.5 py-2 bg-surface-container/95 hover:bg-surface-container-high rounded-full border border-outline-variant/50 cyber-glass shadow-xl backdrop-blur-xl transition-all group hover:border-primary/50 text-left cursor-pointer"
+              aria-label="Expand role and user selector"
+              title="Click to switch user or role"
+            >
+              <span className="size-2 rounded-full bg-primary animate-pulse" />
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-mono font-semibold text-on-surface">
+                <span className="text-outline text-xs uppercase tracking-wider">Acting as:</span>
+                <span className="text-white font-bold">{user.name}</span>
+                <span className="text-outline-variant">|</span>
+                <span className="text-primary uppercase text-xs px-1.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/40">
+                  {role}
+                </span>
+              </div>
+              <ChevronUp className="w-4 h-4 text-outline group-hover:text-primary transition-transform" />
+            </button>
+          ) : (
+            <div className="w-76 p-3.5 bg-surface-container/95 rounded-xl border border-outline-variant/50 cyber-glass shadow-2xl backdrop-blur-xl animate-in fade-in slide-in-from-bottom-2 duration-150">
+              <div className="text-xs font-mono font-semibold text-outline uppercase tracking-wider mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-primary" />
+                  <span className="text-white font-bold">Acting Identity</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsUserSwitcherOpen(false)}
+                  className="p-1 rounded hover:bg-surface-container-high text-outline hover:text-white transition-colors cursor-pointer"
+                  aria-label="Collapse role and user selector"
+                  title="Collapse"
+                >
+                  <ChevronDown className="w-4 h-4" />
+                </button>
+              </div>
 
-          {/* Role Toggle: Developer vs Reviewer (UI toggle for Phase 5) */}
-          <div className="mt-2.5 pt-2 border-t border-outline-variant/30">
-            <div className="text-[10px] font-mono font-semibold text-outline uppercase tracking-wider mb-1.5 flex items-center justify-between">
-              <span>Role</span>
-              <span className="text-[10px] font-mono text-primary font-bold uppercase">{role}</span>
-            </div>
-            <div className="grid grid-cols-2 gap-1.5 bg-surface-container-lowest/90 p-1 rounded-lg border border-outline-variant/30">
-              <button
-                onClick={() => setRole('developer')}
-                className={cn(
-                  "py-1 px-2 rounded-md text-[11px] font-mono font-semibold text-center transition-all",
-                  role === 'developer'
-                    ? "bg-secondary-container text-white shadow-sm"
-                    : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
-                )}
-              >
-                Developer
-              </button>
-              <button
-                onClick={() => setRole('reviewer')}
-                className={cn(
-                  "py-1 px-2 rounded-md text-[11px] font-mono font-semibold text-center transition-all",
-                  role === 'reviewer'
-                    ? "bg-primary-container text-white shadow-sm"
-                    : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
-                )}
-              >
-                Reviewer
-              </button>
-            </div>
-          </div>
+              <div className="text-xs font-mono text-outline uppercase tracking-wider mb-1 px-1">Switch User</div>
+              <div className="grid grid-cols-2 gap-1.5 bg-surface-container-lowest/90 p-1.5 rounded-lg border border-outline-variant/30">
+                {users.map((u) => (
+                  <button
+                    key={u.id}
+                    type="button"
+                    onClick={() => setUser(u)}
+                    className={cn(
+                      "py-1.5 px-2 rounded-md text-xs sm:text-sm font-mono font-semibold text-center transition-all cursor-pointer",
+                      user.id === u.id
+                        ? "bg-primary-container text-white shadow-sm"
+                        : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
+                    )}
+                    title={u.email}
+                  >
+                    {u.name}
+                  </button>
+                ))}
+              </div>
 
-          <div className="mt-2 text-xs font-mono text-outline truncate flex items-center justify-between">
-            <span className="truncate text-on-surface-variant text-[11px]">{user.email}</span>
-            <span className="font-bold text-primary uppercase text-[10px] ml-2 shrink-0">{user.name}</span>
-          </div>
+              {/* Role Toggle: Developer vs Reviewer */}
+              <div className="mt-2.5 pt-2 border-t border-outline-variant/30">
+                <div className="text-xs font-mono text-outline uppercase tracking-wider mb-1.5 px-1 flex items-center justify-between">
+                  <span>Role</span>
+                  <span className="text-xs font-mono text-primary font-bold uppercase">{role}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5 bg-surface-container-lowest/90 p-1.5 rounded-lg border border-outline-variant/30">
+                  <button
+                    type="button"
+                    onClick={() => setRole('developer')}
+                    className={cn(
+                      "py-1.5 px-2 rounded-md text-xs sm:text-sm font-mono font-semibold text-center transition-all cursor-pointer",
+                      role === 'developer'
+                        ? "bg-secondary-container text-white shadow-sm"
+                        : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
+                    )}
+                  >
+                    Developer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole('reviewer')}
+                    className={cn(
+                      "py-1.5 px-2 rounded-md text-xs sm:text-sm font-mono font-semibold text-center transition-all cursor-pointer",
+                      role === 'reviewer'
+                        ? "bg-primary-container text-white shadow-sm"
+                        : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60"
+                    )}
+                  >
+                    Reviewer
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-2.5 px-1 text-xs font-mono text-outline truncate flex items-center justify-between">
+                <span className="truncate text-on-surface-variant text-xs">{user.email}</span>
+                <button
+                  type="button"
+                  onClick={() => setIsUserSwitcherOpen(false)}
+                  className="text-xs font-mono text-primary hover:underline ml-2 shrink-0 cursor-pointer"
+                >
+                  Collapse ▲
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -216,7 +262,7 @@ function TopNavItem({ to, children }: { to: string; children: React.ReactNode })
       end={to === '/'}
       className={({ isActive }) =>
         cn(
-          "px-3.5 py-1.5 rounded-full transition-all text-[13px] font-mono font-semibold tracking-normal whitespace-nowrap flex items-center gap-1",
+          "px-3.5 py-1.5 rounded-full transition-all text-xs sm:text-sm font-mono font-semibold tracking-normal whitespace-nowrap flex items-center gap-1",
           isActive
             ? "bg-primary-container text-white shadow-sm font-bold cyber-glow-tab"
             : "text-on-surface-variant hover:text-white hover:bg-surface-container-high/60 transition-colors"

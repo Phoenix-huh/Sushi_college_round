@@ -621,27 +621,27 @@ export function TopologyDiagram({
         </svg>
 
         {/* Legend for 1, 2, 3 numbered badges */}
-        <div className="flex flex-wrap items-center justify-center gap-8 pt-4 border-t border-outline-variant/30 text-xs font-mono">
+        <div className="flex flex-wrap items-center justify-center gap-8 pt-4 border-t border-outline-variant/30 text-xs sm:text-sm font-mono">
           <div className="flex items-center gap-2">
-            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[11px]">
+            <span className="size-5.5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-xs">
               1
             </span>
-            <span className="text-on-surface">Save patch</span>
-            <span className="text-outline text-[11px]">({getRouteString('POST', '/patches')})</span>
+            <span className="text-on-surface font-medium">Save patch</span>
+            <span className="text-outline text-xs">({getRouteString('POST', '/patches')})</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[11px]">
+            <span className="size-5.5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-xs">
               2
             </span>
-            <span className="text-on-surface">Review and deploy</span>
-            <span className="text-outline text-[11px]">({getRouteString('POST', '/deploy')})</span>
+            <span className="text-on-surface font-medium">Review and deploy</span>
+            <span className="text-outline text-xs">({getRouteString('POST', '/deploy')})</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="size-5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-[11px]">
+            <span className="size-5.5 rounded-full bg-primary-container text-white flex items-center justify-center font-bold text-xs">
               3
             </span>
-            <span className="text-on-surface">Runtime polls live version</span>
-            <span className="text-outline text-[11px]">({getRouteString('GET', '/deployments/live')})</span>
+            <span className="text-on-surface font-medium">Runtime polls live version</span>
+            <span className="text-outline text-xs">({getRouteString('GET', '/deployments/live')})</span>
           </div>
         </div>
       </div>
@@ -649,10 +649,10 @@ export function TopologyDiagram({
       {/* 7-Stage Lifecycle Stepper: Zero Scroll Wheel / Zero Horizontal Scrollbar */}
       <div className="p-6 rounded-3xl cyber-glass border border-outline-variant/40 space-y-4 font-mono shadow-xl w-full">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-outline-variant/20 pb-3">
-          <span className="text-xs font-bold text-white uppercase tracking-wider">
+          <span className="text-sm font-bold text-white uppercase tracking-wider">
             7-Stage Hotfix Lifecycle Stepper
           </span>
-          <span className="text-[11px] text-outline">Click any stage pill for complete details</span>
+          <span className="text-xs text-outline">Click any stage pill for complete details</span>
         </div>
 
         {/* Responsive grid that fits all 7 items on desktop with zero scrollbar */}
@@ -663,21 +663,21 @@ export function TopologyDiagram({
               <button
                 key={stage.id}
                 onClick={() => handleStageClick(idx)}
-                className={`p-3 rounded-2xl text-left border transition-all text-xs font-mono flex flex-col justify-between gap-2 focus:outline-none focus:ring-1 focus:ring-primary ${
+                className={`p-3.5 rounded-2xl text-left border transition-all text-xs sm:text-sm font-mono flex flex-col justify-between gap-2.5 focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer ${
                   isSelected
                     ? 'bg-primary-container text-white border-primary-container shadow-lg cyber-glow-tab'
                     : 'bg-surface-container/70 text-on-surface hover:text-white border-outline-variant/30 hover:border-primary/50'
                 }`}
               >
                 <div className="flex items-center justify-between w-full">
-                  <span className="text-[10px] font-bold opacity-80 px-1.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/20">
+                  <span className="text-xs font-bold opacity-90 px-1.5 py-0.5 rounded bg-surface-container-lowest border border-outline-variant/20">
                     0{stage.step}
                   </span>
-                  <span className="text-[10px] text-outline truncate max-w-[85px]" title={stage.resultingStatus}>
+                  <span className="text-xs text-outline truncate max-w-[85px]" title={stage.resultingStatus}>
                     {stage.resultingStatus}
                   </span>
                 </div>
-                <span className="font-semibold text-xs leading-snug">{stage.name}</span>
+                <span className="font-semibold text-xs sm:text-sm leading-snug">{stage.name}</span>
               </button>
             );
           })}

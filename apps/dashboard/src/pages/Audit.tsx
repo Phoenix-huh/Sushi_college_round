@@ -50,16 +50,16 @@ export function Audit() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-headline font-bold tracking-tight text-white">Audit Trail</h1>
-        <p className="text-sm font-mono text-on-surface-variant mt-1">
+        <h1 className="text-3xl sm:text-4xl font-headline font-bold tracking-tight text-white">Audit Trail</h1>
+        <p className="text-sm sm:text-base font-mono text-on-surface-variant mt-1">
           Complete, append-only history of patch creation, submissions, reviews, merges, conflicts, and deployments.
         </p>
       </div>
 
       <ErrorBanner message={error} />
 
-      <div className="cyber-glass p-6 rounded-xl border border-outline-variant/30 shadow-lg">
-        <ol className="relative border-l border-outline-variant/30 ml-4 space-y-6">
+      <div className="cyber-glass p-6 sm:p-8 rounded-xl border border-outline-variant/30 shadow-lg">
+        <ol className="relative border-l border-outline-variant/30 ml-4 space-y-7">
           {events.map((evt) => {
             const meta = getEventMeta(evt.event_type);
             const Icon = meta.icon;
@@ -68,35 +68,35 @@ export function Audit() {
             return (
               <li key={evt.id} className="ml-6">
                 <span
-                  className={`absolute flex items-center justify-center w-6 h-6 rounded-full -left-3 ring-4 ring-surface-container-lowest text-white ${meta.color}`}
+                  className={`absolute flex items-center justify-center w-6.5 h-6.5 rounded-full -left-3.5 ring-4 ring-surface-container-lowest text-white ${meta.color}`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-4 h-4" />
                 </span>
 
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-1.5">
                   <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider bg-surface-container border border-outline-variant/40 text-primary">
+                    <span className="px-2.5 py-0.5 rounded text-xs font-mono font-bold uppercase tracking-wider bg-surface-container border border-outline-variant/40 text-primary">
                       {evt.event_type.replace(/_/g, ' ')}
                     </span>
-                    <span className="text-xs font-mono text-on-surface font-medium">by {actorName}</span>
+                    <span className="text-xs sm:text-sm font-mono text-on-surface font-semibold">by {actorName}</span>
                   </div>
-                  <time className="text-xs text-outline font-mono">
+                  <time className="text-xs sm:text-sm text-outline font-mono">
                     {new Date(evt.created_at).toLocaleString()}
                   </time>
                 </div>
 
-                <div className="text-xs text-outline font-mono mb-1.5">
-                  Entity ID: <span className="text-on-surface">{evt.entity_id}</span>
+                <div className="text-xs sm:text-sm text-outline font-mono mb-2">
+                  Entity ID: <span className="text-on-surface font-medium">{evt.entity_id}</span>
                 </div>
 
-                <div className="text-xs text-on-surface bg-surface-container-lowest/80 p-3 rounded-lg border border-outline-variant/30 font-mono break-words shadow-inner">
+                <div className="text-xs sm:text-sm text-on-surface bg-surface-container-lowest/80 p-3.5 rounded-lg border border-outline-variant/30 font-mono break-words shadow-inner leading-relaxed">
                   {JSON.stringify(evt.details, null, 2)}
                 </div>
               </li>
             );
           })}
           {!loading && events.length === 0 && (
-            <li className="ml-6 text-outline text-xs font-mono">No audit events recorded yet.</li>
+            <li className="ml-6 text-outline text-sm font-mono">No audit events recorded yet.</li>
           )}
         </ol>
       </div>

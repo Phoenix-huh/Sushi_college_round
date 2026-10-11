@@ -87,48 +87,48 @@ export function Architecture() {
             <span className="text-primary">DOM Runtime Architecture</span>
           </h1>
 
-          <p className="font-mono text-sm sm:text-base text-on-surface-variant max-w-4xl leading-relaxed relative z-10">
+          <p className="font-mono text-base sm:text-lg text-on-surface-variant max-w-4xl leading-relaxed relative z-10">
             Diagram-first inspection of the Patchwork monorepo. Click any node in the diagrams below to inspect its exact implementation details, API routes, and codebase facts.
           </p>
 
           {/* Codebase Facts Bar: Spans Wide */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/30 mt-6 relative z-10 font-mono text-xs">
-            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
-              <span className="text-[11px] text-outline uppercase block">Locators</span>
-              <span className="text-white font-bold text-sm mt-0.5 block">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 border-t border-outline-variant/30 mt-6 relative z-10 font-mono text-sm">
+            <div className="p-4 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
+              <span className="text-xs text-outline uppercase block font-semibold">Locators</span>
+              <span className="text-white font-bold text-base mt-1 block">
                 {CODEBASE_FACTS.anchorCount} Anchor Fields
               </span>
-              <span className="text-[11px] text-primary truncate block mt-0.5">
+              <span className="text-xs text-primary truncate block mt-0.5">
                 CSS, XPath, Tokens
               </span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
-              <span className="text-[11px] text-outline uppercase block">Change Types</span>
-              <span className="text-white font-bold text-sm mt-0.5 block">
+            <div className="p-4 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
+              <span className="text-xs text-outline uppercase block font-semibold">Change Types</span>
+              <span className="text-white font-bold text-base mt-1 block">
                 {CODEBASE_FACTS.changeTypeCount} Types Supported
               </span>
-              <span className="text-[11px] text-secondary truncate block mt-0.5">
+              <span className="text-xs text-secondary truncate block mt-0.5">
                 text, style, script...
               </span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
-              <span className="text-[11px] text-outline uppercase block">Visual Verification</span>
-              <span className="text-white font-bold text-sm mt-0.5 block">
+            <div className="p-4 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
+              <span className="text-xs text-outline uppercase block font-semibold">Visual Verification</span>
+              <span className="text-white font-bold text-base mt-1 block">
                 Playwright + Pixelmatch
               </span>
-              <span className="text-[11px] text-[#38bdf8] truncate block mt-0.5">
+              <span className="text-xs text-[#38bdf8] truncate block mt-0.5">
                 Automated Checkout Test
               </span>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
-              <span className="text-[11px] text-outline uppercase block">AI Model</span>
-              <span className="text-white font-bold text-sm mt-0.5 block">
+            <div className="p-4 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/20">
+              <span className="text-xs text-outline uppercase block font-semibold">AI Model</span>
+              <span className="text-white font-bold text-base mt-1 block">
                 {CODEBASE_FACTS.geminiModel}
               </span>
-              <span className="text-[11px] text-primary truncate block mt-0.5">
+              <span className="text-xs text-primary truncate block mt-0.5">
                 Rule Heuristic Fallback
               </span>
             </div>
@@ -153,7 +153,7 @@ export function Architecture() {
                 aria-controls={`panel-${tab.id}`}
                 tabIndex={isSelected ? 0 : -1}
                 onClick={() => handleTabChange(tab.id)}
-                className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs font-bold transition-all focus:outline-none focus:ring-1 focus:ring-primary ${
+                className={`flex items-center gap-2.5 px-5 py-3 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer ${
                   isSelected
                     ? 'bg-primary-container text-white border border-primary-container shadow-md cyber-glow-tab'
                     : 'text-on-surface-variant hover:text-white hover:bg-surface-container/60 border border-transparent'
@@ -180,16 +180,16 @@ export function Architecture() {
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
-              <div className="flex items-center gap-2 text-xs font-mono text-primary uppercase font-bold tracking-wider mb-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-primary uppercase font-bold tracking-wider mb-1">
                 <span className="px-2 py-0.5 rounded bg-primary-container/20 border border-primary-container/30">
                   DIAGRAM 01
                 </span>
                 <span>SYSTEM TOPOLOGY & MODULES</span>
               </div>
-              <h2 className="font-headline font-black text-2xl sm:text-3xl text-white">
+              <h2 className="font-headline font-black text-2xl sm:text-4xl text-white">
                 Inter-Module Architecture & Lifecycle Flow
               </h2>
-              <p className="text-xs font-mono text-outline mt-1">
+              <p className="text-sm font-mono text-outline mt-1">
                 Visual map connecting Chrome extension, dashboard, API server, and backing services.
               </p>
             </div>
@@ -218,16 +218,16 @@ export function Architecture() {
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
-              <div className="flex items-center gap-2 text-xs font-mono text-primary uppercase font-bold tracking-wider mb-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-primary uppercase font-bold tracking-wider mb-1">
                 <span className="px-2 py-0.5 rounded bg-primary-container/20 border border-primary-container/30">
                   DIAGRAM 02
                 </span>
                 <span>RESILIENT TARGETING & HEALING</span>
               </div>
-              <h2 className="font-headline font-black text-2xl sm:text-3xl text-white">
+              <h2 className="font-headline font-black text-2xl sm:text-4xl text-white">
                 Multi-Anchor Cascade & Fuzzy Token Healer
               </h2>
-              <p className="text-xs font-mono text-outline mt-1">
+              <p className="text-sm font-mono text-outline mt-1">
                 3-tier resolution funnel ensuring DOM hotfixes persist across site updates.
               </p>
             </div>
@@ -256,16 +256,16 @@ export function Architecture() {
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
-              <div className="flex items-center gap-2 text-xs font-mono text-primary uppercase font-bold tracking-wider mb-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-primary uppercase font-bold tracking-wider mb-1">
                 <span className="px-2 py-0.5 rounded bg-primary-container/20 border border-primary-container/30">
                   DIAGRAM 03
                 </span>
                 <span>COLLABORATIVE MERGE SAFETY</span>
               </div>
-              <h2 className="font-headline font-black text-2xl sm:text-3xl text-white">
+              <h2 className="font-headline font-black text-2xl sm:text-4xl text-white">
                 Element + Property Conflict Detection Engine
               </h2>
-              <p className="text-xs font-mono text-outline mt-1">
+              <p className="text-sm font-mono text-outline mt-1">
                 Git-graph analysis detecting concurrent property collisions on target elements.
               </p>
             </div>
@@ -294,16 +294,16 @@ export function Architecture() {
           >
             {/* Header: Title and One-Line Caption Only */}
             <div>
-              <div className="flex items-center gap-2 text-xs font-mono text-primary uppercase font-bold tracking-wider mb-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm font-mono text-primary uppercase font-bold tracking-wider mb-1">
                 <span className="px-2 py-0.5 rounded bg-primary-container/20 border border-primary-container/30">
                   DIAGRAM 04
                 </span>
                 <span>DEPLOYMENTS, ROLLBACK & AUDIT</span>
               </div>
-              <h2 className="font-headline font-black text-2xl sm:text-3xl text-white">
+              <h2 className="font-headline font-black text-2xl sm:text-4xl text-white">
                 Immutable Version Bundles, Rollbacks & Audit Trail
               </h2>
-              <p className="text-xs font-mono text-outline mt-1">
+              <p className="text-sm font-mono text-outline mt-1">
                 Zero-downtime deployment rail, atomic rollback mechanics, and tamper audit log.
               </p>
             </div>

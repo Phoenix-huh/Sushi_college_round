@@ -40,7 +40,7 @@ export function Extension() {
                 href={DEMO_URL}
                 target="_blank"
                 rel="noreferrer"
-                className="px-5 py-3.5 rounded-xl bg-surface-container/80 hover:bg-surface-container border border-outline-variant/40 text-white font-mono text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2"
+                className="px-5 py-3.5 rounded-xl bg-surface-container/80 hover:bg-surface-container border border-outline-variant/40 text-white font-mono text-sm font-bold uppercase tracking-wider transition-all flex items-center gap-2"
               >
                 <span>Test on Demo Site</span>
                 <ExternalLink className="w-4 h-4 text-outline" />
@@ -50,37 +50,37 @@ export function Extension() {
 
           {/* Feature Highlights Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-            <div className="cyber-glass p-6 rounded-2xl border border-outline-variant/30 flex flex-col justify-between">
+            <div className="cyber-glass p-6 sm:p-7 rounded-2xl border border-outline-variant/30 flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-primary mb-4">
-                  <Layers className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-xl bg-primary-container/20 border border-primary-container/40 flex items-center justify-center text-primary mb-4">
+                  <Layers className="w-6 h-6" />
                 </div>
-                <h3 className="font-headline font-bold text-lg text-white mb-2">Point & Click Selector</h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
+                <h3 className="font-headline font-bold text-xl text-white mb-2">Point & Click Selector</h3>
+                <p className="text-base text-on-surface-variant leading-relaxed">
                   Hover and select any element on the page. The extension automatically computes robust CSS selectors, XPath, and text anchor fallbacks.
                 </p>
               </div>
             </div>
 
-            <div className="cyber-glass p-6 rounded-2xl border border-outline-variant/30 flex flex-col justify-between">
+            <div className="cyber-glass p-6 sm:p-7 rounded-2xl border border-outline-variant/30 flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-secondary-container/30 border border-secondary/40 flex items-center justify-center text-secondary mb-4">
-                  <Sparkles className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-xl bg-secondary-container/30 border border-secondary/40 flex items-center justify-center text-secondary mb-4">
+                  <Sparkles className="w-6 h-6" />
                 </div>
-                <h3 className="font-headline font-bold text-lg text-white mb-2">Natural Language AI</h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
+                <h3 className="font-headline font-bold text-xl text-white mb-2">Natural Language AI</h3>
+                <p className="text-base text-on-surface-variant leading-relaxed">
                   Describe the fix you want in plain English (e.g. <em>"Make this banner green"</em>) and let Gemini generate the exact patch payload instantly.
                 </p>
               </div>
             </div>
 
-            <div className="cyber-glass p-6 rounded-2xl border border-outline-variant/30 flex flex-col justify-between">
+            <div className="cyber-glass p-6 sm:p-7 rounded-2xl border border-outline-variant/30 flex flex-col justify-between">
               <div>
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mb-4">
-                  <ShieldCheck className="w-5 h-5" />
+                <div className="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 mb-4">
+                  <ShieldCheck className="w-6 h-6" />
                 </div>
-                <h3 className="font-headline font-bold text-lg text-white mb-2">Instant Review Sync</h3>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
+                <h3 className="font-headline font-bold text-xl text-white mb-2">Instant Review Sync</h3>
+                <p className="text-base text-on-surface-variant leading-relaxed">
                   Submit drafts straight to your team dashboard. Preview hotfixes in isolation, run visual regression tests, and deploy with zero downtime.
                 </p>
               </div>
@@ -90,39 +90,39 @@ export function Extension() {
           {/* 3-Step Installation Guide */}
           <div className="cyber-glass rounded-2xl border border-outline-variant/30 p-8 sm:p-10 mb-14">
             <div className="text-center max-w-xl mx-auto mb-8">
-              <span className="font-mono text-xs text-primary uppercase font-bold tracking-widest">Setup Guide</span>
+              <span className="font-mono text-sm text-primary uppercase font-bold tracking-widest">Setup Guide</span>
               <h2 className="font-headline font-bold text-2xl sm:text-3xl text-white mt-1">How to Install in 3 Steps</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-surface-container/60 border border-outline-variant/30 p-6 rounded-xl flex flex-col">
                 <span className="font-headline font-black text-2xl text-primary mb-2">01</span>
-                <h4 className="font-bold text-white text-base mb-1">Unzip Archive</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
-                  Click the download button above and extract <code className="text-xs bg-surface-container-highest px-1.5 py-0.5 rounded text-primary">patchwork-extension.zip</code> to any folder on your machine.
+                <h4 className="font-bold text-white text-lg mb-1.5">Unzip Archive</h4>
+                <p className="text-base text-on-surface-variant leading-relaxed">
+                  Click the download button above and extract <code className="text-xs sm:text-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-primary">patchwork-extension.zip</code> to any folder on your machine.
                 </p>
               </div>
 
               <div className="bg-surface-container/60 border border-outline-variant/30 p-6 rounded-xl flex flex-col">
                 <span className="font-headline font-black text-2xl text-primary mb-2">02</span>
-                <h4 className="font-bold text-white text-base mb-1">Enable Dev Mode</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
-                  Open Google Chrome or Edge, navigate to <code className="text-xs bg-surface-container-highest px-1.5 py-0.5 rounded text-primary">chrome://extensions</code>, and toggle on <strong>Developer mode</strong> in the top right.
+                <h4 className="font-bold text-white text-lg mb-1.5">Enable Dev Mode</h4>
+                <p className="text-base text-on-surface-variant leading-relaxed">
+                  Open Google Chrome or Edge, navigate to <code className="text-xs sm:text-sm bg-surface-container-highest px-1.5 py-0.5 rounded text-primary">chrome://extensions</code>, and toggle on <strong>Developer mode</strong> in the top right.
                 </p>
               </div>
 
               <div className="bg-surface-container/60 border border-outline-variant/30 p-6 rounded-xl flex flex-col">
                 <span className="font-headline font-black text-2xl text-primary mb-2">03</span>
-                <h4 className="font-bold text-white text-base mb-1">Load Unpacked</h4>
-                <p className="text-sm text-on-surface-variant leading-relaxed">
+                <h4 className="font-bold text-white text-lg mb-1.5">Load Unpacked</h4>
+                <p className="text-base text-on-surface-variant leading-relaxed">
                   Click <strong>Load unpacked</strong>, select the extracted folder, and the Patchwork extension icon will appear in your toolbar ready to use!
                 </p>
               </div>
             </div>
 
-            <div className="mt-8 pt-6 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-4 text-xs font-mono text-outline">
+            <div className="mt-8 pt-6 border-t border-outline-variant/20 flex flex-wrap items-center justify-between gap-4 text-xs sm:text-sm font-mono text-outline">
               <div className="flex items-center gap-2 text-emerald-400">
-                <CheckCircle2 className="w-4 h-4" />
+                <CheckCircle2 className="w-4.5 h-4.5" />
                 <span>Compatible with Chrome, Chromium, Brave, and Edge</span>
               </div>
               <a

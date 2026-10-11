@@ -220,8 +220,8 @@ export function Patches() {
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-headline font-bold tracking-tight text-white">Patches</h1>
-          <p className="text-sm font-mono text-on-surface-variant mt-1">
+          <h1 className="text-3xl sm:text-4xl font-headline font-bold tracking-tight text-white">Patches</h1>
+          <p className="text-sm sm:text-base font-mono text-on-surface-variant mt-1">
             Live on demo site:{' '}
             <strong className="text-primary font-bold">
               {live?.version ? `version ${live.version.number}, ${live.patches.length} patch(es)` : 'original site (no patches)'}
@@ -232,7 +232,7 @@ export function Patches() {
           {/* Rename "+ New patch" to "+ New website" */}
           <button
             onClick={() => setSiteModal(true)}
-            className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm"
+            className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-mono font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all shadow-sm cursor-pointer"
           >
             <Globe className="w-4 h-4" />
             + New website
@@ -245,11 +245,11 @@ export function Patches() {
 
       {/* Sites tab indicator if multiple sites exist */}
       {sitesQ.data && sitesQ.data.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-mono">
-          <span className="text-outline font-semibold uppercase text-[10px] tracking-wider">Site:</span>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs sm:text-sm font-mono">
+          <span className="text-outline font-semibold uppercase text-xs tracking-wider">Site:</span>
           <button
             onClick={() => setActiveSiteId(null)}
-            className={`px-3 py-1 rounded-full border transition-all text-xs ${
+            className={`px-3 py-1 rounded-full border transition-all text-xs sm:text-sm cursor-pointer ${
               !activeSiteId
                 ? 'bg-primary-container/20 border-primary-container text-white font-bold shadow-[0_0_12px_rgba(255,59,129,0.3)]'
                 : 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:text-white'
@@ -261,7 +261,7 @@ export function Patches() {
             <button
               key={s.id}
               onClick={() => setActiveSiteId(s.id)}
-              className={`px-3 py-1 rounded-full border transition-all text-xs ${
+              className={`px-3 py-1 rounded-full border transition-all text-xs sm:text-sm cursor-pointer ${
                 activeSiteId === s.id
                   ? 'bg-primary-container/20 border-primary-container text-white font-bold shadow-[0_0_12px_rgba(255,59,129,0.3)]'
                   : 'bg-surface-container border-outline-variant/30 text-on-surface-variant hover:text-white'
@@ -284,28 +284,28 @@ export function Patches() {
 
       {/* Patches Table */}
       <div className="cyber-glass rounded-xl border border-outline-variant/30 shadow-lg overflow-x-auto">
-        <div className="px-4 py-3.5 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container/60">
+        <div className="px-5 py-4 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container/60">
           <div className="flex items-center gap-2">
-            <h2 className="text-xs font-headline font-bold text-white uppercase tracking-wider">Patch Repository</h2>
-            <span className="text-xs font-mono text-outline">({patches.length})</span>
+            <h2 className="text-sm font-headline font-bold text-white uppercase tracking-wider">Patch Repository</h2>
+            <span className="text-sm font-mono text-outline">({patches.length})</span>
           </div>
           {/* Secondary entry point for manual patch creation */}
           <button
             onClick={openCreate}
-            className="text-xs font-mono font-bold text-primary hover:text-white underline transition-colors"
+            className="text-sm font-mono font-bold text-primary hover:text-white underline transition-colors cursor-pointer"
           >
             + Add patch manually
           </button>
         </div>
-        <table className="w-full text-xs font-mono text-left min-w-[920px]">
-          <thead className="bg-surface-container-highest/50 border-b border-outline-variant/30 text-outline uppercase text-[11px]">
+        <table className="w-full text-sm font-mono text-left min-w-[920px]">
+          <thead className="bg-surface-container-highest/50 border-b border-outline-variant/30 text-outline uppercase text-xs font-semibold">
             <tr>
-              <th className="px-4 py-3 font-medium w-24">Status</th>
-              <th className="px-4 py-3 font-medium w-72 max-w-sm">Title / Element</th>
-              <th className="px-4 py-3 font-medium w-20">Change</th>
-              <th className="px-4 py-3 font-medium max-w-md">Value</th>
-              <th className="px-4 py-3 font-medium w-28 whitespace-nowrap">Author</th>
-              <th className="px-4 py-3 pr-6 font-medium text-right min-w-[220px]">Actions</th>
+              <th className="px-4 py-3.5 font-semibold w-28">Status</th>
+              <th className="px-4 py-3.5 font-semibold w-72 max-w-sm">Title / Element</th>
+              <th className="px-4 py-3.5 font-semibold w-24">Change</th>
+              <th className="px-4 py-3.5 font-semibold max-w-md">Value</th>
+              <th className="px-4 py-3.5 font-semibold w-28 whitespace-nowrap">Author</th>
+              <th className="px-4 py-3.5 pr-6 font-semibold text-right min-w-[220px]">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-outline-variant/20">
@@ -325,33 +325,33 @@ export function Patches() {
                     </td>
 
                     {/* Title & Selector */}
-                    <td className="px-4 py-3 w-72 max-w-sm">
+                    <td className="px-4 py-3.5 w-72 max-w-sm">
                       {patch.title ? (
-                        <div className="font-semibold text-white text-xs truncate" title={patch.title}>
+                        <div className="font-semibold text-white text-sm sm:text-base truncate" title={patch.title}>
                           {patch.title}
                         </div>
                       ) : null}
-                      <div className="font-mono text-xs text-primary truncate" title={patch.anchors.cssSelector}>
+                      <div className="font-mono text-xs sm:text-sm text-primary truncate" title={patch.anchors.cssSelector}>
                         {patch.anchors.cssSelector || '(text search)'}
                       </div>
                       {patch.anchors.textContent && (
-                        <div className="text-[11px] text-outline truncate" title={patch.anchors.textContent}>
+                        <div className="text-xs text-outline truncate" title={patch.anchors.textContent}>
                           match: "{patch.anchors.textContent}"
                         </div>
                       )}
                     </td>
 
                     {/* Change Type */}
-                    <td className="px-4 py-3 font-mono text-xs text-outline-variant whitespace-nowrap w-20">
-                      <span className="bg-surface-container px-1.5 py-0.5 rounded border border-outline-variant/30 text-on-surface">
+                    <td className="px-4 py-3.5 font-mono text-xs sm:text-sm text-outline-variant whitespace-nowrap w-24">
+                      <span className="bg-surface-container px-2 py-0.5 rounded border border-outline-variant/30 text-on-surface">
                         {patch.change.type}
                       </span>
                     </td>
 
                     {/* Value */}
-                    <td className="px-4 py-3 max-w-md">
+                    <td className="px-4 py-3.5 max-w-md">
                       <div
-                        className="font-mono text-xs text-on-surface max-w-md break-all line-clamp-2 bg-surface-container/40 px-2 py-1 rounded border border-outline-variant/20 hover:line-clamp-none transition-all cursor-pointer"
+                        className="font-mono text-xs sm:text-sm text-on-surface max-w-md break-all line-clamp-2 bg-surface-container/40 px-2.5 py-1.5 rounded border border-outline-variant/20 hover:line-clamp-none transition-all cursor-pointer"
                         title={patch.change.value}
                       >
                         {patch.change.value}
@@ -359,20 +359,20 @@ export function Patches() {
                     </td>
 
                     {/* Author */}
-                    <td className="px-4 py-3 whitespace-nowrap w-28 text-xs font-mono text-on-surface-variant">
+                    <td className="px-4 py-3.5 whitespace-nowrap w-28 text-xs sm:text-sm font-mono text-on-surface-variant">
                       {getUserName(patch.author_id)}
-                      {isAuthor && <span className="ml-1 text-[10px] text-primary font-bold">(You)</span>}
+                      {isAuthor && <span className="ml-1 text-xs text-primary font-bold">(You)</span>}
                     </td>
 
                     {/* Actions — right aligned with icons flush right */}
-                    <td className="px-4 py-3 pr-6 text-right whitespace-nowrap min-w-[220px]">
+                    <td className="px-4 py-3.5 pr-6 text-right whitespace-nowrap min-w-[220px]">
                       <div className="inline-flex items-center justify-end gap-2 min-w-max">
                         {/* Status workflow actions */}
                         <a
                           href={`${DEMO_URL}/?preview_patch=${patch.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="bg-surface-container hover:bg-surface-container-high text-white border border-outline-variant/40 px-2.5 py-1 rounded-md text-xs font-mono font-semibold transition-colors"
+                          className="bg-surface-container hover:bg-surface-container-high text-white border border-outline-variant/40 px-3 py-1.5 rounded-md text-xs sm:text-sm font-mono font-semibold transition-colors cursor-pointer"
                           title="Open the demo site with only this patch previewed"
                         >
                           Preview
@@ -382,10 +382,10 @@ export function Patches() {
                           <button
                             disabled={busy}
                             onClick={() => submitPatch(patch)}
-                            className="bg-primary-container/20 hover:bg-primary-container/30 text-primary border border-primary-container/50 px-2.5 py-1 rounded-md text-xs font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 transition-all"
+                            className="bg-primary-container/20 hover:bg-primary-container/30 text-primary border border-primary-container/50 px-3 py-1.5 rounded-md text-xs sm:text-sm font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1.5 transition-all cursor-pointer"
                             title="Submit this patch for review and check for conflicts"
                           >
-                            <Send className="w-3 h-3" />
+                            <Send className="w-3.5 h-3.5" />
                             Submit
                           </button>
                         )}
@@ -394,14 +394,14 @@ export function Patches() {
                           <>
                             {isAuthor ? (
                               <span
-                                className="text-xs text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2 py-0.5 rounded font-mono font-medium"
+                                className="text-xs sm:text-sm text-amber-300 bg-amber-950/60 border border-amber-500/40 px-2.5 py-1 rounded font-mono font-medium"
                                 title="An author cannot approve their own patch"
                               >
                                 Awaiting review
                               </span>
                             ) : role !== 'reviewer' ? (
                               <span
-                                className="text-xs text-on-surface-variant bg-surface-container border border-outline-variant/40 px-2 py-0.5 rounded font-mono"
+                                className="text-xs sm:text-sm text-on-surface-variant bg-surface-container border border-outline-variant/40 px-2.5 py-1 rounded font-mono"
                                 title="Switch your role to Reviewer (bottom-left) to approve or reject this patch"
                               >
                                 In review (Reviewer only)
@@ -411,19 +411,19 @@ export function Patches() {
                                 <button
                                   disabled={busy}
                                   onClick={() => reviewPatch(patch, 'approved')}
-                                  className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/60 px-2.5 py-1 rounded text-xs font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm transition-all"
+                                  className="bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/60 px-3 py-1.5 rounded text-xs sm:text-sm font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                                   title="Approve this patch"
                                 >
-                                  <Check className="w-3.5 h-3.5" />
+                                  <Check className="w-4 h-4" />
                                   Approve
                                 </button>
                                 <button
                                   disabled={busy}
                                   onClick={() => reviewPatch(patch, 'rejected')}
-                                  className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/60 px-2.5 py-1 rounded text-xs font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm transition-all"
+                                  className="bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-500/60 px-3 py-1.5 rounded text-xs sm:text-sm font-mono font-bold disabled:opacity-50 inline-flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                                   title="Reject this patch"
                                 >
-                                  <X className="w-3.5 h-3.5" />
+                                  <X className="w-4 h-4" />
                                   Reject
                                 </button>
                               </div>
@@ -435,7 +435,7 @@ export function Patches() {
                           <button
                             disabled={busy}
                             onClick={() => deploy(patch)}
-                            className="bg-primary-container hover:bg-[#ff1e70] text-white px-3 py-1 rounded text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 shadow-sm transition-all"
+                            className="bg-primary-container hover:bg-[#ff1e70] text-white px-3.5 py-1.5 rounded text-xs sm:text-sm font-mono font-bold uppercase tracking-wider disabled:opacity-50 shadow-sm transition-all cursor-pointer"
                             title="Deploy and merge into live version"
                           >
                             {busy ? 'Deploying...' : 'Deploy'}
@@ -446,7 +446,7 @@ export function Patches() {
                           <button
                             disabled={busy}
                             onClick={() => rollback(patch)}
-                            className="bg-amber-950/60 hover:bg-amber-900 text-amber-300 border border-amber-500/50 px-2.5 py-1 rounded text-xs font-mono font-semibold disabled:opacity-50 transition-all"
+                            className="bg-amber-950/60 hover:bg-amber-900 text-amber-300 border border-amber-500/50 px-3 py-1.5 rounded text-xs sm:text-sm font-mono font-semibold disabled:opacity-50 transition-all cursor-pointer"
                             title="Roll back this patch from the live site"
                           >
                             Roll back
@@ -456,10 +456,10 @@ export function Patches() {
                         {effectiveStatus === 'conflicted' && (
                           <a
                             href="/conflicts"
-                            className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2 py-1 rounded text-xs font-semibold inline-flex items-center gap-1"
+                            className="bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2.5 py-1.5 rounded text-xs sm:text-sm font-semibold inline-flex items-center gap-1"
                             title="Resolve conflict on the Conflicts page"
                           >
-                            <GitCommit className="w-3 h-3" />
+                            <GitCommit className="w-3.5 h-3.5" />
                             View conflict
                           </a>
                         )}
@@ -471,18 +471,18 @@ export function Patches() {
                             onClick={() => openEdit(patch)}
                             aria-label="Edit"
                             title="Edit"
-                            className="p-1 rounded text-outline hover:text-primary hover:bg-surface-container transition-colors"
+                            className="p-1.5 rounded text-outline hover:text-primary hover:bg-surface-container transition-colors cursor-pointer"
                           >
-                            <Pencil className="w-3.5 h-3.5" />
+                            <Pencil className="w-4 h-4" />
                           </button>
                           <button
                             disabled={busy}
                             onClick={() => remove(patch)}
                             aria-label="Delete"
                             title="Delete"
-                            className="p-1 rounded text-outline hover:text-rose-400 hover:bg-rose-950/40 transition-colors disabled:opacity-50"
+                            className="p-1.5 rounded text-outline hover:text-rose-400 hover:bg-rose-950/40 transition-colors disabled:opacity-50 cursor-pointer"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
@@ -657,7 +657,7 @@ function StatusPill({ status }: { status: string }) {
   const style = badgeClasses[status] || 'bg-surface-container text-on-surface-variant border border-outline-variant/40';
   const label = status === 'healed' ? '⟡ auto-healed' : status.replace(/_/g, ' ');
   return (
-    <span className={`px-2 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider ${style}`}>
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-mono font-bold uppercase tracking-wider ${style}`}>
       {label}
     </span>
   );
@@ -753,17 +753,17 @@ function NLPromptBox({
   };
 
   return (
-    <div className="cyber-glass border border-outline-variant/30 rounded-xl p-5 space-y-3 shadow-lg">
+    <div className="cyber-glass border border-outline-variant/30 rounded-xl p-5 space-y-3.5 shadow-lg">
       <div className="flex items-center gap-2">
         <span className="size-2 rounded-full bg-primary-container animate-ping" />
-        <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-primary">Natural language patch (AI)</h3>
+        <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-primary">Natural language patch (AI)</h3>
       </div>
       <textarea
         value={context}
         onChange={(e) => setContext(e.target.value)}
         placeholder={'Paste the element\'s HTML (optional), e.g. <h3 class="product-title">Smart Watch</h3>'}
         rows={2}
-        className="w-full bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3 py-2 text-xs font-mono text-white focus:border-primary-container outline-none"
+        className="w-full bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white focus:border-primary-container outline-none"
       />
       <div className="flex gap-2">
         <input
@@ -771,12 +771,12 @@ function NLPromptBox({
           onChange={(e) => setInstruction(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && generate()}
           placeholder='e.g. "Change the logo text to SuperStore" or "Make the checkout button green"'
-          className="flex-1 bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3 py-2 text-xs font-mono text-white focus:border-primary-container outline-none"
+          className="flex-1 bg-surface-container-lowest/80 border border-outline-variant/40 rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-mono text-white focus:border-primary-container outline-none"
         />
         <button
           onClick={generate}
           disabled={loading || !instruction.trim()}
-          className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 transition-all shadow-sm"
+          className="bg-primary-container hover:bg-[#ff1e70] text-white px-5 py-2.5 rounded-lg text-xs sm:text-sm font-mono font-bold uppercase tracking-wider disabled:opacity-50 transition-all shadow-sm cursor-pointer whitespace-nowrap"
         >
           {loading ? 'Generating...' : 'Generate patch'}
         </button>
@@ -785,24 +785,24 @@ function NLPromptBox({
       {/* Inline Submit & Deploy — shown immediately after draft creation */}
       {pendingPatch && (
         <div className="flex items-center justify-between gap-3 bg-primary-container/20 border border-primary-container/50 rounded-lg px-4 py-3">
-          <div className="text-xs font-mono text-white">
+          <div className="text-xs sm:text-sm font-mono text-white">
             <span className="font-bold text-primary">Draft ready</span>
             {pendingPatch.title && (
               <span className="ml-1 text-on-surface">· {pendingPatch.title}</span>
             )}
-            <span className="ml-2 font-mono text-outline text-[11px]">({pendingPatch.id.slice(0, 8)})</span>
+            <span className="ml-2 font-mono text-outline text-xs">({pendingPatch.id.slice(0, 8)})</span>
           </div>
           <div className="flex gap-2 items-center">
             <button
               onClick={() => setPendingPatch(null)}
-              className="text-xs font-mono text-outline hover:text-white transition-colors"
+              className="text-xs sm:text-sm font-mono text-outline hover:text-white transition-colors cursor-pointer"
             >
               Dismiss
             </button>
             <button
               onClick={submitAndDeploy}
               disabled={deploying}
-              className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs font-mono font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 shadow-sm transition-all"
+              className="bg-primary-container hover:bg-[#ff1e70] text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-mono font-bold uppercase tracking-wider disabled:opacity-50 flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
             >
               {deploying ? (
                 <span>Submitting...</span>

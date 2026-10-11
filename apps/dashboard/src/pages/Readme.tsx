@@ -74,25 +74,25 @@ export function Readme() {
         </p>
 
         {/* Feature Badges from Codebase Truth */}
-        <div className="flex flex-wrap gap-2 pt-6 border-t border-outline-variant/30 mt-6 text-xs font-mono">
-          <span className="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
+        <div className="flex flex-wrap gap-2.5 pt-6 border-t border-outline-variant/30 mt-6 text-xs sm:text-sm font-mono">
+          <span className="px-3 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
             Status: <strong className="text-amber-300">Hackathon prototype</strong>
           </span>
           <a
             href="https://github.com/Phoenix-huh/Sushi_college_round/blob/main/LICENSE"
             target="_blank"
             rel="noreferrer"
-            className="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:text-primary transition-colors flex items-center gap-1"
+            className="px-3 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface hover:text-primary transition-colors flex items-center gap-1"
           >
             <span>License:</span> <strong className="text-primary underline">MIT</strong>
           </a>
-          <span className="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
+          <span className="px-3 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
             Runtime: <strong className="text-secondary">Chrome MV3 extension + page runtime</strong>
           </span>
-          <span className="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
+          <span className="px-3 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
             Verification: <strong className="text-[#38bdf8]">{CODEBASE_FACTS.verificationEngine}</strong>
           </span>
-          <span className="px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
+          <span className="px-3 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 text-on-surface">
             AI Model: <strong className="text-primary">{CODEBASE_FACTS.geminiModel}</strong>
           </span>
         </div>
@@ -104,23 +104,23 @@ export function Readme() {
           <Terminal className="w-6 h-6 text-primary" />
           <span>Quickstart & Setup</span>
         </h2>
-        <div className="p-6 rounded-2xl cyber-glass border border-outline-variant/40 space-y-6">
-          <p className="text-sm font-mono text-on-surface-variant leading-relaxed">
+        <div className="p-6 sm:p-8 rounded-2xl cyber-glass border border-outline-variant/40 space-y-6">
+          <p className="text-sm sm:text-base font-mono text-on-surface-variant leading-relaxed">
             Follow the complete step-by-step instructions to install, seed, launch, and test the entire Patchwork ecosystem:
           </p>
 
-          <div className="space-y-4 font-mono text-xs">
+          <div className="space-y-4 font-mono text-xs sm:text-sm">
             {/* Step 1 */}
             <div className="space-y-1.5">
               <span className="text-white font-bold flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px]">1</span>
+                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-xs">1</span>
                 <span>Install dependencies across monorepo:</span>
               </span>
               <div className="relative group bg-surface-container-lowest/90 rounded-xl p-3 border border-outline-variant/30 text-white flex items-center justify-between">
                 <code>npm install</code>
                 <button
                   onClick={() => copyToClipboard('npm install', 'install')}
-                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                   title="Copy"
                 >
                   {copiedCmd === 'install' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -131,20 +131,20 @@ export function Readme() {
             {/* Step 2 */}
             <div className="space-y-1.5">
               <span className="text-white font-bold flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px]">2</span>
+                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-xs">2</span>
                 <span>Configure environment variables:</span>
               </span>
               <div className="relative group bg-surface-container-lowest/90 rounded-xl p-3 border border-outline-variant/30 text-white flex items-center justify-between">
                 <code>cp .env.example .env</code>
                 <button
                   onClick={() => copyToClipboard('cp .env.example .env', 'env')}
-                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                   title="Copy"
                 >
                   {copiedCmd === 'env' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <p className="text-[11px] text-on-surface-variant">
+              <p className="text-xs text-on-surface-variant">
                 Set <code>GEMINI_API_KEY</code> for AI-driven patch authoring. Supabase is optional; the server automatically falls back to an in-memory store if Supabase credentials are not provided.
               </p>
             </div>
@@ -152,14 +152,14 @@ export function Readme() {
             {/* Step 3 */}
             <div className="space-y-1.5">
               <span className="text-white font-bold flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px]">3</span>
+                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-xs">3</span>
                 <span>Seed demo data:</span>
               </span>
               <div className="relative group bg-surface-container-lowest/90 rounded-xl p-3 border border-outline-variant/30 text-white flex items-center justify-between">
                 <code>npm run seed</code>
                 <button
                   onClick={() => copyToClipboard('npm run seed', 'seed')}
-                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                   title="Copy"
                 >
                   {copiedCmd === 'seed' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -170,14 +170,14 @@ export function Readme() {
             {/* Step 4 */}
             <div className="space-y-1.5">
               <span className="text-white font-bold flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px]">4</span>
+                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-xs">4</span>
                 <span>Run all three apps concurrently:</span>
               </span>
               <div className="relative group bg-surface-container-lowest/90 rounded-xl p-3 border border-outline-variant/30 text-white flex items-center justify-between">
                 <code>npm run demo</code>
                 <button
                   onClick={() => copyToClipboard('npm run demo', 'demo')}
-                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                   title="Copy"
                 >
                   {copiedCmd === 'demo' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -188,20 +188,20 @@ export function Readme() {
             {/* Step 5 */}
             <div className="space-y-1.5">
               <span className="text-white font-bold flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px]">5</span>
+                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-xs">5</span>
                 <span>Build and load the Chrome Extension (MV3):</span>
               </span>
               <div className="relative group bg-surface-container-lowest/90 rounded-xl p-3 border border-outline-variant/30 text-white flex items-center justify-between">
                 <code>npm run build -w apps/extension</code>
                 <button
                   onClick={() => copyToClipboard('npm run build -w apps/extension', 'build-ext')}
-                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                  className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                   title="Copy"
                 >
                   {copiedCmd === 'build-ext' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
-              <p className="text-[11px] text-on-surface-variant">
+              <p className="text-xs text-on-surface-variant">
                 Open Chrome &rarr; Navigate to <code>chrome://extensions/</code> &rarr; Enable <strong>Developer mode</strong> &rarr; Click <strong>Load unpacked</strong> &rarr; Select <code>apps/extension/dist</code>.
               </p>
             </div>
@@ -209,7 +209,7 @@ export function Readme() {
             {/* Step 6 */}
             <div className="space-y-1.5">
               <span className="text-white font-bold flex items-center gap-2">
-                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-[10px]">6</span>
+                <span className="px-1.5 py-0.5 rounded bg-primary-container text-white text-xs">6</span>
                 <span>Run test suites & end-to-end verifications:</span>
               </span>
               <div className="space-y-2">
@@ -217,7 +217,7 @@ export function Readme() {
                   <code>npm test</code>
                   <button
                     onClick={() => copyToClipboard('npm test', 'test')}
-                    className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                    className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                     title="Copy"
                   >
                     {copiedCmd === 'test' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -227,7 +227,7 @@ export function Readme() {
                   <code>npm run e2e && npm run e2e:ext</code>
                   <button
                     onClick={() => copyToClipboard('npm run e2e && npm run e2e:ext', 'e2e')}
-                    className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white"
+                    className="p-1 rounded bg-surface-container hover:bg-surface-container-high border border-outline-variant/40 text-outline hover:text-white cursor-pointer"
                     title="Copy"
                   >
                     {copiedCmd === 'e2e' ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -238,21 +238,21 @@ export function Readme() {
           </div>
 
           {/* Three Ports Card */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-outline-variant/30 font-mono text-xs">
-            <div className="p-3.5 rounded-xl bg-surface-container/60 border border-outline-variant/30">
-              <span className="text-[10px] text-outline uppercase font-semibold">Demo Storefront</span>
-              <p className="font-bold text-white text-sm mt-1">http://localhost:4100</p>
-              <p className="text-on-surface-variant text-[11px] mt-0.5">Live TechMart e-commerce target</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-outline-variant/30 font-mono text-xs sm:text-sm">
+            <div className="p-4 rounded-xl bg-surface-container/60 border border-outline-variant/30">
+              <span className="text-xs text-outline uppercase font-semibold">Demo Storefront</span>
+              <p className="font-bold text-white text-base mt-1">http://localhost:4100</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">Live TechMart e-commerce target</p>
             </div>
-            <div className="p-3.5 rounded-xl bg-surface-container/60 border border-outline-variant/30">
-              <span className="text-[10px] text-outline uppercase font-semibold">Fastify API & DB</span>
-              <p className="font-bold text-white text-sm mt-1">http://localhost:4000</p>
-              <p className="text-on-surface-variant text-[11px] mt-0.5">Fastify server & store</p>
+            <div className="p-4 rounded-xl bg-surface-container/60 border border-outline-variant/30">
+              <span className="text-xs text-outline uppercase font-semibold">Fastify API & DB</span>
+              <p className="font-bold text-white text-base mt-1">http://localhost:4000</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">Fastify server & store</p>
             </div>
-            <div className="p-3.5 rounded-xl bg-surface-container/60 border border-outline-variant/30">
-              <span className="text-[10px] text-outline uppercase font-semibold">Dashboard Console</span>
-              <p className="font-bold text-white text-sm mt-1">http://localhost:5173</p>
-              <p className="text-on-surface-variant text-[11px] mt-0.5">Vite + React cockpit</p>
+            <div className="p-4 rounded-xl bg-surface-container/60 border border-outline-variant/30">
+              <span className="text-xs text-outline uppercase font-semibold">Dashboard Console</span>
+              <p className="font-bold text-white text-base mt-1">http://localhost:5173</p>
+              <p className="text-on-surface-variant text-xs mt-0.5">Vite + React cockpit</p>
             </div>
           </div>
         </div>
@@ -260,47 +260,47 @@ export function Readme() {
 
       {/* Core Modules Section */}
       <section className="space-y-4">
-        <h2 className="font-headline font-bold text-2xl text-white flex items-center gap-2.5">
+        <h2 className="font-headline font-bold text-2xl sm:text-3xl text-white flex items-center gap-2.5">
           <Layers className="w-6 h-6 text-primary" />
           <span>Core Architecture & Modules</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-5 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2">
-            <div className="flex items-center gap-2 font-headline font-bold text-base text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="p-6 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2.5">
+            <div className="flex items-center gap-2 font-headline font-bold text-lg text-white">
               <span className="size-2 rounded-full bg-primary-container" />
               <h3>1. Chrome Extension (MV3)</h3>
             </div>
-            <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
+            <p className="text-xs sm:text-sm font-mono text-on-surface-variant leading-relaxed">
               Provides point-and-click DOM inspection, visual property modification, text editing, and AI-assisted patch generation directly on any live browser tab.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2">
-            <div className="flex items-center gap-2 font-headline font-bold text-base text-white">
+          <div className="p-6 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2.5">
+            <div className="flex items-center gap-2 font-headline font-bold text-lg text-white">
               <span className="size-2 rounded-full bg-primary" />
               <h3>2. Multi-Anchor Locator & Token Healer</h3>
             </div>
-            <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
+            <p className="text-xs sm:text-sm font-mono text-on-surface-variant leading-relaxed">
               Computes CSS selectors, structural XPath, and text anchors. When classes or structures mutate, fuzzy Jaccard token matching (threshold &ge; 0.25) self-heals target elements.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2">
-            <div className="flex items-center gap-2 font-headline font-bold text-base text-white">
+          <div className="p-6 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2.5">
+            <div className="flex items-center gap-2 font-headline font-bold text-lg text-white">
               <span className="size-2 rounded-full bg-[#38bdf8]" />
               <h3>3. Playwright Pixelmatch Verification</h3>
             </div>
-            <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
+            <p className="text-xs sm:text-sm font-mono text-on-surface-variant leading-relaxed">
               Automated headless Chromium pipeline running checkout user flows and baseline vs. patched screenshot diffing with pixelmatch to prevent visual and operational regressions.
             </p>
           </div>
 
-          <div className="p-5 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2">
-            <div className="flex items-center gap-2 font-headline font-bold text-base text-white">
+          <div className="p-6 rounded-2xl cyber-glass border border-outline-variant/30 space-y-2.5">
+            <div className="flex items-center gap-2 font-headline font-bold text-lg text-white">
               <span className="size-2 rounded-full bg-secondary" />
               <h3>4. Element + Property Conflict Engine</h3>
             </div>
-            <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
+            <p className="text-xs sm:text-sm font-mono text-on-surface-variant leading-relaxed">
               Detects concurrent property-level overlaps between open patches and newer versions, allows non-overlapping edits to auto-merge, and enforces reviewer approvals.
             </p>
           </div>
@@ -309,21 +309,21 @@ export function Readme() {
 
       {/* Lifecycle Flow Section Rendered from lifecycle.ts */}
       <section className="space-y-4">
-        <h2 className="font-headline font-bold text-2xl text-white flex items-center gap-2.5">
+        <h2 className="font-headline font-bold text-2xl sm:text-3xl text-white flex items-center gap-2.5">
           <GitMerge className="w-6 h-6 text-primary" />
           <span>Hotfix Lifecycle (Real Statuses from Shared Schema)</span>
         </h2>
-        <div className="p-6 rounded-2xl cyber-glass border border-outline-variant/40 space-y-4">
-          <p className="text-xs font-mono text-on-surface-variant">
+        <div className="p-6 sm:p-8 rounded-2xl cyber-glass border border-outline-variant/40 space-y-4">
+          <p className="text-sm font-mono text-on-surface-variant">
             Every patch moves through exact status states backed by <code>PatchStatusSchema</code> in <code>packages/shared/src/schema.ts</code>:
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 font-mono text-sm">
             {LIFECYCLE_STAGES.slice(0, 4).map((stage) => (
               <StageCard key={stage.id} stage={stage} showRoute />
             ))}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 font-mono text-sm">
             {LIFECYCLE_STAGES.slice(4).map((stage) => (
               <StageCard key={stage.id} stage={stage} showRoute />
             ))}
@@ -333,25 +333,25 @@ export function Readme() {
 
       {/* Real API Reference Table */}
       <section className="space-y-4">
-        <h2 className="font-headline font-bold text-2xl text-white flex items-center gap-2.5">
+        <h2 className="font-headline font-bold text-2xl sm:text-3xl text-white flex items-center gap-2.5">
           <BookOpen className="w-6 h-6 text-primary" />
           <span>Audited Fastify API Endpoints</span>
         </h2>
         <div className="rounded-2xl cyber-glass border border-outline-variant/40 overflow-x-auto shadow-lg">
-          <table className="w-full text-xs font-mono text-left">
-            <thead className="bg-surface-container-highest/60 border-b border-outline-variant/30 text-outline uppercase text-[11px]">
+          <table className="w-full text-xs sm:text-sm font-mono text-left">
+            <thead className="bg-surface-container-highest/60 border-b border-outline-variant/30 text-outline uppercase text-xs font-semibold">
               <tr>
-                <th className="px-4 py-3">Method</th>
-                <th className="px-4 py-3">Endpoint</th>
-                <th className="px-4 py-3">Description</th>
+                <th className="px-5 py-3.5">Method</th>
+                <th className="px-5 py-3.5">Endpoint</th>
+                <th className="px-5 py-3.5">Description</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-outline-variant/20 text-on-surface">
               {REAL_API_ENDPOINTS.map((endpoint, i) => (
                 <tr key={`${endpoint.method}-${endpoint.path}-${i}`}>
-                  <td className="px-4 py-2.5">
+                  <td className="px-5 py-3">
                     <span
-                      className={`px-2 py-0.5 rounded font-bold border ${
+                      className={`px-2.5 py-0.5 rounded font-bold border text-xs ${
                         endpoint.method === 'GET'
                           ? 'bg-blue-950 text-blue-300 border-blue-500/40'
                           : endpoint.method === 'POST'
@@ -364,8 +364,8 @@ export function Readme() {
                       {endpoint.method}
                     </span>
                   </td>
-                  <td className="px-4 py-2.5 font-bold text-white">{endpoint.path}</td>
-                  <td className="px-4 py-2.5 text-on-surface-variant">{endpoint.description}</td>
+                  <td className="px-5 py-3 font-bold text-white text-xs sm:text-sm">{endpoint.path}</td>
+                  <td className="px-5 py-3 text-on-surface-variant text-xs sm:text-sm">{endpoint.description}</td>
                 </tr>
               ))}
             </tbody>
@@ -375,21 +375,21 @@ export function Readme() {
 
       {/* Known Limitations */}
       <section className="space-y-4">
-        <h2 className="font-headline font-bold text-2xl text-white flex items-center gap-2.5">
+        <h2 className="font-headline font-bold text-2xl sm:text-3xl text-white flex items-center gap-2.5">
           <AlertTriangle className="w-6 h-6 text-amber-400" />
           <span>Known Limitations & Architectural Bounds</span>
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {KNOWN_LIMITATIONS.map((lim, i) => (
             <div
               key={i}
-              className="p-5 rounded-2xl cyber-glass border border-amber-500/20 bg-amber-500/5 space-y-2"
+              className="p-6 rounded-2xl cyber-glass border border-amber-500/20 bg-amber-500/5 space-y-2.5"
             >
-              <div className="flex items-center gap-2 font-headline font-bold text-base text-amber-300">
+              <div className="flex items-center gap-2 font-headline font-bold text-base sm:text-lg text-amber-300">
                 <span className="size-2 rounded-full bg-amber-400" />
                 <h3>{lim.title}</h3>
               </div>
-              <p className="text-xs font-mono text-on-surface-variant leading-relaxed">
+              <p className="text-xs sm:text-sm font-mono text-on-surface-variant leading-relaxed">
                 {lim.description}
               </p>
             </div>
