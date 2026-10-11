@@ -4,6 +4,8 @@ import { Pencil, Trash2, Globe, ExternalLink, GitCommit, Check, X, Send } from '
 import type { Patch, AuditEvent, Site } from '@patchwork/shared';
 import { api, usePolling, DEMO_URL, useActingUser, getUserName } from '../lib/api';
 import { ErrorBanner, Notice, useNotice } from '../components/Notice';
+import { PreviewWindow } from '../components/PreviewWindow';
+import { loadPreviewOpen, savePreviewOpen } from '../lib/preview';
 
 interface LiveState {
   deployment: { id: string } | null;
@@ -75,6 +77,12 @@ export function Patches() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [expanded, setExpanded] = useState<string | null>(null);
 
+  // Site preview window (under the AI box): shows the live site, or one patch previewed on top of it.
+  const [previewOpen, setPreviewOpen] = useState<boolean>(() => loadPreviewOpen());
+  const [previewPatchId, setPreviewPatchId] = useState<string | null>(null);
+  const [previewReload, setPreviewReload] = useState(0);
+  const previewRef = useRef<HTMLDivElement>(null);
+
   // Notify when a teammate creates a conflicting patch
   const knownConflictIdsRef = useRef<Set<string> | null>(null);
   useEffect(() => {
@@ -104,6 +112,31 @@ export function Patches() {
   for (const e of auditQ.data ?? []) {
     if (e.event_type === 'patch_healed' && !healByPatch[e.entity_id]) healByPatch[e.entity_id] = e;
   }
+
+  // Derived from the list on purpose: if the previewed patch is deleted it is simply not found,
+  // so the window falls back to the live site without any extra state handling.
+  const previewedPatch = previewPatchId ? allPatches.find((p) => p.id === previewPatchId) : undefined;
+  const previewTarget = previewedPatch
+    ? {
+        id: previewedPatch.id,
+        label: previewedPatch.title || formatChangeValue(previewedPatch.change.type, previewedPatch.change.value),
+        status: liveIds.has(previewedPatch.id) ? 'live' : previewedPatch.status,
+        version: previewedPatch.updated_at,
+      }
+    : null;
+
+  const setPreviewWindowOpen = (open: boolean) => {
+    setPreviewOpen(open);
+    savePreviewOpen(open);
+  };
+
+  const showPreview = (p: Patch) => {
+    setPreviewPatchId(p.id);
+    setPreviewReload((n) => n + 1); // clicking Preview again re-fetches the latest version of the patch
+    setPreviewWindowOpen(true);
+    // the window sits above the table; bring it into view once it has rendered
+    requestAnimationFrame(() => previewRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+  };
 
   const refreshAll = async () => {
     await Promise.all([patchesQ.refresh(), liveQ.refresh(), auditQ.refresh(), conflictsQ.refresh(), sitesQ.refresh()]);
@@ -389,6 +422,18 @@ export function Patches() {
         onError={(m) => show(m, 'error')}
       />
 
+      {/* Site preview: Preview buttons below load into this window instead of opening a new tab */}
+      <PreviewWindow
+        ref={previewRef}
+        baseUrl={DEMO_URL}
+        open={previewOpen}
+        onToggle={() => setPreviewWindowOpen(!previewOpen)}
+        target={previewTarget}
+        reloadKey={previewReload}
+        onReload={() => setPreviewReload((n) => n + 1)}
+        onShowLive={() => setPreviewPatchId(null)}
+      />
+
       {/* Patches Table */}
       <div className="cyber-glass rounded-xl border border-outline-variant/30 shadow-lg overflow-x-auto">
         <div className="px-5 py-3 border-b border-outline-variant/30 flex flex-wrap items-center justify-between gap-3 bg-surface-container/60">
@@ -536,15 +581,19 @@ export function Patches() {
                     <td className="px-4 py-3.5 pr-6 text-right whitespace-nowrap min-w-[220px]">
                       <div className="inline-flex items-center justify-end gap-2 min-w-max">
                         {/* Status workflow actions */}
-                        <a
-                          href={`${DEMO_URL}/?preview_patch=${patch.id}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="bg-surface-container hover:bg-surface-container-high text-white border border-outline-variant/40 px-3 py-1.5 rounded-md text-xs sm:text-sm font-mono font-semibold transition-colors cursor-pointer"
-                          title="Open the demo site with only this patch previewed"
+                        <button
+                          type="button"
+                          onClick={() => showPreview(patch)}
+                          aria-pressed={previewOpen && previewPatchId === patch.id}
+                          className={`border px-3 py-1.5 rounded-md text-xs sm:text-sm font-mono font-semibold transition-colors cursor-pointer ${
+                            previewOpen && previewPatchId === patch.id
+                              ? 'bg-primary-container/20 text-primary border-primary-container/50'
+                              : 'bg-surface-container hover:bg-surface-container-high text-white border-outline-variant/40'
+                          }`}
+                          title="Preview this patch in the window above (nothing goes live)"
                         >
-                          Preview
-                        </a>
+                          {previewOpen && previewPatchId === patch.id ? 'Previewing' : 'Preview'}
+                        </button>
 
                         {effectiveStatus === 'draft' && (
                           <button
