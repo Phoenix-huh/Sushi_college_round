@@ -22,19 +22,17 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(root, 'public');
 const out = path.join(root, 'dist');
 
-/** Returns the clean origin of the server, or throws a message that says what to fix. */
+/** Returns the clean origin or relative path of the server, or throws a message that says what to fix. */
 export function resolveServerUrl(raw) {
-  if (!raw || !raw.trim()) {
-    throw new Error(
-      'SERVER_URL is not set. The deployed page would try to load patches from localhost, which only works on your own machine.\n' +
-        'Set SERVER_URL to the public https address of your Patchwork server (Vercel: Project Settings > Environment Variables).',
-    );
+  const trimmed = (raw && raw.trim()) ? raw.trim() : '/api';
+  if (trimmed.startsWith('/')) {
+    return trimmed.replace(/\/+$/, '') || '/';
   }
   let url;
   try {
-    url = new URL(raw.trim());
+    url = new URL(trimmed);
   } catch {
-    throw new Error(`SERVER_URL "${raw}" is not a valid URL. Example: https://patchwork-api.onrender.com`);
+    throw new Error(`SERVER_URL "${raw}" is not a valid URL. Example: /api or https://patchwork-api.onrender.com`);
   }
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname);
   if (url.protocol !== 'https:' && !local) {

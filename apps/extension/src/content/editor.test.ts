@@ -143,13 +143,13 @@ describe('openEditor', () => {
     expect(heightInput).not.toBeNull();
 
     widthInput.value = '320';
-    widthInput.dispatchEvent(new window.Event('input'));
+    widthInput.dispatchEvent(new window.Event('input') as any);
 
     heightInput.value = '180';
-    heightInput.dispatchEvent(new window.Event('input'));
+    heightInput.dispatchEvent(new window.Event('input') as any);
 
-    expect((btn as HTMLElement).style.width).toBe('320px');
-    expect((btn as HTMLElement).style.height).toBe('180px');
+    expect((btn as unknown as HTMLElement).style.width).toBe('320px');
+    expect((btn as unknown as HTMLElement).style.height).toBe('180px');
 
     editor.close();
     window.Element.prototype.attachShadow = origAttach;
@@ -180,11 +180,11 @@ describe('openEditor', () => {
 
     // Trigger pointerdown on header at (100, 100)
     const downEvent = new window.PointerEvent('pointerdown', { clientX: 100, clientY: 100 } as any);
-    header.dispatchEvent(downEvent);
+    header.dispatchEvent(downEvent as any);
 
     // Trigger pointermove at (250, 300)
     const moveEvent = new window.PointerEvent('pointermove', { clientX: 250, clientY: 300 } as any);
-    window.dispatchEvent(moveEvent);
+    window.dispatchEvent(moveEvent as any);
 
     // Panel left and top should have shifted
     expect(panel.style.left).toBeDefined();
@@ -192,7 +192,7 @@ describe('openEditor', () => {
 
     // Trigger pointerup
     const upEvent = new window.PointerEvent('pointerup', { clientX: 250, clientY: 300 } as any);
-    window.dispatchEvent(upEvent);
+    window.dispatchEvent(upEvent as any);
 
     editor.close();
     window.Element.prototype.attachShadow = origAttach;
@@ -219,13 +219,13 @@ describe('openEditor', () => {
     const textArea = capturedShadow.querySelector('textarea') as HTMLTextAreaElement;
     expect(textArea).not.toBeNull();
     textArea.value = 'Buy Now';
-    textArea.dispatchEvent(new window.Event('input'));
+    textArea.dispatchEvent(new window.Event('input') as any);
 
     // 2. Style change: switch to Style tab and set width
     const widthInput = capturedShadow.getElementById('pw-resize-width') as HTMLInputElement;
     expect(widthInput).not.toBeNull();
     widthInput.value = '280';
-    widthInput.dispatchEvent(new window.Event('input'));
+    widthInput.dispatchEvent(new window.Event('input') as any);
 
     // Check preview button
     const buttons = Array.from(capturedShadow.querySelectorAll('button')) as HTMLButtonElement[];
@@ -239,14 +239,14 @@ describe('openEditor', () => {
 
     // Both text and style should be applied simultaneously!
     expect(btn.textContent).toBe('Buy Now');
-    expect((btn as HTMLElement).style.width).toBe('280px');
+    expect((btn as unknown as HTMLElement).style.width).toBe('280px');
 
     // Click Revert
     revertBtn!.click();
 
     // Both should revert back!
     expect(btn.textContent).toBe('Submit Order');
-    expect((btn as HTMLElement).style.width).not.toBe('280px');
+    expect((btn as unknown as HTMLElement).style.width).not.toBe('280px');
 
     editor.close();
     window.Element.prototype.attachShadow = origAttach;
@@ -275,7 +275,7 @@ describe('openEditor', () => {
 
     const textArea = capturedShadow.querySelector('textarea') as HTMLTextAreaElement;
     textArea.value = 'Order Placed';
-    textArea.dispatchEvent(new window.Event('input'));
+    textArea.dispatchEvent(new window.Event('input') as any);
 
     const buttons = Array.from(capturedShadow.querySelectorAll('button')) as HTMLButtonElement[];
     const stageBtn = buttons.find((b) => b.textContent?.includes('Stage & Pick Next'));
